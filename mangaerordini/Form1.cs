@@ -7751,17 +7751,7 @@ namespace mangaerordini
             UpdateFields("VS", "E", false);
 
             string nordine = VisOrdNumero.Text;
-            /*string clnome = VisOrdSoc.Text;
-            string clstato = VisOrdSoStato.Text;
-            string clprov = VisOrdSoPro.Text;
-            string clcitt = VisOrdSoCitta.Text;
-            string crnome = VisOrdCont.Text;
-            string crtel = VisOrdContTel.Text;
-            string crmail = VisOrdContMail.Text;
-            string opdo = VisOrdData.Text;*/
             string opde = VisOrdETA.Text;
-            /*string optot = VisOrdTot.Text;
-            string optotf = VisOrdTotFi.Text;*/
 
             DateTime dataETAOrdValue;
             DateTime dateAppoint = DateTime.MinValue;
@@ -10006,7 +9996,7 @@ namespace mangaerordini
         private void csvhelper_github_LinkClicked(object sender, LinkLabelLinkClickedEventArgs e)
         {
             System.Diagnostics.Process.Start("https://joshclose.github.io/CsvHelper/");
-        
+
         }
 
         private void autoupdaternet_github_LinkClicked(object sender, LinkLabelLinkClickedEventArgs e)

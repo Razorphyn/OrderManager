@@ -71,7 +71,9 @@ namespace mangaerordini
             Application.EnableVisualStyles();
             Application.SetCompatibleTextRenderingDefault(false);
 
-            decimal version = 1;
+            AutoUpdater.Start("https://github.com/Razorphyn/OrderManager/blob/main/mangaerordini/AutoUpdater.xml");
+
+            decimal version = 0;
 
             string connectionString = @"Data Source = " + exeFolderPath + db_path + db_name + @";cache=shared; synchronous  = NORMAL ;  journal_mode=WAL; temp_store = memory;  mmap_size = 30000000000; ";
             string schemadb = "";
@@ -138,8 +140,6 @@ namespace mangaerordini
                     }
                 }
             }
-
-            version = 0;
 
             string commandText = "SELECT versione FROM " + schemadb + @"[informazioni] WHERE Id=1 LIMIT 1;";
             using (SQLiteConnection conn = new SQLiteConnection(connectionString))
