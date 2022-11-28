@@ -16,6 +16,7 @@ using System.Threading;
 using System.Windows.Forms;
 using Windows.Management;
 using Outlook = Microsoft.Office.Interop.Outlook;
+using AutoUpdaterDotNET;
 
 namespace mangaerordini
 {
