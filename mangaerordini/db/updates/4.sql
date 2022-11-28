@@ -67,6 +67,8 @@ BEGIN TRANSACTION;
 	FROM temp;
 
 	DROP TABLE IF EXISTS temp;
+	
+	UPDATE  informazioni SET versione=4 WHERE id=1;
 END;
 	
 SELECT "Attenzione: Verificare ordine con ID: " || [ID_ordine] || ". ID ricambio: "|| [ID_ricambio] || "duplicato ed eliminato (ID riga: " || Id || ")."  AS retentry FROM temp.temp_value;

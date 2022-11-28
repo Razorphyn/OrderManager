@@ -70,13 +70,6 @@ namespace mangaerordini
             Application.EnableVisualStyles();
             Application.SetCompatibleTextRenderingDefault(false);
 
-            /*string exeFolderPath = Path.GetDirectoryName(Application.ExecutablePath);
-            string db_path = @"\db\";
-            string db_name = @"ManagerOrdini.db";
-            string db__query_folder = @"\db\updates\";
-            string db_check_file = exeFolderPath + db_path + db_name;
-            string settingFile = exeFolderPath + @"\" + "ManagerOrdiniSettings.txt";*/
-
             decimal version = 1;
 
             string connectionString = @"Data Source = " + exeFolderPath + db_path + db_name + @";cache=shared; synchronous  = NORMAL ;  journal_mode=WAL; temp_store = memory;  mmap_size = 30000000000; ";
@@ -121,31 +114,13 @@ namespace mangaerordini
                             else
                             {
                                 MessageBox.Show("Il Programma verrà chiuso");
-                                if (System.Windows.Forms.Application.MessageLoop)
-                                {
-                                    // WinForms app
-                                    System.Windows.Forms.Application.Exit();
-                                }
-                                else
-                                {
-                                    // Console app
-                                    System.Environment.Exit(1);
-                                }
+                                ExitProgram();
                             }
                         }
                     }
                     else
                     {
-                        if (System.Windows.Forms.Application.MessageLoop)
-                        {
-                            // WinForms app
-                            System.Windows.Forms.Application.Exit();
-                        }
-                        else
-                        {
-                            // Console app
-                            System.Environment.Exit(1);
-                        }
+                        ExitProgram();
                     }
                 }
                 else
@@ -162,6 +137,8 @@ namespace mangaerordini
                     }
                 }
             }
+
+            version = 0;
 
             string commandText = "SELECT versione FROM " + schemadb + @"[informazioni] WHERE Id=1 LIMIT 1;";
             using (SQLiteConnection conn = new SQLiteConnection(connectionString))
@@ -239,7 +216,7 @@ namespace mangaerordini
 
                             if (success)
                             {
-                                commandText = "UPDATE " + schemadb + @"[informazioni] SET versione=@ver WHERE id=1;";
+                                /*commandText = "UPDATE " + schemadb + @"[informazioni] SET versione=@ver WHERE id=1;";
                                 using (SQLiteConnection conn = new SQLiteConnection(connectionString))
                                 using (SQLiteCommand cmd = new SQLiteCommand(commandText, conn))
                                 {
@@ -260,7 +237,7 @@ namespace mangaerordini
                                     {
                                         conn.Close();
                                     }
-                                }
+                                }*/
                                 DelTempFileBkDb();
                             }
                             else

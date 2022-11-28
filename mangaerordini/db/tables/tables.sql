@@ -2,7 +2,7 @@
 		[Id]        INTEGER	PRIMARY KEY	NOT NULL,
 		[versione]  INT DEFAULT ((4)) NOT NULL
 	);
-	INSERT INTO [informazioni] ([Id] ,[versione]) VALUES (1 ,2); 
+	INSERT INTO [informazioni] ([Id] ,[versione]) VALUES (1 ,4); 
 
 	CREATE TABLE IF NOT EXISTS [fornitori] (
 		[Id]        INTEGER	PRIMARY KEY	AUTOINCREMENT NOT NULL,

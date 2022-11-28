@@ -440,3 +440,5 @@
 	FROM temp;
 
 	DROP TABLE IF EXISTS temp;
+	
+	UPDATE  informazioni SET versione=2 WHERE id=1;

@@ -70,3 +70,5 @@
 	
 	ALTER TABLE ordine_pezzi  ADD Outside_Offer BOOLEAN DEFAULT ((0)) NOT NULL;
 	
+	UPDATE  informazioni SET versione=3 WHERE id=1;
+	

@@ -10002,6 +10002,27 @@ namespace mangaerordini
             else
                 return ex.Message;
         }
+
+        private void csvhelper_github_LinkClicked(object sender, LinkLabelLinkClickedEventArgs e)
+        {
+            System.Diagnostics.Process.Start("https://joshclose.github.io/CsvHelper/");
+        
+        }
+
+        private void autoupdaternet_github_LinkClicked(object sender, LinkLabelLinkClickedEventArgs e)
+        {
+            System.Diagnostics.Process.Start("https://github.com/ravibpatel/AutoUpdater.NET");
+        }
+
+        private void fody_github_LinkClicked(object sender, LinkLabelLinkClickedEventArgs e)
+        {
+            System.Diagnostics.Process.Start("https://github.com/Fody/Fody");
+        }
+
+        private void CosturaFody_github_LinkClicked(object sender, LinkLabelLinkClickedEventArgs e)
+        {
+            System.Diagnostics.Process.Start("https://github.com/Fody/Costura");
+        }
     }
 
     public class ComboBoxList
