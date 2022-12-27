@@ -16,7 +16,6 @@ using System.Threading;
 using System.Windows.Forms;
 using Windows.Management;
 using Outlook = Microsoft.Office.Interop.Outlook;
-using AutoUpdaterDotNET;
 
 namespace mangaerordini
 {
@@ -63,8 +62,6 @@ namespace mangaerordini
 
             Application.EnableVisualStyles();
             Application.SetCompatibleTextRenderingDefault(false);
-
-            AutoUpdater.Start("https://github.com/Razorphyn/OrderManager/blob/main/mangaerordini/AutoUpdater.xml");
 
             decimal version = 0;
 

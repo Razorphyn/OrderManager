@@ -6,7 +6,6 @@ using System;
 using System.Collections.Generic;
 using System.ComponentModel.DataAnnotations;
 using System.Data;
-using System.Data.Common;
 using System.Data.SQLite;
 using System.Diagnostics;
 using System.Globalization;
@@ -16,18 +15,9 @@ using System.Reflection;
 using System.Text;
 using System.Text.RegularExpressions;
 using System.Threading;
-using System.Threading.Tasks;
 using System.Windows.Forms;
-using static System.Data.Entity.Infrastructure.Design.Executor;
-using Windows.UI.Xaml.Controls.Primitives;
-using static System.Windows.Forms.AxHost;
-using static System.Windows.Forms.VisualStyles.VisualStyleElement.Tab;
 using Application = System.Windows.Forms.Application;
 using Outlook = Microsoft.Office.Interop.Outlook;
-using NodaTime.Calendars;
-using Windows.UI.Xaml.Media.Animation;
-
-using System.Runtime.CompilerServices;
 
 namespace mangaerordini
 {
