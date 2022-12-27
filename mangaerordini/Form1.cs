@@ -46,7 +46,12 @@ namespace mangaerordini
         string AddOffCreaOggettoPezzoFiltro_Text = "";
         string FieldOrdOggPezzoFiltro_Text = "";
 
-        SQLiteConnection connection = new SQLiteConnection(@"Data Source = " + exeFolderPath + db_file_path + db_file_name + @";cache=shared; synchronous  = NORMAL ;  foreign_keys  = 1;  journal_mode=WAL; temp_store = memory;  mmap_size = 30000000000; ");
+        readonly CultureInfo provider = CultureInfo.InvariantCulture;
+        readonly NumberStyles style = NumberStyles.AllowDecimalPoint;
+        readonly CultureInfo culture = CultureInfo.CreateSpecificCulture("it-IT");
+        readonly NumberFormatInfo nfi = CultureInfo.GetCultureInfo("it-IT").NumberFormat;
+
+        readonly SQLiteConnection connection = new SQLiteConnection(@"Data Source = " + exeFolderPath + db_file_path + db_file_name + @";cache=shared; synchronous  = NORMAL ;  foreign_keys  = 1;  journal_mode=WAL; temp_store = memory;  mmap_size = 30000000000; ");
 
         public Form1()
         {
@@ -482,7 +487,7 @@ namespace mangaerordini
 
 
                                 using (var writer = new StreamWriter(folderPath + @"\" + "OFFERTE_" + iden + ".csv", true, Encoding.UTF8))
-                                using (var csv = new CsvWriter(writer, CultureInfo.InvariantCulture))
+                                using (var csv = new CsvWriter(writer, provider))
                                 {
                                     csv.WriteHeader<Offerte>();
                                     csv.NextRecord();
@@ -590,7 +595,7 @@ namespace mangaerordini
 
 
                                 using (var writer = new StreamWriter(folderPath + @"\" + "ORDINI_" + iden + ".csv", true, Encoding.UTF8))
-                                using (var csv = new CsvWriter(writer, CultureInfo.InvariantCulture))
+                                using (var csv = new CsvWriter(writer, provider))
                                 {
                                     csv.WriteHeader<Ordini>();
                                     csv.NextRecord();
@@ -639,10 +644,7 @@ namespace mangaerordini
             int fornitoreId = Convert.ToInt32(AddDatiCompSupplier.SelectedValue.GetHashCode());
             int macchinaId = Convert.ToInt32(AddDatiCompMachine.SelectedValue.GetHashCode());
 
-            NumberStyles style;
-            CultureInfo culture;
             string er_list = "";
-            decimal prezzod = 0;
 
             //Aggiungere controllo input;
             if (string.IsNullOrEmpty(nome))
@@ -657,20 +659,15 @@ namespace mangaerordini
                 er_list += "Codice non valido o vuoto" + Environment.NewLine;
             }
 
-            style = NumberStyles.AllowDecimalPoint;
-            culture = CultureInfo.CreateSpecificCulture("it-IT");
 
-            if (!Decimal.TryParse(prezzo, style, culture, out decimal dummyvalue))
+
+            if (!Decimal.TryParse(prezzo, style, culture, out decimal prezzod))
             {
                 er_list += "Prezzo non valido(##,##) o vuoto" + Environment.NewLine;
             }
-            else
+            if (prezzod < 0)
             {
-                prezzod = Convert.ToDecimal(prezzo);
-                if (prezzod < 0)
-                {
-                    er_list += "Il prezzo deve essere positivo" + Environment.NewLine;
-                }
+                er_list += "Il prezzo deve essere positivo" + Environment.NewLine;
             }
 
             if (fornitoreId < 1)
@@ -756,12 +753,6 @@ namespace mangaerordini
             {
                 er_list += "Nome non valido o vuoto" + Environment.NewLine;
             }
-
-            NumberStyles style;
-            CultureInfo culture;
-
-            style = NumberStyles.AllowDecimalPoint;
-            culture = CultureInfo.CreateSpecificCulture("it-IT");
 
             string commandText = "SELECT COUNT(*) FROM " + schemadb + @"[clienti_macchine] WHERE ([Id] = @user) LIMIT 1;";
             int UserExist = 0;
@@ -1027,8 +1018,13 @@ namespace mangaerordini
 
         private void DataGridViewComp_CellDoubleClick(object sender, DataGridViewCellEventArgs e)
         {
-            DataGridView dgv = sender as DataGridView;
+            /*DataGridView dgv = sender as DataGridView;
             if (dgv == null)
+            {
+                return;
+            }*/
+
+            if (!(sender is DataGridView dgv))
             {
                 return;
             }
@@ -1252,13 +1248,15 @@ namespace mangaerordini
                     cmd.Fill(ds, "Ricambi");
                     data_grid.DataSource = ds.Tables["Ricambi"].DefaultView;
 
-                    Dictionary<string, string> columnNames = new Dictionary<string, string>();
-                    columnNames.Add("ID", "ID");
-                    columnNames.Add("Nome", "Nome");
-                    columnNames.Add("Fornitore", "Fornitore");
-                    columnNames.Add("Macchina", "Macchina");
-                    columnNames.Add("Codice", "Codice");
-                    columnNames.Add("Prezzo", "Prezzo");
+                    Dictionary<string, string> columnNames = new Dictionary<string, string>
+                    {
+                        { "ID", "ID" },
+                        { "Nome", "Nome" },
+                        { "Fornitore", "Fornitore" },
+                        { "Macchina", "Macchina" },
+                        { "Codice", "Codice" },
+                        { "Prezzo", "Prezzo" }
+                    };
                     int colCount = data_grid.ColumnCount;
                     for (int i = 0; i < colCount; i++)
                     {
@@ -1295,7 +1293,7 @@ namespace mangaerordini
             TimerdataGridViewCompFilter.Stop();
             LoadCompTable(datiGridViewRicambiCurPage);
         }
-        private void dataGridViewComp_Filtro_Codice_TextChanged(object sender, EventArgs e)
+        private void DataGridViewComp_Filtro_Codice_TextChanged(object sender, EventArgs e)
         {
             TimerdataGridViewCompFilter.Stop();
             TimerdataGridViewCompFilter.Start();
@@ -1586,8 +1584,7 @@ namespace mangaerordini
 
         private void DataGridViewClienti_CellDoubleClick(object sender, DataGridViewCellEventArgs e)
         {
-            DataGridView dgv = sender as DataGridView;
-            if (dgv == null)
+            if (!(sender is DataGridView dgv))
             {
                 return;
             }
@@ -1665,12 +1662,14 @@ namespace mangaerordini
                     else
                         data_grid.DataSource = ds;
 
-                    Dictionary<string, string> columnNames = new Dictionary<string, string>();
-                    columnNames.Add("Id", "ID");
-                    columnNames.Add("nome", "Nome");
-                    columnNames.Add("stato", "Stato");
-                    columnNames.Add("citta", "Città");
-                    columnNames.Add("provincia", "Provincia");
+                    Dictionary<string, string> columnNames = new Dictionary<string, string>
+                    {
+                        { "Id", "ID" },
+                        { "nome", "Nome" },
+                        { "stato", "Stato" },
+                        { "citta", "Città" },
+                        { "provincia", "Provincia" }
+                    };
                     int colCount = data_grid.ColumnCount;
                     for (int i = 0; i < colCount; i++)
                     {
@@ -1981,8 +1980,7 @@ namespace mangaerordini
 
         private void DataGridViewPref_CellDoubleClick(object sender, DataGridViewCellEventArgs e)
         {
-            DataGridView dgv = sender as DataGridView;
-            if (dgv == null)
+            if (!(sender is DataGridView dgv))
             {
                 return;
             }
@@ -2066,12 +2064,14 @@ namespace mangaerordini
                     cmd.Fill(ds, "Riferimenti");
                     data_grid.DataSource = ds.Tables["Riferimenti"].DefaultView;
 
-                    Dictionary<string, string> columnNames = new Dictionary<string, string>();
-                    columnNames.Add("ID", "ID");
-                    columnNames.Add("Nome", "Nome");
-                    columnNames.Add("Mail", "Mail");
-                    columnNames.Add("Telefono", "Telefono");
-                    columnNames.Add("Cliente", "Cliente");
+                    Dictionary<string, string> columnNames = new Dictionary<string, string>
+                    {
+                        { "ID", "ID" },
+                        { "Nome", "Nome" },
+                        { "Mail", "Mail" },
+                        { "Telefono", "Telefono" },
+                        { "Cliente", "Cliente" }
+                    };
                     int colCount = data_grid.ColumnCount;
 
                     for (int i = 0; i < colCount; i++)
@@ -2333,8 +2333,7 @@ namespace mangaerordini
 
         private void DataGridViewFornitori_CellDoubleClick(object sender, DataGridViewCellEventArgs e)
         {
-            DataGridView dgv = sender as DataGridView;
-            if (dgv == null)
+            if (!(sender is DataGridView dgv))
             {
                 return;
             }
@@ -2397,9 +2396,11 @@ namespace mangaerordini
                     cmd.Fill(ds);
                     data_grid.DataSource = ds;
 
-                    Dictionary<string, string> columnNames = new Dictionary<string, string>();
-                    columnNames.Add("Id", "ID");
-                    columnNames.Add("nome", "Nome");
+                    Dictionary<string, string> columnNames = new Dictionary<string, string>
+                    {
+                        { "Id", "ID" },
+                        { "nome", "Nome" }
+                    };
                     int colCount = data_grid.ColumnCount;
                     for (int i = 0; i < colCount; i++)
                     {
@@ -2696,8 +2697,7 @@ namespace mangaerordini
 
         private void DataGridViewMacchina_CellDoubleClick(object sender, DataGridViewCellEventArgs e)
         {
-            DataGridView dgv = sender as DataGridView;
-            if (dgv == null)
+            if (!(sender is DataGridView dgv))
             {
                 return;
             }
@@ -2840,7 +2840,7 @@ namespace mangaerordini
             return;
         }
 
-        private void dataGridViewMacchina_Filtro_Cliente_SelectedValueChanged(object sender, EventArgs e)
+        private void DataGridViewMacchina_Filtro_Cliente_SelectedValueChanged(object sender, EventArgs e)
         {
             LoadMacchinaTable();
         }
@@ -2884,12 +2884,6 @@ namespace mangaerordini
 
             DateTime dataoffValue;
             string format = "dd/MM/yyyy";
-            CultureInfo provider = CultureInfo.InvariantCulture;
-
-            NumberStyles style;
-            CultureInfo culture;
-            style = NumberStyles.AllowDecimalPoint;
-            culture = CultureInfo.CreateSpecificCulture("it-IT");
 
             stato = (stato < 0) ? 0 : stato;
 
@@ -2906,10 +2900,6 @@ namespace mangaerordini
             if (!DateTime.TryParseExact(dataoffString, format, provider, DateTimeStyles.None, out dataoffValue))
             {
                 er_list += "Data non valida o vuota" + Environment.NewLine;
-            }
-            else
-            {
-                dataoffValue = DateTime.ParseExact(dataoffString, format, provider);
             }
 
             answer = ValidateCliente(idcl);
@@ -3449,11 +3439,8 @@ namespace mangaerordini
             int idof = Convert.ToInt32(SelOffCrea.SelectedItem.GetHashCode());
             int idir = Convert.ToInt32(AddOffCreaOggettoRica.SelectedItem.GetHashCode());
 
-            NumberStyles style;
-            CultureInfo culture;
             string er_list = "";
-            style = NumberStyles.AllowDecimalPoint;
-            culture = CultureInfo.CreateSpecificCulture("it-IT");
+
 
             if (!Decimal.TryParse(prezzoOr, style, culture, out decimal prezzoOrV))
             {
@@ -3546,8 +3533,7 @@ namespace mangaerordini
 
         private void DataGridViewOffCrea_CellDoubleClick(object sender, DataGridViewCellEventArgs e)
         {
-            DataGridView dgv = sender as DataGridView;
-            if (dgv == null)
+            if (!(sender is DataGridView dgv))
             {
                 return;
             }
@@ -3621,12 +3607,6 @@ namespace mangaerordini
 
             DateTime dataoffValue;
             string format = "dd/MM/yyyy";
-            CultureInfo provider = CultureInfo.InvariantCulture;
-
-            NumberStyles style;
-            CultureInfo culture;
-            style = NumberStyles.AllowDecimalPoint;
-            culture = CultureInfo.CreateSpecificCulture("it-IT");
 
             ValidationResult answer;
             string commandText;
@@ -3909,8 +3889,7 @@ namespace mangaerordini
 
         private void DataGridViewOffCreaOggetti_CellDoubleClick(object sender, DataGridViewCellEventArgs e)
         {
-            DataGridView dgv = sender as DataGridView;
-            if (dgv == null)
+            if (!(sender is DataGridView dgv))
             {
                 return;
             }
@@ -4161,11 +4140,7 @@ namespace mangaerordini
             int idof = Convert.ToInt32(SelOffCrea.SelectedItem.GetHashCode());
             int idOggToOff = Convert.ToInt32(AddOffCreaOggettoId.Text.Trim());
 
-            NumberStyles style;
-            CultureInfo culture;
             string er_list = "";
-            style = NumberStyles.AllowDecimalPoint;
-            culture = CultureInfo.CreateSpecificCulture("it-IT");
 
             if (!Decimal.TryParse(prezzoOr, style, culture, out decimal prezzoOrV))
             {
@@ -4440,11 +4415,6 @@ namespace mangaerordini
                 return;
             }
 
-            NumberStyles style;
-            CultureInfo culture;
-            style = NumberStyles.AllowDecimalPoint;
-            culture = CultureInfo.CreateSpecificCulture("it-IT");
-
             if (!Regex.IsMatch(sconto, @"^[\d,.]+$") || !Decimal.TryParse(sconto, style, culture, out scontoV))
             {
                 er_list += "Sconto non valido(##,##) o vuoto" + Environment.NewLine;
@@ -4462,7 +4432,6 @@ namespace mangaerordini
                 MessageBox.Show(er_list);
                 return;
             }
-            NumberFormatInfo nfi = CultureInfo.GetCultureInfo("it-IT").NumberFormat;
             FieldOrdPrezF.Text = ((prezzoI * (1 - scontoV / 100)).ToString("N2", nfi)).Replace(".", "");
         }
         private void ApplySconto(object sender, KeyEventArgs e)
@@ -4485,11 +4454,6 @@ namespace mangaerordini
                 return;
             }
 
-            NumberStyles style;
-            CultureInfo culture;
-            style = NumberStyles.AllowDecimalPoint;
-            culture = CultureInfo.CreateSpecificCulture("it-IT");
-
             if (!Decimal.TryParse(prezzoF, style, culture, out decimal prezzoFV))
             {
                 er_list += "Prezzo finale non valido(##,##) o vuoto" + Environment.NewLine;
@@ -4508,7 +4472,7 @@ namespace mangaerordini
                 UpdateFields("OCR", "A", true);
                 return;
             }
-            NumberFormatInfo nfi = CultureInfo.GetCultureInfo("it-IT").NumberFormat;
+
             if (prezzoI != 0)
                 FieldOrdSconto.Text = (-(prezzoFV - prezzoI) / prezzoI * 100).ToString("N2", nfi);
             return;
@@ -4744,12 +4708,6 @@ namespace mangaerordini
             DateTime dataOrdValue;
             DateTime dataETAOrdValue;
             string format = "dd/MM/yyyy";
-            CultureInfo provider = CultureInfo.InvariantCulture;
-
-            NumberStyles style;
-            CultureInfo culture;
-            style = NumberStyles.AllowDecimalPoint;
-            culture = CultureInfo.CreateSpecificCulture("it-IT");
 
             ValidationResult answer;
 
@@ -5252,8 +5210,7 @@ namespace mangaerordini
 
         private void DataGridViewOrd_CellDoubleClick(object sender, DataGridViewCellEventArgs e)
         {
-            DataGridView dgv = sender as DataGridView;
-            if (dgv == null)
+            if (!(sender is DataGridView dgv))
             {
                 return;
             }
@@ -5357,8 +5314,7 @@ namespace mangaerordini
 
         private void DataGridViewOrdOffOgg_CellDoubleClick(object sender, DataGridViewCellEventArgs e)
         {
-            DataGridView dgv = sender as DataGridView;
-            if (dgv == null)
+            if (!(sender is DataGridView dgv))
             {
                 return;
             }
@@ -5460,8 +5416,7 @@ namespace mangaerordini
 
         private void DataGridViewOrdOgg_CellDoubleClick(object sender, DataGridViewCellEventArgs e)
         {
-            DataGridView dgv = sender as DataGridView;
-            if (dgv == null)
+            if (!(sender is DataGridView dgv))
             {
                 return;
             }
@@ -5593,12 +5548,6 @@ namespace mangaerordini
 
             DateTime dataETAOrdValue;
             string format = "dd/MM/yyyy";
-            CultureInfo provider = CultureInfo.InvariantCulture;
-
-            NumberStyles style;
-            CultureInfo culture;
-            style = NumberStyles.AllowDecimalPoint;
-            culture = CultureInfo.CreateSpecificCulture("it-IT");
 
             string er_list = "";
 
@@ -6272,12 +6221,6 @@ namespace mangaerordini
             DateTime dataOrdValue;
             DateTime dataETAOrdValue;
             string format = "dd/MM/yyyy";
-            CultureInfo provider = CultureInfo.InvariantCulture;
-
-            NumberStyles style;
-            CultureInfo culture;
-            style = NumberStyles.AllowDecimalPoint;
-            culture = CultureInfo.CreateSpecificCulture("it-IT");
 
             string er_list = "";
             if (string.IsNullOrEmpty(n_ordine) || !Regex.IsMatch(n_ordine, @"^\d+$"))
@@ -6554,12 +6497,6 @@ namespace mangaerordini
 
             DateTime dataETAOrdValue;
             string format = "dd/MM/yyyy";
-            CultureInfo provider = CultureInfo.InvariantCulture;
-
-            NumberStyles style;
-            CultureInfo culture;
-            style = NumberStyles.AllowDecimalPoint;
-            culture = CultureInfo.CreateSpecificCulture("it-IT");
 
             string er_list = "";
 
@@ -7278,8 +7215,7 @@ namespace mangaerordini
 
         private void DataGridViewVisualizzaOrdini_CellDoubleClick(object sender, DataGridViewCellEventArgs e)
         {
-            DataGridView dgv = sender as DataGridView;
-            if (dgv == null)
+            if (!(sender is DataGridView dgv))
             {
                 return;
             }
@@ -7473,7 +7409,7 @@ namespace mangaerordini
                 Outlook.AppointmentItem newAppointment = personalCalendar.Items.Add(Outlook.OlItemType.olAppointmentItem) as Outlook.AppointmentItem;
                 newAppointment.AllDayEvent = true;
                 newAppointment.Start = estDate + TimeSpan.Parse("8:00");
-                estDate = estDate + TimeSpan.Parse("17:00");
+                estDate += TimeSpan.Parse("17:00");
                 newAppointment.End = estDate;
 
                 newAppointment.Location = "";
@@ -7717,7 +7653,6 @@ namespace mangaerordini
             DateTime dataETAOrdValue;
             DateTime dateAppoint = DateTime.MinValue;
             string format = "dd/MM/yyyy";
-            CultureInfo provider = CultureInfo.InvariantCulture;
 
             if (!DateTime.TryParseExact(opde, format, provider, DateTimeStyles.None, out dataETAOrdValue))
             {
@@ -7787,7 +7722,6 @@ namespace mangaerordini
 
             DateTime dataETAOrdValue;
             string format = "dd/MM/yyyy";
-            CultureInfo provider = CultureInfo.InvariantCulture;
 
             if (!DateTime.TryParseExact(ETA, format, provider, DateTimeStyles.None, out dataETAOrdValue))
             {
@@ -7824,23 +7758,6 @@ namespace mangaerordini
 
                 if (delete == true)
                 {
-                    /*while (dateAppoint == DateTime.MinValue || DateTime.Compare(dateAppoint, estDate) > 0)
-                    {
-
-                        string input = Interaction.InputBox("Inserire la data per l'appunatmento sul calendario? Una volta creato, sarà necessario salvarlo." + Environment.NewLine + Environment.NewLine
-                                                            + "ATTENZIONE: NON rimuovere la stringa finale ##ManaOrdini[numero_ordine]## dal titolo dell'appunatmento. Serve per riconoscere l'evento.", "Modifica Appuntamento Calendario", (estDate).ToString(format));
-                        if (String.ReferenceEquals(input, String.Empty))
-                        {
-                            MessageBox.Show("Azione Cancellata");
-                            //UpdateFields("VS", "E", true);
-                            return;
-                        }
-
-                        if (DateTime.TryParse(input, out dateAppoint))
-                        {
-                        }
-                    }*/
-
                     while (dateAppoint == DateTime.MinValue)
                     {
                         string input = Interaction.InputBox("Inserire la data per l'appunatmento sul calendario? Una volta creato, sarà necessario salvarlo." + Environment.NewLine + Environment.NewLine
@@ -8593,8 +8510,10 @@ namespace mangaerordini
         //POPULTAE FUNCTIONS
         private void Populate_combobox_machine(ComboBox[] nome_ctr, int idcl = 0)
         {
-            var dataSource = new List<ComboBoxList>();
-            dataSource.Add(new ComboBoxList() { Name = "", Value = -1 });
+            var dataSource = new List<ComboBoxList>
+            {
+                new ComboBoxList() { Name = "", Value = -1 }
+            };
 
             string commandText = "SELECT Id,modello,seriale FROM " + schemadb + @"[clienti_macchine] ORDER BY Id ASC;";
 
@@ -8643,8 +8562,10 @@ namespace mangaerordini
 
         private void Populate_combobox_ricambi(ComboBox[] nome_ctr, int idmc = 0, bool offpezziSel = false)
         {
-            var dataSource = new List<ComboBoxList>();
-            dataSource.Add(new ComboBoxList() { Name = "", Value = -1 });
+            var dataSource = new List<ComboBoxList>
+            {
+                new ComboBoxList() { Name = "", Value = -1 }
+            };
             string extenQuery = "";
             int idoff = 0;
             string filter = "";
@@ -8722,8 +8643,10 @@ namespace mangaerordini
 
         private void Populate_combobox_ricambi_ordine(ComboBox[] nome_ctr, int idmc = 0, bool offpezziSel = false)
         {
-            var dataSource = new List<ComboBoxList>();
-            dataSource.Add(new ComboBoxList() { Name = "", Value = -1 });
+            var dataSource = new List<ComboBoxList>
+            {
+                new ComboBoxList() { Name = "", Value = -1 }
+            };
             string extenQuery = "";
             int idOrd = 0;
             string filter = "";
@@ -8792,9 +8715,10 @@ namespace mangaerordini
 
         private void Populate_combobox_clienti(ComboBox[] nome_ctr)
         {
-            var dataSource = new List<ComboBoxList>();
-
-            dataSource.Add(new ComboBoxList() { Name = "", Value = -1 });
+            var dataSource = new List<ComboBoxList>
+            {
+                new ComboBoxList() { Name = "", Value = -1 }
+            };
 
 
             string commandText = "SELECT Id,nome,stato, provincia, citta FROM " + schemadb + @"[clienti_elenco] ORDER BY Id ASC;";
@@ -8840,8 +8764,10 @@ namespace mangaerordini
 
         private void Populate_combobox_fornitore(ComboBox[] nome_ctr)
         {
-            var dataSource = new List<ComboBoxList>();
-            dataSource.Add(new ComboBoxList() { Name = "", Value = -1 });
+            var dataSource = new List<ComboBoxList>
+            {
+                new ComboBoxList() { Name = "", Value = -1 }
+            };
 
             string commandText = "SELECT Id,nome FROM " + schemadb + @"[fornitori] ORDER BY Id ASC;";
 
@@ -8888,8 +8814,10 @@ namespace mangaerordini
 
         private void Populate_combobox_pref(ComboBox nome_ctr, int ID_cliente = 0)
         {
-            var dataSource = new List<ComboBoxList>();
-            dataSource.Add(new ComboBoxList() { Name = "", Value = -1 });
+            var dataSource = new List<ComboBoxList>
+            {
+                new ComboBoxList() { Name = "", Value = -1 }
+            };
 
             string commandText = "SELECT Id,nome FROM " + schemadb + @"[clienti_riferimenti] ORDER BY Id ASC;";
 
@@ -8941,8 +8869,10 @@ namespace mangaerordini
             {
                 queryExtra = " AND ID_cliente=@idcl ";
             }
-            var dataSource = new List<ComboBoxList>();
-            dataSource.Add(new ComboBoxList() { Name = "", Value = -1 });
+            var dataSource = new List<ComboBoxList>
+            {
+                new ComboBoxList() { Name = "", Value = -1 }
+            };
 
             string commandText = @"SELECT 
 
@@ -9010,8 +8940,10 @@ namespace mangaerordini
 
         private void Populate_combobox_dummy(ComboBox nome_ctr)
         {
-            var dataSource = new List<ComboBoxList>();
-            dataSource.Add(new ComboBoxList() { Name = "", Value = -1 });
+            var dataSource = new List<ComboBoxList>
+            {
+                new ComboBoxList() { Name = "", Value = -1 }
+            };
 
             nome_ctr.DataSource = null;
             nome_ctr.BindingContext = new BindingContext();
@@ -9022,11 +8954,13 @@ namespace mangaerordini
 
         private void Populate_combobox_statoOfferte(ComboBox[] nome_ctr)
         {
-            var dataSource = new List<ComboBoxList>();
-            dataSource.Add(new ComboBoxList() { Name = "", Value = -1 });
-            dataSource.Add(new ComboBoxList() { Name = "APERTA", Value = 0 });
-            dataSource.Add(new ComboBoxList() { Name = "ORDINATA", Value = 1 });
-            dataSource.Add(new ComboBoxList() { Name = "ANNULLATA", Value = 2 });
+            var dataSource = new List<ComboBoxList>
+            {
+                new ComboBoxList() { Name = "", Value = -1 },
+                new ComboBoxList() { Name = "APERTA", Value = 0 },
+                new ComboBoxList() { Name = "ORDINATA", Value = 1 },
+                new ComboBoxList() { Name = "ANNULLATA", Value = 2 }
+            };
 
             int count = nome_ctr.Count();
             for (int i = 0; i < count; i++)
@@ -9041,10 +8975,12 @@ namespace mangaerordini
 
         private void Populate_combobox_statoOrdini(ComboBox[] nome_ctr)
         {
-            var dataSource = new List<ComboBoxList>();
-            dataSource.Add(new ComboBoxList() { Name = "", Value = -1 });
-            dataSource.Add(new ComboBoxList() { Name = "APERTO", Value = 0 });
-            dataSource.Add(new ComboBoxList() { Name = "CHIUSO", Value = 1 });
+            var dataSource = new List<ComboBoxList>
+            {
+                new ComboBoxList() { Name = "", Value = -1 },
+                new ComboBoxList() { Name = "APERTO", Value = 0 },
+                new ComboBoxList() { Name = "CHIUSO", Value = 1 }
+            };
 
             int count = nome_ctr.Count();
             for (int i = 0; i < count; i++)
@@ -9059,8 +8995,10 @@ namespace mangaerordini
 
         private void Populate_combobox_ordini_crea_offerta(ComboBox nome_ctr, int idcl = 0, bool transformed = true, int codice = 0)
         {
-            var dataSource = new List<ComboBoxList>();
-            dataSource.Add(new ComboBoxList() { Name = "", Value = -1 });
+            var dataSource = new List<ComboBoxList>
+            {
+                new ComboBoxList() { Name = "", Value = -1 }
+            };
             string commandText;
 
 
@@ -9113,8 +9051,10 @@ namespace mangaerordini
 
         private void Populate_combobox_ordini(ComboBox nome_ctr, int idcl = 0)
         {
-            var dataSource = new List<ComboBoxList>();
-            dataSource.Add(new ComboBoxList() { Name = "", Value = -1 });
+            var dataSource = new List<ComboBoxList>
+            {
+                new ComboBoxList() { Name = "", Value = -1 }
+            };
 
             string queryExtra = "";
             if (idcl > 0)
@@ -9189,11 +9129,13 @@ namespace mangaerordini
 
         private void Populate_combobox_FieldOrdSpedGestione(ComboBox nome_ctr)
         {
-            var dataSource = new List<ComboBoxList>();
-            dataSource.Add(new ComboBoxList() { Name = "", Value = -1 });
-            dataSource.Add(new ComboBoxList() { Name = "Exlude from Tot.", Value = 0 });
-            dataSource.Add(new ComboBoxList() { Name = "Add total & No Discount", Value = 1 });
-            dataSource.Add(new ComboBoxList() { Name = "Add Tot with Discount", Value = 2 });
+            var dataSource = new List<ComboBoxList>
+            {
+                new ComboBoxList() { Name = "", Value = -1 },
+                new ComboBoxList() { Name = "Exlude from Tot.", Value = 0 },
+                new ComboBoxList() { Name = "Add total & No Discount", Value = 1 },
+                new ComboBoxList() { Name = "Add Tot with Discount", Value = 2 }
+            };
 
             //Setup data binding
             nome_ctr.DataSource = null;
@@ -9211,13 +9153,14 @@ namespace mangaerordini
 
         public object ReturnStato(object stat)
         {
-            Dictionary<string, int> stati = new Dictionary<string, int>();
-
-            stati.Add("APERTA", 0);
-            stati.Add("ORDINATA", 1);
-            stati.Add("ANNULLATA", 2);
-            stati.Add("APERTO", 0);
-            stati.Add("CHIUSO", 1);
+            Dictionary<string, int> stati = new Dictionary<string, int>
+            {
+                { "APERTA", 0 },
+                { "ORDINATA", 1 },
+                { "ANNULLATA", 2 },
+                { "APERTO", 0 },
+                { "CHIUSO", 1 }
+            };
 
             if (stat.GetType() == typeof(string))
             {
@@ -9941,10 +9884,11 @@ namespace mangaerordini
 
         public string ReturnErorrCode(SQLiteException ex)
         {
-            Dictionary<int, string> er = new Dictionary<int, string>();
-
-            er.Add(787, Environment.NewLine + "L'informazione che si sta provando ad eliminare è associata ad un elemento, eliminare prima l'elemento e poi riprovare." + Environment.NewLine + Environment.NewLine + "Esempio: se si sta provando ad eliminare un'offerta per la quale è stato creato un ordine, eliminare prima l'ordine e poi l'offerta.");
-            er.Add(2067, Environment.NewLine + "Esiste già un elemento nel database con le stesse uniche informazioni.");
+            Dictionary<int, string> er = new Dictionary<int, string>
+            {
+                { 787, Environment.NewLine + "L'informazione che si sta provando ad eliminare è associata ad un elemento, eliminare prima l'elemento e poi riprovare." + Environment.NewLine + Environment.NewLine + "Esempio: se si sta provando ad eliminare un'offerta per la quale è stato creato un ordine, eliminare prima l'ordine e poi l'offerta." },
+                { 2067, Environment.NewLine + "Esiste già un elemento nel database con le stesse uniche informazioni." }
+            };
 
             //MessageBox.Show("" + ex.ErrorCode);
 
@@ -9954,18 +9898,18 @@ namespace mangaerordini
                 return ex.Message;
         }
 
-        private void csvhelper_github_LinkClicked(object sender, LinkLabelLinkClickedEventArgs e)
+        private void Csvhelper_github_LinkClicked(object sender, LinkLabelLinkClickedEventArgs e)
         {
             System.Diagnostics.Process.Start("https://joshclose.github.io/CsvHelper/");
 
         }
 
-        private void autoupdaternet_github_LinkClicked(object sender, LinkLabelLinkClickedEventArgs e)
+        private void Autoupdaternet_github_LinkClicked(object sender, LinkLabelLinkClickedEventArgs e)
         {
             System.Diagnostics.Process.Start("https://github.com/ravibpatel/AutoUpdater.NET");
         }
 
-        private void fody_github_LinkClicked(object sender, LinkLabelLinkClickedEventArgs e)
+        private void Fody_github_LinkClicked(object sender, LinkLabelLinkClickedEventArgs e)
         {
             System.Diagnostics.Process.Start("https://github.com/Fody/Fody");
         }
