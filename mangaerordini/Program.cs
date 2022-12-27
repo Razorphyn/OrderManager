@@ -1,4 +1,5 @@
 ﻿//using log4net;
+using AutoUpdaterDotNET;
 using Microsoft.Toolkit.Uwp.Notifications;
 using Microsoft.VisualBasic;
 using Newtonsoft.Json;
@@ -62,6 +63,15 @@ namespace mangaerordini
 
             Application.EnableVisualStyles();
             Application.SetCompatibleTextRenderingDefault(false);
+
+
+            var currentDirectory = new DirectoryInfo(Application.StartupPath);
+            AutoUpdater.InstalledVersion = new Version(Application.ProductVersion);
+            AutoUpdater.RunUpdateAsAdmin = false;
+            AutoUpdater.ShowRemindLaterButton = false;
+            AutoUpdater.DownloadPath = Application.StartupPath;
+            AutoUpdater.InstallationPath = currentDirectory.Parent.FullName;
+            AutoUpdater.Start("https://github.com/Razorphyn/OrderManager/blob/main/mangaerordini/AutoUpdater.xml?raw=true");
 
             decimal version = 0;
 
