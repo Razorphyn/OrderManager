@@ -53,14 +53,7 @@ namespace mangaerordini
                 if (!created)
                 {
                     MessageBox.Show("L'applicazione è già in esecuzione.");
-                    if (System.Windows.Forms.Application.MessageLoop)
-                    {
-                        System.Windows.Forms.Application.Exit();
-                    }
-                    else
-                    {
-                        System.Environment.Exit(1);
-                    }
+                    ExitProgram();
                 }
             }
             finally

@@ -120,8 +120,8 @@ namespace mangaerordini
             System.Windows.Forms.Label label134;
             System.Windows.Forms.Label label136;
             System.Windows.Forms.Label label140;
-            System.Windows.Forms.DataGridViewCellStyle dataGridViewCellStyle1 = new System.Windows.Forms.DataGridViewCellStyle();
-            System.Windows.Forms.DataGridViewCellStyle dataGridViewCellStyle2 = new System.Windows.Forms.DataGridViewCellStyle();
+            System.Windows.Forms.DataGridViewCellStyle dataGridViewCellStyle16 = new System.Windows.Forms.DataGridViewCellStyle();
+            System.Windows.Forms.DataGridViewCellStyle dataGridViewCellStyle15 = new System.Windows.Forms.DataGridViewCellStyle();
             this.TabsMother = new System.Windows.Forms.TabControl();
             this.tabPage1 = new System.Windows.Forms.TabPage();
             this.splitContainer14 = new System.Windows.Forms.SplitContainer();
@@ -1776,13 +1776,13 @@ namespace mangaerordini
             this.DataGridViewVisualizzaOrdini.AllowUserToDeleteRows = false;
             this.DataGridViewVisualizzaOrdini.AllowUserToOrderColumns = true;
             this.DataGridViewVisualizzaOrdini.BackgroundColor = System.Drawing.Color.White;
-            dataGridViewCellStyle1.BackColor = System.Drawing.SystemColors.Control;
-            dataGridViewCellStyle1.Font = new System.Drawing.Font("Segoe UI", 12F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
-            dataGridViewCellStyle1.ForeColor = System.Drawing.SystemColors.WindowText;
-            dataGridViewCellStyle1.SelectionBackColor = System.Drawing.SystemColors.Highlight;
-            dataGridViewCellStyle1.SelectionForeColor = System.Drawing.SystemColors.HighlightText;
-            dataGridViewCellStyle1.WrapMode = System.Windows.Forms.DataGridViewTriState.True;
-            this.DataGridViewVisualizzaOrdini.ColumnHeadersDefaultCellStyle = dataGridViewCellStyle1;
+            dataGridViewCellStyle16.BackColor = System.Drawing.SystemColors.Control;
+            dataGridViewCellStyle16.Font = new System.Drawing.Font("Segoe UI", 12F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
+            dataGridViewCellStyle16.ForeColor = System.Drawing.SystemColors.WindowText;
+            dataGridViewCellStyle16.SelectionBackColor = System.Drawing.SystemColors.Highlight;
+            dataGridViewCellStyle16.SelectionForeColor = System.Drawing.SystemColors.HighlightText;
+            dataGridViewCellStyle16.WrapMode = System.Windows.Forms.DataGridViewTriState.True;
+            this.DataGridViewVisualizzaOrdini.ColumnHeadersDefaultCellStyle = dataGridViewCellStyle16;
             this.DataGridViewVisualizzaOrdini.ColumnHeadersHeightSizeMode = System.Windows.Forms.DataGridViewColumnHeadersHeightSizeMode.AutoSize;
             this.DataGridViewVisualizzaOrdini.Dock = System.Windows.Forms.DockStyle.Fill;
             this.DataGridViewVisualizzaOrdini.Location = new System.Drawing.Point(3, 3);
@@ -1892,7 +1892,7 @@ namespace mangaerordini
             this.tableLayoutPanel1.ColumnStyles.Add(new System.Windows.Forms.ColumnStyle(System.Windows.Forms.SizeType.Percent, 24.62121F));
             this.tableLayoutPanel1.ColumnStyles.Add(new System.Windows.Forms.ColumnStyle());
             this.tableLayoutPanel1.ColumnStyles.Add(new System.Windows.Forms.ColumnStyle(System.Windows.Forms.SizeType.Percent, 21.59092F));
-            this.tableLayoutPanel1.ColumnStyles.Add(new System.Windows.Forms.ColumnStyle(System.Windows.Forms.SizeType.Absolute, 304F));
+            this.tableLayoutPanel1.ColumnStyles.Add(new System.Windows.Forms.ColumnStyle(System.Windows.Forms.SizeType.Absolute, 306F));
             this.tableLayoutPanel1.Controls.Add(this.RimuoviEventoCalendario, 8, 2);
             this.tableLayoutPanel1.Controls.Add(this.VisOrdId, 2, 3);
             this.tableLayoutPanel1.Controls.Add(this.VisOrdSpedGest, 7, 1);
@@ -1943,9 +1943,9 @@ namespace mangaerordini
             // 
             this.RimuoviEventoCalendario.Dock = System.Windows.Forms.DockStyle.Fill;
             this.RimuoviEventoCalendario.Enabled = false;
-            this.RimuoviEventoCalendario.Location = new System.Drawing.Point(871, 84);
+            this.RimuoviEventoCalendario.Location = new System.Drawing.Point(870, 84);
             this.RimuoviEventoCalendario.Name = "RimuoviEventoCalendario";
-            this.RimuoviEventoCalendario.Size = new System.Drawing.Size(300, 36);
+            this.RimuoviEventoCalendario.Size = new System.Drawing.Size(301, 36);
             this.RimuoviEventoCalendario.TabIndex = 124;
             this.RimuoviEventoCalendario.Text = "Rimuovi da Calendario";
             this.RimuoviEventoCalendario.UseVisualStyleBackColor = true;
@@ -1966,7 +1966,7 @@ namespace mangaerordini
             // 
             this.VisOrdSpedGest.AutoSize = true;
             this.VisOrdSpedGest.Dock = System.Windows.Forms.DockStyle.Fill;
-            this.VisOrdSpedGest.Location = new System.Drawing.Point(775, 39);
+            this.VisOrdSpedGest.Location = new System.Drawing.Point(774, 39);
             this.VisOrdSpedGest.Name = "VisOrdSpedGest";
             this.VisOrdSpedGest.Size = new System.Drawing.Size(90, 42);
             this.VisOrdSpedGest.TabIndex = 123;
@@ -1977,7 +1977,7 @@ namespace mangaerordini
             // 
             this.VisOrdSped.AutoSize = true;
             this.VisOrdSped.Dock = System.Windows.Forms.DockStyle.Fill;
-            this.VisOrdSped.Location = new System.Drawing.Point(775, 0);
+            this.VisOrdSped.Location = new System.Drawing.Point(774, 0);
             this.VisOrdSped.Name = "VisOrdSped";
             this.VisOrdSped.Size = new System.Drawing.Size(90, 39);
             this.VisOrdSped.TabIndex = 122;
@@ -1988,7 +1988,7 @@ namespace mangaerordini
             // 
             this.label122.AutoSize = true;
             this.label122.Dock = System.Windows.Forms.DockStyle.Fill;
-            this.label122.Location = new System.Drawing.Point(629, 39);
+            this.label122.Location = new System.Drawing.Point(628, 39);
             this.label122.Name = "label122";
             this.label122.Size = new System.Drawing.Size(140, 42);
             this.label122.TabIndex = 121;
@@ -1999,7 +1999,7 @@ namespace mangaerordini
             // 
             this.label121.AutoSize = true;
             this.label121.Dock = System.Windows.Forms.DockStyle.Fill;
-            this.label121.Location = new System.Drawing.Point(629, 0);
+            this.label121.Location = new System.Drawing.Point(628, 0);
             this.label121.Name = "label121";
             this.label121.Size = new System.Drawing.Size(140, 39);
             this.label121.TabIndex = 120;
@@ -2021,9 +2021,9 @@ namespace mangaerordini
             // 
             this.AggiornaEventoCalendario.Dock = System.Windows.Forms.DockStyle.Fill;
             this.AggiornaEventoCalendario.Enabled = false;
-            this.AggiornaEventoCalendario.Location = new System.Drawing.Point(871, 42);
+            this.AggiornaEventoCalendario.Location = new System.Drawing.Point(870, 42);
             this.AggiornaEventoCalendario.Name = "AggiornaEventoCalendario";
-            this.AggiornaEventoCalendario.Size = new System.Drawing.Size(300, 36);
+            this.AggiornaEventoCalendario.Size = new System.Drawing.Size(301, 36);
             this.AggiornaEventoCalendario.TabIndex = 119;
             this.AggiornaEventoCalendario.Text = "Aggiorna Evento";
             this.toolTip1.SetToolTip(this.AggiornaEventoCalendario, "Usare questa funzione nel caso in cui i prodotti dell\'ordine siano cambiati e si " +
@@ -2059,7 +2059,7 @@ namespace mangaerordini
             this.VisOrdStato.Dock = System.Windows.Forms.DockStyle.Fill;
             this.VisOrdStato.Location = new System.Drawing.Point(519, 39);
             this.VisOrdStato.Name = "VisOrdStato";
-            this.VisOrdStato.Size = new System.Drawing.Size(104, 42);
+            this.VisOrdStato.Size = new System.Drawing.Size(103, 42);
             this.VisOrdStato.TabIndex = 117;
             this.VisOrdStato.Text = "Hold";
             this.VisOrdStato.TextAlign = System.Drawing.ContentAlignment.MiddleLeft;
@@ -2068,9 +2068,9 @@ namespace mangaerordini
             // 
             this.creaEventoCalendario.Dock = System.Windows.Forms.DockStyle.Fill;
             this.creaEventoCalendario.Enabled = false;
-            this.creaEventoCalendario.Location = new System.Drawing.Point(871, 3);
+            this.creaEventoCalendario.Location = new System.Drawing.Point(870, 3);
             this.creaEventoCalendario.Name = "creaEventoCalendario";
-            this.creaEventoCalendario.Size = new System.Drawing.Size(300, 33);
+            this.creaEventoCalendario.Size = new System.Drawing.Size(301, 33);
             this.creaEventoCalendario.TabIndex = 87;
             this.creaEventoCalendario.Text = "Crea Evento Calendario";
             this.creaEventoCalendario.UseVisualStyleBackColor = true;
@@ -2080,7 +2080,7 @@ namespace mangaerordini
             // 
             this.VisOrdTotFi.AutoSize = true;
             this.VisOrdTotFi.Dock = System.Windows.Forms.DockStyle.Fill;
-            this.VisOrdTotFi.Location = new System.Drawing.Point(775, 123);
+            this.VisOrdTotFi.Location = new System.Drawing.Point(774, 123);
             this.VisOrdTotFi.Name = "VisOrdTotFi";
             this.VisOrdTotFi.Size = new System.Drawing.Size(90, 42);
             this.VisOrdTotFi.TabIndex = 112;
@@ -2102,7 +2102,7 @@ namespace mangaerordini
             // 
             this.VisOrdTot.AutoSize = true;
             this.VisOrdTot.Dock = System.Windows.Forms.DockStyle.Fill;
-            this.VisOrdTot.Location = new System.Drawing.Point(775, 81);
+            this.VisOrdTot.Location = new System.Drawing.Point(774, 81);
             this.VisOrdTot.Name = "VisOrdTot";
             this.VisOrdTot.Size = new System.Drawing.Size(90, 42);
             this.VisOrdTot.TabIndex = 110;
@@ -2115,7 +2115,7 @@ namespace mangaerordini
             this.VisOrdNumero.Dock = System.Windows.Forms.DockStyle.Fill;
             this.VisOrdNumero.Location = new System.Drawing.Point(519, 0);
             this.VisOrdNumero.Name = "VisOrdNumero";
-            this.VisOrdNumero.Size = new System.Drawing.Size(104, 39);
+            this.VisOrdNumero.Size = new System.Drawing.Size(103, 39);
             this.VisOrdNumero.TabIndex = 115;
             this.VisOrdNumero.Text = "Hold";
             this.VisOrdNumero.TextAlign = System.Drawing.ContentAlignment.MiddleLeft;
@@ -2157,7 +2157,7 @@ namespace mangaerordini
             // 
             this.label119.AutoSize = true;
             this.label119.Dock = System.Windows.Forms.DockStyle.Fill;
-            this.label119.Location = new System.Drawing.Point(629, 123);
+            this.label119.Location = new System.Drawing.Point(628, 123);
             this.label119.Name = "label119";
             this.label119.Size = new System.Drawing.Size(140, 42);
             this.label119.TabIndex = 111;
@@ -2190,7 +2190,7 @@ namespace mangaerordini
             // 
             this.label117.AutoSize = true;
             this.label117.Dock = System.Windows.Forms.DockStyle.Fill;
-            this.label117.Location = new System.Drawing.Point(629, 81);
+            this.label117.Location = new System.Drawing.Point(628, 81);
             this.label117.Name = "label117";
             this.label117.Size = new System.Drawing.Size(140, 42);
             this.label117.TabIndex = 109;
@@ -2258,7 +2258,7 @@ namespace mangaerordini
             this.VisOrdETA.Dock = System.Windows.Forms.DockStyle.Fill;
             this.VisOrdETA.Location = new System.Drawing.Point(519, 123);
             this.VisOrdETA.Name = "VisOrdETA";
-            this.VisOrdETA.Size = new System.Drawing.Size(104, 42);
+            this.VisOrdETA.Size = new System.Drawing.Size(103, 42);
             this.VisOrdETA.TabIndex = 108;
             this.VisOrdETA.Text = "Hold";
             this.VisOrdETA.TextAlign = System.Drawing.ContentAlignment.MiddleLeft;
@@ -2280,7 +2280,7 @@ namespace mangaerordini
             this.VisOrdData.Dock = System.Windows.Forms.DockStyle.Fill;
             this.VisOrdData.Location = new System.Drawing.Point(519, 81);
             this.VisOrdData.Name = "VisOrdData";
-            this.VisOrdData.Size = new System.Drawing.Size(104, 42);
+            this.VisOrdData.Size = new System.Drawing.Size(103, 42);
             this.VisOrdData.TabIndex = 106;
             this.VisOrdData.Text = "Hold";
             this.VisOrdData.TextAlign = System.Drawing.ContentAlignment.MiddleLeft;
@@ -2324,9 +2324,9 @@ namespace mangaerordini
             this.VisOrdChiudi.AutoSize = true;
             this.VisOrdChiudi.AutoSizeMode = System.Windows.Forms.AutoSizeMode.GrowAndShrink;
             this.VisOrdChiudi.Enabled = false;
-            this.VisOrdChiudi.Location = new System.Drawing.Point(871, 128);
+            this.VisOrdChiudi.Location = new System.Drawing.Point(870, 128);
             this.VisOrdChiudi.Name = "VisOrdChiudi";
-            this.VisOrdChiudi.Size = new System.Drawing.Size(300, 31);
+            this.VisOrdChiudi.Size = new System.Drawing.Size(301, 31);
             this.VisOrdChiudi.TabIndex = 88;
             this.VisOrdChiudi.Text = "Chiudi";
             this.VisOrdChiudi.UseVisualStyleBackColor = true;
@@ -2341,13 +2341,13 @@ namespace mangaerordini
             | System.Windows.Forms.AnchorStyles.Left) 
             | System.Windows.Forms.AnchorStyles.Right)));
             this.dataGridViewVisOrdOggetti.BackgroundColor = System.Drawing.Color.White;
-            dataGridViewCellStyle2.BackColor = System.Drawing.SystemColors.Control;
-            dataGridViewCellStyle2.Font = new System.Drawing.Font("Segoe UI", 12F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
-            dataGridViewCellStyle2.ForeColor = System.Drawing.SystemColors.WindowText;
-            dataGridViewCellStyle2.SelectionBackColor = System.Drawing.SystemColors.Highlight;
-            dataGridViewCellStyle2.SelectionForeColor = System.Drawing.SystemColors.HighlightText;
-            dataGridViewCellStyle2.WrapMode = System.Windows.Forms.DataGridViewTriState.True;
-            this.dataGridViewVisOrdOggetti.ColumnHeadersDefaultCellStyle = dataGridViewCellStyle2;
+            dataGridViewCellStyle15.BackColor = System.Drawing.SystemColors.Control;
+            dataGridViewCellStyle15.Font = new System.Drawing.Font("Segoe UI", 12F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
+            dataGridViewCellStyle15.ForeColor = System.Drawing.SystemColors.WindowText;
+            dataGridViewCellStyle15.SelectionBackColor = System.Drawing.SystemColors.Highlight;
+            dataGridViewCellStyle15.SelectionForeColor = System.Drawing.SystemColors.HighlightText;
+            dataGridViewCellStyle15.WrapMode = System.Windows.Forms.DataGridViewTriState.True;
+            this.dataGridViewVisOrdOggetti.ColumnHeadersDefaultCellStyle = dataGridViewCellStyle15;
             this.dataGridViewVisOrdOggetti.ColumnHeadersHeightSizeMode = System.Windows.Forms.DataGridViewColumnHeadersHeightSizeMode.AutoSize;
             this.dataGridViewVisOrdOggetti.Location = new System.Drawing.Point(0, 174);
             this.dataGridViewVisOrdOggetti.MultiSelect = false;
@@ -2834,7 +2834,7 @@ namespace mangaerordini
             this.ComboBoxOrdCliente.Anchor = ((System.Windows.Forms.AnchorStyles)((System.Windows.Forms.AnchorStyles.Left | System.Windows.Forms.AnchorStyles.Right)));
             this.tableLayoutPanel21.SetColumnSpan(this.ComboBoxOrdCliente, 3);
             this.ComboBoxOrdCliente.FormattingEnabled = true;
-            this.ComboBoxOrdCliente.Location = new System.Drawing.Point(114, 5);
+            this.ComboBoxOrdCliente.Location = new System.Drawing.Point(114, 3);
             this.ComboBoxOrdCliente.Name = "ComboBoxOrdCliente";
             this.ComboBoxOrdCliente.Size = new System.Drawing.Size(471, 29);
             this.ComboBoxOrdCliente.TabIndex = 154;
@@ -2856,7 +2856,7 @@ namespace mangaerordini
             this.ComboBoxOrdContatto.Anchor = ((System.Windows.Forms.AnchorStyles)((System.Windows.Forms.AnchorStyles.Left | System.Windows.Forms.AnchorStyles.Right)));
             this.tableLayoutPanel21.SetColumnSpan(this.ComboBoxOrdContatto, 2);
             this.ComboBoxOrdContatto.FormattingEnabled = true;
-            this.ComboBoxOrdContatto.Location = new System.Drawing.Point(114, 41);
+            this.ComboBoxOrdContatto.Location = new System.Drawing.Point(114, 37);
             this.ComboBoxOrdContatto.Name = "ComboBoxOrdContatto";
             this.ComboBoxOrdContatto.Size = new System.Drawing.Size(302, 29);
             this.ComboBoxOrdContatto.TabIndex = 156;

@@ -1810,6 +1810,8 @@ namespace mangaerordini
             string idF = ChangeDatiPRefID.Text;
             int idQ = -1;
 
+            ValidationResult answer;
+            string commandText = "";
 
             string er_list = "";
 
@@ -1817,36 +1819,20 @@ namespace mangaerordini
             {
                 er_list += "Nome Persona di Riferimento non valido o vuoto" + Environment.NewLine;
             }
-            if (cliente < 0)
+
+            answer = ValidateCliente(cliente);
+
+            if (answer.Success)
             {
-                er_list += "Cliente non valido o vuoto" + Environment.NewLine;
-            }
-
-            string commandText = "SELECT COUNT(*) FROM " + schemadb + @"[clienti_elenco] WHERE ([Id] = @user) LIMIT 1;";
-            int UserExist = 0;
-
-            using (SQLiteCommand cmd = new SQLiteCommand(commandText, connection))
-            {
-                try
+                if (!answer.Answer)
                 {
-                    cmd.CommandText = commandText;
-                    cmd.Parameters.AddWithValue("@user", cliente);
-
-                    UserExist = Convert.ToInt32(cmd.ExecuteScalar());
-                }
-                catch (SQLiteException ex)
-                {
-                    MessageBox.Show("Errore durante verifica ID Cliente. Codice: " + ReturnErorrCode(ex));
-
-                    return;
-                }
-                finally
-                {
+                    er_list += answer.Error + Environment.NewLine;
                 }
             }
-            if (UserExist < 1)
+            else
             {
-                er_list += "Il cliente non è presente nel database." + Environment.NewLine;
+                MessageBox.Show(answer.Error);
+                return;
             }
 
             if (!int.TryParse(idF, out int value))
@@ -2462,37 +2448,29 @@ namespace mangaerordini
             string seriale = AddDatiMacchinaSeriale.Text.Trim();
             string codice = AddDatiMacchinaCodice.Text.Trim();
 
+            ValidationResult answer = new ValidationResult();
+            string commandText = "";
+
             string er_list = "";
+
             if (string.IsNullOrEmpty(nome))
             {
                 er_list += "Nome non valido o vuoto" + Environment.NewLine;
             }
 
-            string commandText = "SELECT COUNT(*) FROM " + schemadb + @"[clienti_elenco] WHERE ([Id] = @user) LIMIT 1;";
-            int UserExist = 0;
+            answer = ValidateCliente(idcl);
 
-            using (SQLiteCommand cmd = new SQLiteCommand(commandText, connection))
+            if (answer.Success)
             {
-                try
+                if (!answer.Answer)
                 {
-                    cmd.CommandText = commandText;
-                    cmd.Parameters.AddWithValue("@user", idcl);
-
-                    UserExist = Convert.ToInt32(cmd.ExecuteScalar());
-                    if (UserExist < 1)
-                    {
-                        er_list += "Cliente non valido o vuoto" + Environment.NewLine;
-                    }
+                    er_list += answer.Error + Environment.NewLine;
                 }
-                catch (SQLiteException ex)
-                {
-                    MessageBox.Show("Errore durante verifica ID Cliente. Codice: " + ReturnErorrCode(ex));
-                    return;
-                }
-                finally
-                {
-
-                }
+            }
+            else
+            {
+                MessageBox.Show(answer.Error);
+                return;
             }
 
             if (er_list != "")
@@ -2551,6 +2529,8 @@ namespace mangaerordini
             string idF = ChangeDatiMacchinaID.Text;
             int idQ = -1;
 
+            ValidationResult answer = new ValidationResult();
+            string commandText = "";
 
             string er_list = "";
 
@@ -2558,32 +2538,20 @@ namespace mangaerordini
             {
                 er_list += "Nome non valido o vuoto" + Environment.NewLine;
             }
-            if (cliente < 0)
+
+            answer = ValidateCliente(cliente);
+
+            if (answer.Success)
             {
-                er_list += "Cliente non valido o vuoto" + Environment.NewLine;
+                if (!answer.Answer)
+                {
+                    er_list += answer.Error + Environment.NewLine;
+                }
             }
-
-            string commandText = "SELECT COUNT(*) FROM " + schemadb + @"[clienti_elenco] WHERE ([Id] = @user) LIMIT 1;";
-            int UserExist = 0;
-
-            using (SQLiteCommand cmd = new SQLiteCommand(commandText, connection))
+            else
             {
-                try
-                {
-                    cmd.CommandText = commandText;
-                    cmd.Parameters.AddWithValue("@user", cliente);
-
-                    UserExist = Convert.ToInt32(cmd.ExecuteScalar());
-                }
-                catch (SQLiteException ex)
-                {
-                    MessageBox.Show("Errore durante verifica ID Cliente. Codice: " + ReturnErorrCode(ex));
-                    return;
-                }
-                finally
-                {
-
-                }
+                MessageBox.Show(answer.Error);
+                return;
             }
 
             if (!int.TryParse(idF, out int value))
@@ -2935,6 +2903,10 @@ namespace mangaerordini
 
             stato = (stato < 0) ? 0 : stato;
 
+            string commandText = "";
+            int UserExist = 0;
+            ValidationResult answer = new ValidationResult();
+
             string er_list = "";
             if (string.IsNullOrEmpty(numeroOff) || !Regex.IsMatch(numeroOff, @"^\d+$"))
             {
@@ -2950,30 +2922,19 @@ namespace mangaerordini
                 dataoffValue = DateTime.ParseExact(dataoffString, format, provider);
             }
 
-            string commandText = "SELECT COUNT(*) FROM " + schemadb + @"[clienti_elenco] WHERE ([Id] = @user) LIMIT 1;";
-            int UserExist = 0;
+            answer = ValidateCliente(idcl);
 
-            using (SQLiteCommand cmd = new SQLiteCommand(commandText, connection))
+            if (answer.Success)
             {
-                try
+                if (!answer.Answer)
                 {
-                    cmd.CommandText = commandText;
-                    cmd.Parameters.AddWithValue("@user", idcl);
-
-                    UserExist = Convert.ToInt32(cmd.ExecuteScalar());
-                    if (UserExist < 1)
-                    {
-                        er_list += "Cliente non valido o vuoto" + Environment.NewLine;
-                    }
+                    er_list += answer.Error + Environment.NewLine;
                 }
-                catch (SQLiteException ex)
-                {
-                    MessageBox.Show("Errore durante verifica ID Cliente. Codice: " + ReturnErorrCode(ex));
-                    return;
-                }
-                finally
-                {
-                }
+            }
+            else
+            {
+                MessageBox.Show(answer.Error);
+                return;
             }
 
             if (idpref > 0)
@@ -3677,6 +3638,10 @@ namespace mangaerordini
             style = NumberStyles.AllowDecimalPoint;
             culture = CultureInfo.CreateSpecificCulture("it-IT");
 
+            ValidationResult answer;
+            string commandText;
+            int UserExist = 0;
+
             string er_list = "";
 
             if (string.IsNullOrEmpty(numeroOff) || !Regex.IsMatch(numeroOff, @"^\d+$"))
@@ -3693,38 +3658,19 @@ namespace mangaerordini
                 dataoffValue = DateTime.ParseExact(dataoffString, format, provider);
             }
 
-            if (cliente < 0)
+            answer = ValidateCliente(cliente);
+
+            if (answer.Success)
             {
-                er_list += "Cliente non valido o vuoto" + Environment.NewLine;
+                if (!answer.Answer)
+                {
+                    er_list += answer.Error + Environment.NewLine;
+                }
             }
-
-
-            string commandText = "SELECT COUNT(*) FROM " + schemadb + @"[clienti_elenco] WHERE ([Id] = @user) LIMIT 1;";
-            int UserExist = 0;
-
-            using (SQLiteCommand cmd = new SQLiteCommand(commandText, connection))
+            else
             {
-                try
-                {
-                    cmd.CommandText = commandText;
-                    cmd.Parameters.AddWithValue("@user", cliente);
-
-                    UserExist = Convert.ToInt32(cmd.ExecuteScalar());
-                    if (UserExist < 1)
-                    {
-                        er_list += "Cliente non valido o vuoto" + Environment.NewLine;
-                    }
-                }
-                catch (SQLiteException ex)
-                {
-                    MessageBox.Show("Errore durante verifica ID Cliente. Codice: " + ReturnErorrCode(ex));
-
-
-                    return;
-                }
-                finally
-                {
-                }
+                MessageBox.Show(answer.Error);
+                return;
             }
 
             if (pref > 0)
@@ -4399,7 +4345,14 @@ namespace mangaerordini
 
                 FieldOrdStato.SelectedIndex = 0;
 
-                UpdateFields("OCR", "CA", true);
+                CheckBoxOrdOffertaNonPresente.Enabled = false;
+                CheckBoxOrdOffertaNonPresente.CheckedChanged -= CheckBoxOrdOffertaNonPresente_CheckedChanged;
+                CheckBoxOrdOffertaNonPresente.Checked = false;
+                CheckBoxOrdOffertaNonPresente.CheckedChanged += CheckBoxOrdOffertaNonPresente_CheckedChanged;
+
+                ComboBoxOrdOfferta.Enabled = false;
+
+                UpdateFields("OCR", "CA", false);
             }
             return;
         }
@@ -4420,7 +4373,11 @@ namespace mangaerordini
 
             curItemValue = (curItemValue == null) ? 0 : curItemValue;
 
-            if (curItemValue > 0)
+            if (CheckBoxOrdOffertaNonPresente.Checked)
+            {
+                UpdateFields("OCR", "A", true);
+            }
+            else if (curItemValue > 0)
             {
                 CheckBoxOrdOffertaNonPresente.Enabled = false;
 
@@ -4444,7 +4401,6 @@ namespace mangaerordini
 
                         while (reader.Read())
                         {
-                            //FieldOrdNOrdine.Text = reader["codice_offerta"].ToString();
                             FieldOrdTot.Text = reader["tot_offerta"].ToString();
                             FieldOrdPrezF.Text = reader["tot_offerta"].ToString();
                             FieldOrdSped.Text = "0";
@@ -4465,16 +4421,12 @@ namespace mangaerordini
                     }
                 }
             }
-            else if (CheckBoxOrdOffertaNonPresente.Checked)
-            {
-                UpdateFields("OCR", "A", true);
-            }
             else
             {
                 UpdateFields("OCR", "CA", false, false);
                 UpdateFields("OCR", "A", false);
                 Populate_combobox_dummy(ComboBoxOrdOfferta);
-                ComboBoxOrdOfferta.Enabled = true;
+                ComboBoxOrdOfferta.Enabled = false;
             }
             return;
         }
@@ -4809,7 +4761,27 @@ namespace mangaerordini
             style = NumberStyles.AllowDecimalPoint;
             culture = CultureInfo.CreateSpecificCulture("it-IT");
 
+            ValidationResult answer;
+
             string er_list = "";
+
+            if (CheckBoxOrdOffertaNonPresente.Checked)
+            {
+                answer = ValidateCliente((int)id_cl);
+
+                if (answer.Success)
+                {
+                    if (!answer.Answer)
+                    {
+                        er_list += answer.Error + Environment.NewLine;
+                    }
+                }
+                else
+                {
+                    MessageBox.Show(answer.Error);
+                    return;
+                }
+            }
 
             if (string.IsNullOrEmpty(n_ordine) || !Regex.IsMatch(n_ordine, @"^\d+$"))
             {
@@ -5298,6 +5270,7 @@ namespace mangaerordini
 
             if (dgv.SelectedRows.Count == 1)
             {
+                CheckBoxOrdOffertaNonPresente.Checked = false;
                 foreach (DataGridViewRow row in dgv.SelectedRows)
                 {
 
@@ -6864,7 +6837,9 @@ namespace mangaerordini
         private void CheckBoxOrdOffertaNonPresente_CheckedChanged(object sender, EventArgs e)
         {
             int idcl = ComboBoxOrdCliente.SelectedItem.GetHashCode();
+            int idcl_index = ComboBoxOrdCliente.SelectedIndex;
             int idcont = ComboBoxOrdContatto.SelectedItem.GetHashCode();
+            bool origanl_state = CheckBoxOrdOffertaNonPresente.Checked;
 
             if (idcl > 0)
             {
@@ -6872,14 +6847,14 @@ namespace mangaerordini
 
                 //BtChiudiOrd_Click(this, EventArgs.Empty);
 
-                UpdateFields("OCR", "CA", true);
+                UpdateFields("OCR", "CA", false);
                 UpdateFields("OCR", "E", false);
                 UpdateFields("OCR", "A", false);
                 UpdateFields("OCR", "AE", false);
                 ComboBoxOrdCliente.Enabled = true;
                 ComboBoxOrdContatto.Enabled = false;
 
-                ComboBoxOrdCliente.SelectedIndex = idcl;
+                ComboBoxOrdCliente.SelectedIndex = idcl_index;
                 ComboBoxOrdCliente_SelectedIndexChanged(this, System.EventArgs.Empty);
 
                 if (idcont > 0)
@@ -6889,11 +6864,7 @@ namespace mangaerordini
                 }
             }
 
-            //ComboBoxOrdOfferta.SelectedIndex = 0;
-            //ComboBoxOrdOfferta_SelectedIndexChanged(this, System.EventArgs.Empty);
-
-            ComboBoxOrdCliente.SelectedIndex = idcl;
-            //ComboBoxOrdCliente_SelectedIndexChanged(this, System.EventArgs.Empty);
+            ComboBoxOrdCliente.SelectedIndex = idcl_index;
 
             if (CheckBoxOrdOffertaNonPresente.Checked)
             {
@@ -10012,6 +9983,66 @@ namespace mangaerordini
         private void CosturaFody_github_LinkClicked(object sender, LinkLabelLinkClickedEventArgs e)
         {
             System.Diagnostics.Process.Start("https://github.com/Fody/Costura");
+        }
+
+        //Validate functions
+
+        public class ValidationResult
+        {
+
+            public bool Success { get; set; }
+            public bool Answer { get; set; }
+            public string Error { get; set; } = "";
+        }
+
+        public ValidationResult ValidateCliente(int idcl)
+        {
+            ValidationResult answer = new ValidationResult();
+
+            if (idcl < 0)
+            {
+                answer.Success = true;
+                answer.Answer = false;
+                answer.Error = "Selezionare cliente dalla lista." + Environment.NewLine;
+
+                return answer;
+            }
+
+            string commandText = "SELECT COUNT(*) FROM " + schemadb + @"[clienti_elenco] WHERE ([Id] = @user) LIMIT 1;";
+            int UserExist = 0;
+
+            using (SQLiteCommand cmd = new SQLiteCommand(commandText, connection))
+            {
+                try
+                {
+                    cmd.CommandText = commandText;
+                    cmd.Parameters.AddWithValue("@user", idcl);
+
+                    UserExist = Convert.ToInt32(cmd.ExecuteScalar());
+                    if (UserExist < 1)
+                    {
+                        answer.Success = true;
+                        answer.Answer = false;
+                        answer.Error = "Cliente non valido o vuoto" + Environment.NewLine;
+
+                        return answer;
+                    }
+                }
+                catch (SQLiteException ex)
+                {
+                    answer.Success = false;
+                    answer.Answer = false;
+                    answer.Error = "Errore durante verifica ID Cliente. Codice: " + ReturnErorrCode(ex);
+                    return answer;
+                }
+                finally
+                {
+                }
+
+                answer.Success = true;
+                answer.Answer = true;
+                return answer;
+            }
         }
     }
 

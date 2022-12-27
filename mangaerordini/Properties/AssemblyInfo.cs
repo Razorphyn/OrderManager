@@ -9,7 +9,7 @@ using System.Runtime.InteropServices;
 [assembly: AssemblyConfiguration("")]
 [assembly: AssemblyCompany("Razorphyn")]
 [assembly: AssemblyProduct("ManagerOrdini.Properties")]
-[assembly: AssemblyCopyright("Razorphyn ©  2021")]
+[assembly: AssemblyCopyright("Razorphyn ©  2022")]
 [assembly: AssemblyTrademark("")]
 [assembly: AssemblyCulture("")]
 
