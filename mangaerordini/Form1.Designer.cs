@@ -176,6 +176,7 @@ namespace mangaerordini
             this.panel3 = new System.Windows.Forms.Panel();
             this.DataGridViewOrd = new System.Windows.Forms.DataGridView();
             this.tableLayoutPanel14 = new System.Windows.Forms.TableLayoutPanel();
+            this.DataGridViewFilterNumOrdine = new mangaerordini.FilterTextBox();
             this.DataGridViewFilterCliente = new System.Windows.Forms.ComboBox();
             this.OrdPrvPage = new System.Windows.Forms.Button();
             this.MaxPageOrd = new System.Windows.Forms.Label();
@@ -237,6 +238,7 @@ namespace mangaerordini
             this.CheckBoxOrdOggCheckAddNotOffer = new System.Windows.Forms.CheckBox();
             this.FieldOrdOggMach = new System.Windows.Forms.ComboBox();
             this.FieldOrdOggPezzo = new System.Windows.Forms.ComboBox();
+            this.FieldOrdOggPezzoFiltro = new mangaerordini.FilterTextBox();
             this.label86 = new System.Windows.Forms.Label();
             this.label88 = new System.Windows.Forms.Label();
             this.label89 = new System.Windows.Forms.Label();
@@ -287,6 +289,7 @@ namespace mangaerordini
             this.AddOffCreaOggettoPsco = new System.Windows.Forms.TextBox();
             this.AddOffCreaOggettoRica = new System.Windows.Forms.ComboBox();
             this.AddOffCreaOggettoMach = new System.Windows.Forms.ComboBox();
+            this.AddOffCreaOggettoPezzoFiltro = new mangaerordini.FilterTextBox();
             this.AddOffCreaOggettoId = new System.Windows.Forms.Label();
             this.AddOffCreaOggettoMacID = new System.Windows.Forms.Label();
             this.AddOffCreaOggettoClieID = new System.Windows.Forms.Label();
@@ -316,6 +319,7 @@ namespace mangaerordini
             this.MaxPageDataComp = new System.Windows.Forms.Label();
             this.DataCompCurPage = new System.Windows.Forms.TextBox();
             this.label138 = new System.Windows.Forms.Label();
+            this.dataGridViewComp_Filtro_Codice = new mangaerordini.FilterTextBox();
             this.label45 = new System.Windows.Forms.Label();
             this.tableLayoutPanel20 = new System.Windows.Forms.TableLayoutPanel();
             this.ChangeDatiCompCliente = new System.Windows.Forms.ComboBox();
@@ -468,6 +472,7 @@ namespace mangaerordini
             this.csvhelper_github = new System.Windows.Forms.LinkLabel();
             this.label143 = new System.Windows.Forms.Label();
             this.label144 = new System.Windows.Forms.Label();
+            this.fody_github = new System.Windows.Forms.LinkLabel();
             this.CosturaFody_github = new System.Windows.Forms.LinkLabel();
             this.toolTip1 = new System.Windows.Forms.ToolTip(this.components);
             this.TimerAddOffCreaOggettoPezzoFiltro = new System.Windows.Forms.Timer(this.components);
@@ -476,11 +481,6 @@ namespace mangaerordini
             this.TimerdataGridViewCompFilter = new System.Windows.Forms.Timer(this.components);
             this.TimerFieldOrdOggPezzoFiltro = new System.Windows.Forms.Timer(this.components);
             this.Timer_RunSQLiteOptimize = new System.Windows.Forms.Timer(this.components);
-            this.DataGridViewFilterNumOrdine = new mangaerordini.FilterTextBox();
-            this.FieldOrdOggPezzoFiltro = new mangaerordini.FilterTextBox();
-            this.AddOffCreaOggettoPezzoFiltro = new mangaerordini.FilterTextBox();
-            this.dataGridViewComp_Filtro_Codice = new mangaerordini.FilterTextBox();
-            this.fody_github = new System.Windows.Forms.LinkLabel();
             label34 = new System.Windows.Forms.Label();
             label36 = new System.Windows.Forms.Label();
             label33 = new System.Windows.Forms.Label();
@@ -1892,7 +1892,7 @@ namespace mangaerordini
             this.tableLayoutPanel1.ColumnStyles.Add(new System.Windows.Forms.ColumnStyle(System.Windows.Forms.SizeType.Percent, 24.62121F));
             this.tableLayoutPanel1.ColumnStyles.Add(new System.Windows.Forms.ColumnStyle());
             this.tableLayoutPanel1.ColumnStyles.Add(new System.Windows.Forms.ColumnStyle(System.Windows.Forms.SizeType.Percent, 21.59092F));
-            this.tableLayoutPanel1.ColumnStyles.Add(new System.Windows.Forms.ColumnStyle(System.Windows.Forms.SizeType.Absolute, 315F));
+            this.tableLayoutPanel1.ColumnStyles.Add(new System.Windows.Forms.ColumnStyle(System.Windows.Forms.SizeType.Absolute, 317F));
             this.tableLayoutPanel1.Controls.Add(this.RimuoviEventoCalendario, 8, 2);
             this.tableLayoutPanel1.Controls.Add(this.VisOrdId, 2, 3);
             this.tableLayoutPanel1.Controls.Add(this.VisOrdSpedGest, 7, 1);
@@ -1943,9 +1943,9 @@ namespace mangaerordini
             // 
             this.RimuoviEventoCalendario.Dock = System.Windows.Forms.DockStyle.Fill;
             this.RimuoviEventoCalendario.Enabled = false;
-            this.RimuoviEventoCalendario.Location = new System.Drawing.Point(860, 84);
+            this.RimuoviEventoCalendario.Location = new System.Drawing.Point(858, 84);
             this.RimuoviEventoCalendario.Name = "RimuoviEventoCalendario";
-            this.RimuoviEventoCalendario.Size = new System.Drawing.Size(311, 36);
+            this.RimuoviEventoCalendario.Size = new System.Drawing.Size(313, 36);
             this.RimuoviEventoCalendario.TabIndex = 124;
             this.RimuoviEventoCalendario.Text = "Rimuovi da Calendario";
             this.RimuoviEventoCalendario.UseVisualStyleBackColor = true;
@@ -1966,9 +1966,9 @@ namespace mangaerordini
             // 
             this.VisOrdSpedGest.AutoSize = true;
             this.VisOrdSpedGest.Dock = System.Windows.Forms.DockStyle.Fill;
-            this.VisOrdSpedGest.Location = new System.Drawing.Point(766, 39);
+            this.VisOrdSpedGest.Location = new System.Drawing.Point(765, 39);
             this.VisOrdSpedGest.Name = "VisOrdSpedGest";
-            this.VisOrdSpedGest.Size = new System.Drawing.Size(88, 42);
+            this.VisOrdSpedGest.Size = new System.Drawing.Size(87, 42);
             this.VisOrdSpedGest.TabIndex = 123;
             this.VisOrdSpedGest.Text = "Hold";
             this.VisOrdSpedGest.TextAlign = System.Drawing.ContentAlignment.MiddleLeft;
@@ -1977,9 +1977,9 @@ namespace mangaerordini
             // 
             this.VisOrdSped.AutoSize = true;
             this.VisOrdSped.Dock = System.Windows.Forms.DockStyle.Fill;
-            this.VisOrdSped.Location = new System.Drawing.Point(766, 0);
+            this.VisOrdSped.Location = new System.Drawing.Point(765, 0);
             this.VisOrdSped.Name = "VisOrdSped";
-            this.VisOrdSped.Size = new System.Drawing.Size(88, 39);
+            this.VisOrdSped.Size = new System.Drawing.Size(87, 39);
             this.VisOrdSped.TabIndex = 122;
             this.VisOrdSped.Text = "Hold";
             this.VisOrdSped.TextAlign = System.Drawing.ContentAlignment.MiddleLeft;
@@ -1988,7 +1988,7 @@ namespace mangaerordini
             // 
             this.label122.AutoSize = true;
             this.label122.Dock = System.Windows.Forms.DockStyle.Fill;
-            this.label122.Location = new System.Drawing.Point(620, 39);
+            this.label122.Location = new System.Drawing.Point(619, 39);
             this.label122.Name = "label122";
             this.label122.Size = new System.Drawing.Size(140, 42);
             this.label122.TabIndex = 121;
@@ -1999,7 +1999,7 @@ namespace mangaerordini
             // 
             this.label121.AutoSize = true;
             this.label121.Dock = System.Windows.Forms.DockStyle.Fill;
-            this.label121.Location = new System.Drawing.Point(620, 0);
+            this.label121.Location = new System.Drawing.Point(619, 0);
             this.label121.Name = "label121";
             this.label121.Size = new System.Drawing.Size(140, 39);
             this.label121.TabIndex = 120;
@@ -2021,9 +2021,9 @@ namespace mangaerordini
             // 
             this.AggiornaEventoCalendario.Dock = System.Windows.Forms.DockStyle.Fill;
             this.AggiornaEventoCalendario.Enabled = false;
-            this.AggiornaEventoCalendario.Location = new System.Drawing.Point(860, 42);
+            this.AggiornaEventoCalendario.Location = new System.Drawing.Point(858, 42);
             this.AggiornaEventoCalendario.Name = "AggiornaEventoCalendario";
-            this.AggiornaEventoCalendario.Size = new System.Drawing.Size(311, 36);
+            this.AggiornaEventoCalendario.Size = new System.Drawing.Size(313, 36);
             this.AggiornaEventoCalendario.TabIndex = 119;
             this.AggiornaEventoCalendario.Text = "Aggiorna Evento";
             this.toolTip1.SetToolTip(this.AggiornaEventoCalendario, "Usare questa funzione nel caso in cui i prodotti dell\'ordine siano cambiati e si " +
@@ -2059,7 +2059,7 @@ namespace mangaerordini
             this.VisOrdStato.Dock = System.Windows.Forms.DockStyle.Fill;
             this.VisOrdStato.Location = new System.Drawing.Point(513, 39);
             this.VisOrdStato.Name = "VisOrdStato";
-            this.VisOrdStato.Size = new System.Drawing.Size(101, 42);
+            this.VisOrdStato.Size = new System.Drawing.Size(100, 42);
             this.VisOrdStato.TabIndex = 117;
             this.VisOrdStato.Text = "Hold";
             this.VisOrdStato.TextAlign = System.Drawing.ContentAlignment.MiddleLeft;
@@ -2068,9 +2068,9 @@ namespace mangaerordini
             // 
             this.creaEventoCalendario.Dock = System.Windows.Forms.DockStyle.Fill;
             this.creaEventoCalendario.Enabled = false;
-            this.creaEventoCalendario.Location = new System.Drawing.Point(860, 3);
+            this.creaEventoCalendario.Location = new System.Drawing.Point(858, 3);
             this.creaEventoCalendario.Name = "creaEventoCalendario";
-            this.creaEventoCalendario.Size = new System.Drawing.Size(311, 33);
+            this.creaEventoCalendario.Size = new System.Drawing.Size(313, 33);
             this.creaEventoCalendario.TabIndex = 87;
             this.creaEventoCalendario.Text = "Crea Evento Calendario";
             this.creaEventoCalendario.UseVisualStyleBackColor = true;
@@ -2080,9 +2080,9 @@ namespace mangaerordini
             // 
             this.VisOrdTotFi.AutoSize = true;
             this.VisOrdTotFi.Dock = System.Windows.Forms.DockStyle.Fill;
-            this.VisOrdTotFi.Location = new System.Drawing.Point(766, 123);
+            this.VisOrdTotFi.Location = new System.Drawing.Point(765, 123);
             this.VisOrdTotFi.Name = "VisOrdTotFi";
-            this.VisOrdTotFi.Size = new System.Drawing.Size(88, 42);
+            this.VisOrdTotFi.Size = new System.Drawing.Size(87, 42);
             this.VisOrdTotFi.TabIndex = 112;
             this.VisOrdTotFi.Text = "Hold";
             this.VisOrdTotFi.TextAlign = System.Drawing.ContentAlignment.MiddleLeft;
@@ -2102,9 +2102,9 @@ namespace mangaerordini
             // 
             this.VisOrdTot.AutoSize = true;
             this.VisOrdTot.Dock = System.Windows.Forms.DockStyle.Fill;
-            this.VisOrdTot.Location = new System.Drawing.Point(766, 81);
+            this.VisOrdTot.Location = new System.Drawing.Point(765, 81);
             this.VisOrdTot.Name = "VisOrdTot";
-            this.VisOrdTot.Size = new System.Drawing.Size(88, 42);
+            this.VisOrdTot.Size = new System.Drawing.Size(87, 42);
             this.VisOrdTot.TabIndex = 110;
             this.VisOrdTot.Text = "Hold";
             this.VisOrdTot.TextAlign = System.Drawing.ContentAlignment.MiddleLeft;
@@ -2115,7 +2115,7 @@ namespace mangaerordini
             this.VisOrdNumero.Dock = System.Windows.Forms.DockStyle.Fill;
             this.VisOrdNumero.Location = new System.Drawing.Point(513, 0);
             this.VisOrdNumero.Name = "VisOrdNumero";
-            this.VisOrdNumero.Size = new System.Drawing.Size(101, 39);
+            this.VisOrdNumero.Size = new System.Drawing.Size(100, 39);
             this.VisOrdNumero.TabIndex = 115;
             this.VisOrdNumero.Text = "Hold";
             this.VisOrdNumero.TextAlign = System.Drawing.ContentAlignment.MiddleLeft;
@@ -2157,7 +2157,7 @@ namespace mangaerordini
             // 
             this.label119.AutoSize = true;
             this.label119.Dock = System.Windows.Forms.DockStyle.Fill;
-            this.label119.Location = new System.Drawing.Point(620, 123);
+            this.label119.Location = new System.Drawing.Point(619, 123);
             this.label119.Name = "label119";
             this.label119.Size = new System.Drawing.Size(140, 42);
             this.label119.TabIndex = 111;
@@ -2190,7 +2190,7 @@ namespace mangaerordini
             // 
             this.label117.AutoSize = true;
             this.label117.Dock = System.Windows.Forms.DockStyle.Fill;
-            this.label117.Location = new System.Drawing.Point(620, 81);
+            this.label117.Location = new System.Drawing.Point(619, 81);
             this.label117.Name = "label117";
             this.label117.Size = new System.Drawing.Size(140, 42);
             this.label117.TabIndex = 109;
@@ -2258,7 +2258,7 @@ namespace mangaerordini
             this.VisOrdETA.Dock = System.Windows.Forms.DockStyle.Fill;
             this.VisOrdETA.Location = new System.Drawing.Point(513, 123);
             this.VisOrdETA.Name = "VisOrdETA";
-            this.VisOrdETA.Size = new System.Drawing.Size(101, 42);
+            this.VisOrdETA.Size = new System.Drawing.Size(100, 42);
             this.VisOrdETA.TabIndex = 108;
             this.VisOrdETA.Text = "Hold";
             this.VisOrdETA.TextAlign = System.Drawing.ContentAlignment.MiddleLeft;
@@ -2280,7 +2280,7 @@ namespace mangaerordini
             this.VisOrdData.Dock = System.Windows.Forms.DockStyle.Fill;
             this.VisOrdData.Location = new System.Drawing.Point(513, 81);
             this.VisOrdData.Name = "VisOrdData";
-            this.VisOrdData.Size = new System.Drawing.Size(101, 42);
+            this.VisOrdData.Size = new System.Drawing.Size(100, 42);
             this.VisOrdData.TabIndex = 106;
             this.VisOrdData.Text = "Hold";
             this.VisOrdData.TextAlign = System.Drawing.ContentAlignment.MiddleLeft;
@@ -2324,9 +2324,9 @@ namespace mangaerordini
             this.VisOrdChiudi.AutoSize = true;
             this.VisOrdChiudi.AutoSizeMode = System.Windows.Forms.AutoSizeMode.GrowAndShrink;
             this.VisOrdChiudi.Enabled = false;
-            this.VisOrdChiudi.Location = new System.Drawing.Point(860, 128);
+            this.VisOrdChiudi.Location = new System.Drawing.Point(858, 128);
             this.VisOrdChiudi.Name = "VisOrdChiudi";
-            this.VisOrdChiudi.Size = new System.Drawing.Size(311, 31);
+            this.VisOrdChiudi.Size = new System.Drawing.Size(313, 31);
             this.VisOrdChiudi.TabIndex = 88;
             this.VisOrdChiudi.Text = "Chiudi";
             this.VisOrdChiudi.UseVisualStyleBackColor = true;
@@ -2481,6 +2481,17 @@ namespace mangaerordini
             this.tableLayoutPanel14.RowStyles.Add(new System.Windows.Forms.RowStyle());
             this.tableLayoutPanel14.Size = new System.Drawing.Size(588, 57);
             this.tableLayoutPanel14.TabIndex = 132;
+            // 
+            // DataGridViewFilterNumOrdine
+            // 
+            this.DataGridViewFilterNumOrdine.Dock = System.Windows.Forms.DockStyle.Fill;
+            this.DataGridViewFilterNumOrdine.Location = new System.Drawing.Point(260, 24);
+            this.DataGridViewFilterNumOrdine.Name = "DataGridViewFilterNumOrdine";
+            this.DataGridViewFilterNumOrdine.PlaceholderText = "Filtra #Ordine";
+            this.DataGridViewFilterNumOrdine.Size = new System.Drawing.Size(114, 29);
+            this.DataGridViewFilterNumOrdine.TabIndex = 139;
+            this.DataGridViewFilterNumOrdine.Text = "Filtra #Ordine";
+            this.DataGridViewFilterNumOrdine.TextChanged += new System.EventHandler(this.DataGridViewFilterNumOrdine_TextChanged);
             // 
             // DataGridViewFilterCliente
             // 
@@ -2823,7 +2834,7 @@ namespace mangaerordini
             this.ComboBoxOrdCliente.Anchor = ((System.Windows.Forms.AnchorStyles)((System.Windows.Forms.AnchorStyles.Left | System.Windows.Forms.AnchorStyles.Right)));
             this.tableLayoutPanel21.SetColumnSpan(this.ComboBoxOrdCliente, 3);
             this.ComboBoxOrdCliente.FormattingEnabled = true;
-            this.ComboBoxOrdCliente.Location = new System.Drawing.Point(114, 3);
+            this.ComboBoxOrdCliente.Location = new System.Drawing.Point(114, 5);
             this.ComboBoxOrdCliente.Name = "ComboBoxOrdCliente";
             this.ComboBoxOrdCliente.Size = new System.Drawing.Size(471, 29);
             this.ComboBoxOrdCliente.TabIndex = 154;
@@ -2845,7 +2856,7 @@ namespace mangaerordini
             this.ComboBoxOrdContatto.Anchor = ((System.Windows.Forms.AnchorStyles)((System.Windows.Forms.AnchorStyles.Left | System.Windows.Forms.AnchorStyles.Right)));
             this.tableLayoutPanel21.SetColumnSpan(this.ComboBoxOrdContatto, 2);
             this.ComboBoxOrdContatto.FormattingEnabled = true;
-            this.ComboBoxOrdContatto.Location = new System.Drawing.Point(114, 37);
+            this.ComboBoxOrdContatto.Location = new System.Drawing.Point(114, 41);
             this.ComboBoxOrdContatto.Name = "ComboBoxOrdContatto";
             this.ComboBoxOrdContatto.Size = new System.Drawing.Size(302, 29);
             this.ComboBoxOrdContatto.TabIndex = 156;
@@ -3327,6 +3338,16 @@ namespace mangaerordini
             this.FieldOrdOggPezzo.Size = new System.Drawing.Size(208, 29);
             this.FieldOrdOggPezzo.TabIndex = 134;
             this.FieldOrdOggPezzo.SelectedIndexChanged += new System.EventHandler(this.FieldOrdOggPezzo_SelectedIndexChanged);
+            // 
+            // FieldOrdOggPezzoFiltro
+            // 
+            this.FieldOrdOggPezzoFiltro.Dock = System.Windows.Forms.DockStyle.Fill;
+            this.FieldOrdOggPezzoFiltro.Location = new System.Drawing.Point(94, 104);
+            this.FieldOrdOggPezzoFiltro.Name = "FieldOrdOggPezzoFiltro";
+            this.FieldOrdOggPezzoFiltro.PlaceholderText = "";
+            this.FieldOrdOggPezzoFiltro.Size = new System.Drawing.Size(208, 29);
+            this.FieldOrdOggPezzoFiltro.TabIndex = 136;
+            this.FieldOrdOggPezzoFiltro.TextChanged += new System.EventHandler(this.FieldOrdOggPezzoFiltro_TextChanged);
             // 
             // label86
             // 
@@ -4050,6 +4071,16 @@ namespace mangaerordini
             this.AddOffCreaOggettoMach.TabIndex = 80;
             this.AddOffCreaOggettoMach.SelectedIndexChanged += new System.EventHandler(this.AddOffCreaOggettoMach_SelectedIndexChanged);
             // 
+            // AddOffCreaOggettoPezzoFiltro
+            // 
+            this.AddOffCreaOggettoPezzoFiltro.Dock = System.Windows.Forms.DockStyle.Fill;
+            this.AddOffCreaOggettoPezzoFiltro.Location = new System.Drawing.Point(3, 215);
+            this.AddOffCreaOggettoPezzoFiltro.Name = "AddOffCreaOggettoPezzoFiltro";
+            this.AddOffCreaOggettoPezzoFiltro.PlaceholderText = null;
+            this.AddOffCreaOggettoPezzoFiltro.Size = new System.Drawing.Size(206, 29);
+            this.AddOffCreaOggettoPezzoFiltro.TabIndex = 99;
+            this.AddOffCreaOggettoPezzoFiltro.TextChanged += new System.EventHandler(this.AddOffCreaOggettoPezzoFiltro_TextChanged);
+            // 
             // AddOffCreaOggettoId
             // 
             this.AddOffCreaOggettoId.Anchor = System.Windows.Forms.AnchorStyles.Bottom;
@@ -4459,6 +4490,17 @@ namespace mangaerordini
             this.label138.Size = new System.Drawing.Size(194, 21);
             this.label138.TabIndex = 87;
             this.label138.Text = "Codice Ricambio";
+            // 
+            // dataGridViewComp_Filtro_Codice
+            // 
+            this.dataGridViewComp_Filtro_Codice.Dock = System.Windows.Forms.DockStyle.Fill;
+            this.dataGridViewComp_Filtro_Codice.Location = new System.Drawing.Point(3, 24);
+            this.dataGridViewComp_Filtro_Codice.Name = "dataGridViewComp_Filtro_Codice";
+            this.dataGridViewComp_Filtro_Codice.PlaceholderText = "Filtra Codice";
+            this.dataGridViewComp_Filtro_Codice.Size = new System.Drawing.Size(194, 29);
+            this.dataGridViewComp_Filtro_Codice.TabIndex = 88;
+            this.dataGridViewComp_Filtro_Codice.Text = "Filtra Codice";
+            this.dataGridViewComp_Filtro_Codice.TextChanged += new System.EventHandler(this.DataGridViewComp_Filtro_Codice_TextChanged);
             // 
             // label45
             // 
@@ -6470,9 +6512,9 @@ namespace mangaerordini
             // 
             this.label141.AutoSize = true;
             this.label141.Dock = System.Windows.Forms.DockStyle.Fill;
-            this.label141.Location = new System.Drawing.Point(3, 68);
+            this.label141.Location = new System.Drawing.Point(3, 40);
             this.label141.Name = "label141";
-            this.label141.Size = new System.Drawing.Size(232, 68);
+            this.label141.Size = new System.Drawing.Size(232, 40);
             this.label141.TabIndex = 3;
             this.label141.Text = "CsvHelper";
             // 
@@ -6484,7 +6526,7 @@ namespace mangaerordini
             this.autoupdaternet_github.AutoSize = true;
             this.autoupdaternet_github.Location = new System.Drawing.Point(241, 0);
             this.autoupdaternet_github.Name = "autoupdaternet_github";
-            this.autoupdaternet_github.Size = new System.Drawing.Size(232, 68);
+            this.autoupdaternet_github.Size = new System.Drawing.Size(232, 40);
             this.autoupdaternet_github.TabIndex = 1;
             this.autoupdaternet_github.TabStop = true;
             this.autoupdaternet_github.Text = "GitHub";
@@ -6497,7 +6539,7 @@ namespace mangaerordini
             this.label142.Dock = System.Windows.Forms.DockStyle.Fill;
             this.label142.Location = new System.Drawing.Point(3, 0);
             this.label142.Name = "label142";
-            this.label142.Size = new System.Drawing.Size(232, 68);
+            this.label142.Size = new System.Drawing.Size(232, 40);
             this.label142.TabIndex = 4;
             this.label142.Text = "AutoUpdater.NET";
             // 
@@ -6507,9 +6549,9 @@ namespace mangaerordini
             | System.Windows.Forms.AnchorStyles.Left) 
             | System.Windows.Forms.AnchorStyles.Right)));
             this.csvhelper_github.AutoSize = true;
-            this.csvhelper_github.Location = new System.Drawing.Point(241, 68);
+            this.csvhelper_github.Location = new System.Drawing.Point(241, 40);
             this.csvhelper_github.Name = "csvhelper_github";
-            this.csvhelper_github.Size = new System.Drawing.Size(232, 68);
+            this.csvhelper_github.Size = new System.Drawing.Size(232, 40);
             this.csvhelper_github.TabIndex = 5;
             this.csvhelper_github.TabStop = true;
             this.csvhelper_github.Text = "GitHub";
@@ -6519,7 +6561,7 @@ namespace mangaerordini
             // label143
             // 
             this.label143.AutoSize = true;
-            this.label143.Location = new System.Drawing.Point(3, 136);
+            this.label143.Location = new System.Drawing.Point(3, 80);
             this.label143.Name = "label143";
             this.label143.Size = new System.Drawing.Size(44, 21);
             this.label143.TabIndex = 6;
@@ -6528,11 +6570,26 @@ namespace mangaerordini
             // label144
             // 
             this.label144.AutoSize = true;
-            this.label144.Location = new System.Drawing.Point(3, 172);
+            this.label144.Location = new System.Drawing.Point(3, 120);
             this.label144.Name = "label144";
             this.label144.Size = new System.Drawing.Size(101, 21);
             this.label144.TabIndex = 7;
             this.label144.Text = "Costura.Fody";
+            // 
+            // fody_github
+            // 
+            this.fody_github.Anchor = ((System.Windows.Forms.AnchorStyles)((((System.Windows.Forms.AnchorStyles.Top | System.Windows.Forms.AnchorStyles.Bottom) 
+            | System.Windows.Forms.AnchorStyles.Left) 
+            | System.Windows.Forms.AnchorStyles.Right)));
+            this.fody_github.AutoSize = true;
+            this.fody_github.Location = new System.Drawing.Point(241, 80);
+            this.fody_github.Name = "fody_github";
+            this.fody_github.Size = new System.Drawing.Size(232, 40);
+            this.fody_github.TabIndex = 8;
+            this.fody_github.TabStop = true;
+            this.fody_github.Text = "GitHub";
+            this.fody_github.TextAlign = System.Drawing.ContentAlignment.MiddleCenter;
+            this.fody_github.LinkClicked += new System.Windows.Forms.LinkLabelLinkClickedEventHandler(this.Fody_github_LinkClicked);
             // 
             // CosturaFody_github
             // 
@@ -6540,9 +6597,9 @@ namespace mangaerordini
             | System.Windows.Forms.AnchorStyles.Left) 
             | System.Windows.Forms.AnchorStyles.Right)));
             this.CosturaFody_github.AutoSize = true;
-            this.CosturaFody_github.Location = new System.Drawing.Point(241, 172);
+            this.CosturaFody_github.Location = new System.Drawing.Point(241, 120);
             this.CosturaFody_github.Name = "CosturaFody_github";
-            this.CosturaFody_github.Size = new System.Drawing.Size(57, 21);
+            this.CosturaFody_github.Size = new System.Drawing.Size(232, 102);
             this.CosturaFody_github.TabIndex = 9;
             this.CosturaFody_github.TabStop = true;
             this.CosturaFody_github.Text = "Github";
@@ -6580,63 +6637,6 @@ namespace mangaerordini
             // Timer_RunSQLiteOptimize
             // 
             this.Timer_RunSQLiteOptimize.Tick += new System.EventHandler(this.Timer_RunSQLiteOptimize_Tick);
-            // 
-            // DataGridViewFilterNumOrdine
-            // 
-            this.DataGridViewFilterNumOrdine.Dock = System.Windows.Forms.DockStyle.Fill;
-            this.DataGridViewFilterNumOrdine.Location = new System.Drawing.Point(260, 24);
-            this.DataGridViewFilterNumOrdine.Name = "DataGridViewFilterNumOrdine";
-            this.DataGridViewFilterNumOrdine.PlaceholderText = "Filtra #Ordine";
-            this.DataGridViewFilterNumOrdine.Size = new System.Drawing.Size(114, 29);
-            this.DataGridViewFilterNumOrdine.TabIndex = 139;
-            this.DataGridViewFilterNumOrdine.Text = "Filtra #Ordine";
-            this.DataGridViewFilterNumOrdine.TextChanged += new System.EventHandler(this.DataGridViewFilterNumOrdine_TextChanged);
-            // 
-            // FieldOrdOggPezzoFiltro
-            // 
-            this.FieldOrdOggPezzoFiltro.Dock = System.Windows.Forms.DockStyle.Fill;
-            this.FieldOrdOggPezzoFiltro.Location = new System.Drawing.Point(94, 104);
-            this.FieldOrdOggPezzoFiltro.Name = "FieldOrdOggPezzoFiltro";
-            this.FieldOrdOggPezzoFiltro.PlaceholderText = "";
-            this.FieldOrdOggPezzoFiltro.Size = new System.Drawing.Size(208, 29);
-            this.FieldOrdOggPezzoFiltro.TabIndex = 136;
-            this.FieldOrdOggPezzoFiltro.TextChanged += new System.EventHandler(this.FieldOrdOggPezzoFiltro_TextChanged);
-            // 
-            // AddOffCreaOggettoPezzoFiltro
-            // 
-            this.AddOffCreaOggettoPezzoFiltro.Dock = System.Windows.Forms.DockStyle.Fill;
-            this.AddOffCreaOggettoPezzoFiltro.Location = new System.Drawing.Point(3, 215);
-            this.AddOffCreaOggettoPezzoFiltro.Name = "AddOffCreaOggettoPezzoFiltro";
-            this.AddOffCreaOggettoPezzoFiltro.PlaceholderText = null;
-            this.AddOffCreaOggettoPezzoFiltro.Size = new System.Drawing.Size(206, 29);
-            this.AddOffCreaOggettoPezzoFiltro.TabIndex = 99;
-            this.AddOffCreaOggettoPezzoFiltro.TextChanged += new System.EventHandler(this.AddOffCreaOggettoPezzoFiltro_TextChanged);
-            // 
-            // dataGridViewComp_Filtro_Codice
-            // 
-            this.dataGridViewComp_Filtro_Codice.Dock = System.Windows.Forms.DockStyle.Fill;
-            this.dataGridViewComp_Filtro_Codice.Location = new System.Drawing.Point(3, 24);
-            this.dataGridViewComp_Filtro_Codice.Name = "dataGridViewComp_Filtro_Codice";
-            this.dataGridViewComp_Filtro_Codice.PlaceholderText = "Filtra Codice";
-            this.dataGridViewComp_Filtro_Codice.Size = new System.Drawing.Size(194, 29);
-            this.dataGridViewComp_Filtro_Codice.TabIndex = 88;
-            this.dataGridViewComp_Filtro_Codice.Text = "Filtra Codice";
-            this.dataGridViewComp_Filtro_Codice.TextChanged += new System.EventHandler(this.DataGridViewComp_Filtro_Codice_TextChanged);
-            // 
-            // fody_github
-            // 
-            this.fody_github.Anchor = ((System.Windows.Forms.AnchorStyles)((((System.Windows.Forms.AnchorStyles.Top | System.Windows.Forms.AnchorStyles.Bottom) 
-            | System.Windows.Forms.AnchorStyles.Left) 
-            | System.Windows.Forms.AnchorStyles.Right)));
-            this.fody_github.AutoSize = true;
-            this.fody_github.Location = new System.Drawing.Point(241, 136);
-            this.fody_github.Name = "fody_github";
-            this.fody_github.Size = new System.Drawing.Size(59, 21);
-            this.fody_github.TabIndex = 8;
-            this.fody_github.TabStop = true;
-            this.fody_github.Text = "GitHub";
-            this.fody_github.TextAlign = System.Drawing.ContentAlignment.MiddleCenter;
-            this.fody_github.LinkClicked += new System.Windows.Forms.LinkLabelLinkClickedEventHandler(this.Fody_github_LinkClicked);
             // 
             // Form1
             // 

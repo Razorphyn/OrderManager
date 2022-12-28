@@ -50,6 +50,7 @@ namespace mangaerordini
         readonly NumberStyles style = NumberStyles.AllowDecimalPoint;
         readonly CultureInfo culture = CultureInfo.CreateSpecificCulture("it-IT");
         readonly NumberFormatInfo nfi = CultureInfo.GetCultureInfo("it-IT").NumberFormat;
+        readonly string dateFormat = "dd/MM/yyyy";
 
         readonly SQLiteConnection connection = new SQLiteConnection(@"Data Source = " + exeFolderPath + db_file_path + db_file_name + @";cache=shared; synchronous  = NORMAL ;  foreign_keys  = 1;  journal_mode=WAL; temp_store = memory;  mmap_size = 30000000000; ");
 
@@ -663,16 +664,11 @@ namespace mangaerordini
                     else
                         cmd.Parameters.AddWithValue("@idma", macchinaId);
 
-
                     cmd.ExecuteNonQuery();
-
-                    string curPage = DataCompCurPage.Text.Trim();
-                    if (!int.TryParse(curPage, out int page))
-                        page = 1;
 
                     UpdateFields("R", "CA", true);
                     UpdateFields("R", "A", true);
-                    UpdateRicambi(page);
+                    UpdateRicambi();
 
                     MessageBox.Show("Componente aggiunto al database");
 
@@ -698,48 +694,31 @@ namespace mangaerordini
             int fornitoreId = Convert.ToInt32(ChangeDatiCompSupplier.SelectedItem.GetHashCode());
             int macchinaId = Convert.ToInt32(ChangeDatiCompMachine.SelectedItem.GetHashCode());
             string idF = ChangeDatiCompID.Text;
-            int idQ = -1;
             decimal prezzod = 0;
 
-
+            ValidationResult answer = new ValidationResult();
             string er_list = "";
+
+            string commandText;
 
             if (string.IsNullOrEmpty(nome))
             {
                 er_list += "Nome non valido o vuoto" + Environment.NewLine;
             }
 
-            string commandText = "SELECT COUNT(*) FROM " + schemadb + @"[clienti_macchine] WHERE ([Id] = @user) LIMIT 1;";
-            int UserExist = 0;
+            answer = ValidateMacchina(macchinaId);
 
-            if (macchinaId > 0)
+            if (answer.Success)
             {
-
-                using (SQLiteCommand cmd = new SQLiteCommand(commandText, connection))
-                {
-                    try
-                    {
-                        cmd.CommandText = commandText;
-                        cmd.Parameters.AddWithValue("@user", macchinaId);
-
-                        UserExist = Convert.ToInt32(cmd.ExecuteScalar());
-                    }
-                    catch (SQLiteException ex)
-                    {
-                        MessageBox.Show("Errore durante verifica ID Macchina. Codice: " + ReturnErorrCode(ex));
-
-
-                        return;
-                    }
-                }
-                if (UserExist < 1)
-                {
-
-                    er_list += "Macchina non presente nel database" + Environment.NewLine;
-                }
+                er_list += answer.Error;
+            }
+            else
+            {
+                MessageBox.Show(answer.Error);
+                return;
             }
 
-            ValidationResult answer = ValidateFornitore(fornitoreId);
+            answer = ValidateFornitore(fornitoreId);
             if (answer.Success)
             {
                 er_list += answer.Error;
@@ -752,13 +731,9 @@ namespace mangaerordini
 
             er_list += ValidateCodiceRicambio(codice);
 
-            if (!int.TryParse(idF, out int value))
+            if (!int.TryParse(idF, out int idQ))
             {
                 er_list += "ID non valido o vuoto" + Environment.NewLine;
-            }
-            else
-            {
-                idQ = Int32.Parse(ChangeDatiCompID.Text);
             }
 
             if (!Decimal.TryParse(prezzo, style, culture, out prezzod))
@@ -815,11 +790,6 @@ namespace mangaerordini
 
                     cmd.ExecuteNonQuery();
 
-                    string curPage = DataCompCurPage.Text.Trim();
-                    if (!int.TryParse(curPage, out int page))
-                        page = 1;
-
-
                     string IdAddOffCreaOggettoId = AddOffCreaOggettoId.Text.Trim();
                     int tempid = 0;
                     if (!String.IsNullOrEmpty(IdAddOffCreaOggettoId) && int.TryParse(IdAddOffCreaOggettoId, out tempid))
@@ -834,7 +804,7 @@ namespace mangaerordini
 
                     UpdateFields("R", "CE", false);
                     UpdateFields("R", "E", false);
-                    UpdateRicambi(page);
+                    UpdateRicambi();
 
                     MessageBox.Show("Cambiamenti salvati");
                 }
@@ -855,8 +825,6 @@ namespace mangaerordini
 
             string nome = ChangeDatiCompNome.Text.Trim();
             string idF = ChangeDatiCompID.Text;
-            int idQ = -1;
-
 
             string er_list = "";
 
@@ -865,13 +833,9 @@ namespace mangaerordini
                 er_list += "Nome non valido o vuoto" + Environment.NewLine;
             }
 
-            if (!int.TryParse(idF, out int value))
+            if (!int.TryParse(idF, out int idQ))
             {
                 er_list += "ID non valido o vuoto" + Environment.NewLine;
-            }
-            else
-            {
-                idQ = Int32.Parse(ChangeDatiCompID.Text);
             }
 
             if (er_list != "")
@@ -903,13 +867,9 @@ namespace mangaerordini
 
                     cmd.ExecuteNonQuery();
 
-                    string curPage = DataCompCurPage.Text.Trim();
-                    if (!int.TryParse(curPage, out int page))
-                        page = 1;
-
                     UpdateFields("R", "CE", false);
                     UpdateFields("R", "E", false);
-                    UpdateRicambi(page);
+                    UpdateRicambi();
 
                     MessageBox.Show("Pezzo di ricambio (" + nome + ") eliminato.");
                 }
@@ -1017,8 +977,6 @@ namespace mangaerordini
 
         private void AddDatiCompCliente_SelectedIndexChanged(object sender, System.EventArgs e)
         {
-
-
             ComboBox cmb = sender as ComboBox;
             ComboBox ctr = AddDatiCompMachine;
 
@@ -1250,13 +1208,9 @@ namespace mangaerordini
 
                     cmd.ExecuteNonQuery();
 
-                    string curPage = DataClientiCurPage.Text.Trim();
-                    if (!int.TryParse(curPage, out int page))
-                        page = 1;
-
                     UpdateFields("C", "CA", true);
                     UpdateFields("C", "A", true);
-                    UpdateClienti(page);
+                    UpdateClienti();
 
                     MessageBox.Show("Cliente aggiunto al database");
                 }
@@ -1279,7 +1233,6 @@ namespace mangaerordini
             string citta = ChangeDatiClientiCitta.Text.Trim();
             string prov = ChangeDatiClientiProvincia.Text.Trim();
             string idF = ChangeDatiClientiID.Text;
-            int idQ = -1;
 
             string er_list = "";
 
@@ -1302,13 +1255,9 @@ namespace mangaerordini
                 er_list += "Città non valida o vuota" + Environment.NewLine;
             }
 
-            if (!int.TryParse(idF, out int value))
+            if (!int.TryParse(idF, out int idQ))
             {
                 er_list += "ID non valido o vuoto" + Environment.NewLine;
-            }
-            else
-            {
-                idQ = Int32.Parse(ChangeDatiClientiID.Text);
             }
 
             if (er_list != "")
@@ -1345,13 +1294,9 @@ namespace mangaerordini
                     cmd.Parameters.AddWithValue("@provincia", prov);
                     cmd.Parameters.AddWithValue("@idq", idQ);
 
-
                     cmd.ExecuteNonQuery();
 
-                    string curPage = DataClientiCurPage.Text.Trim();
-                    if (!int.TryParse(curPage, out int page))
-                        page = 1;
-                    UpdateClienti(page);
+                    UpdateClienti();
 
                     LoaVisOrdOggTable(OrdiniViewCurPage);
                     LoadOrdiniTable(OrdiniCurPage);
@@ -1386,8 +1331,6 @@ namespace mangaerordini
 
             string nome = ChangeDatiClientiNome.Text.Trim();
             string idF = ChangeDatiClientiID.Text;
-            int idQ = -1;
-
 
             string er_list = "";
 
@@ -1396,13 +1339,9 @@ namespace mangaerordini
                 er_list += "Nome non valido o vuoto" + Environment.NewLine;
             }
 
-            if (!int.TryParse(idF, out int value))
+            if (!int.TryParse(idF, out int idQ))
             {
                 er_list += "ID non valido o vuoto" + Environment.NewLine;
-            }
-            else
-            {
-                idQ = Int32.Parse(ChangeDatiClientiID.Text);
             }
 
             if (er_list != "")
@@ -1434,10 +1373,7 @@ namespace mangaerordini
 
                     cmd.ExecuteNonQuery();
 
-                    string curPage = DataClientiCurPage.Text.Trim();
-                    if (!int.TryParse(curPage, out int page))
-                        page = 1;
-                    UpdateClienti(page);
+                    UpdateClienti();
 
                     //DISABILITA CAMPI & BOTTONI
                     UpdateFields("C", "CE", false);
@@ -1641,10 +1577,8 @@ namespace mangaerordini
                     UpdateFields("P", "CA", true);
                     UpdateFields("P", "A", true);
 
-                    string curPage = DataPRefCurPage.Text.Trim();
-                    if (!int.TryParse(curPage, out int page))
-                        page = 1;
-                    UpdatePRef(page);
+
+                    UpdatePRef();
                 }
                 catch (SQLiteException ex)
                 {
@@ -1665,7 +1599,6 @@ namespace mangaerordini
             string tel = ChangeDatiPRefTelefono.Text.Trim();
             string mail = ChangeDatiPRefMail.Text.Trim();
             string idF = ChangeDatiPRefID.Text;
-            int idQ = -1;
 
             ValidationResult answer;
             string commandText = "";
@@ -1689,13 +1622,9 @@ namespace mangaerordini
                 return;
             }
 
-            if (!int.TryParse(idF, out int value))
+            if (!int.TryParse(idF, out int idQ))
             {
                 er_list += "ID non valido o vuoto" + Environment.NewLine;
-            }
-            else
-            {
-                idQ = Int32.Parse(ChangeDatiPRefID.Text);
             }
 
             if (er_list != "")
@@ -1733,10 +1662,7 @@ namespace mangaerordini
 
                     cmd.ExecuteNonQuery();
 
-                    string curPage = DataPRefCurPage.Text.Trim();
-                    if (!int.TryParse(curPage, out int page))
-                        page = 1;
-                    UpdatePRef(page);
+                    UpdatePRef();
                     //DISABILITA CAMPI & BOTTONI
                     UpdateFields("P", "CE", false);
                     UpdateFields("P", "E", false);
@@ -1760,7 +1686,6 @@ namespace mangaerordini
 
             string nome = ChangeDatiPRefNome.Text.Trim();
             string idF = ChangeDatiPRefID.Text;
-            int idQ = -1;
 
             string er_list = "";
 
@@ -1769,13 +1694,9 @@ namespace mangaerordini
                 er_list += "Nome non valido o vuoto" + Environment.NewLine;
             }
 
-            if (!int.TryParse(idF, out int value))
+            if (!int.TryParse(idF, out int idQ))
             {
                 er_list += "ID non valido o vuoto" + Environment.NewLine;
-            }
-            else
-            {
-                idQ = Int32.Parse(ChangeDatiPRefID.Text);
             }
 
             if (er_list != "")
@@ -1808,10 +1729,7 @@ namespace mangaerordini
 
                     cmd.ExecuteNonQuery();
 
-                    string curPage = DataPRefCurPage.Text.Trim();
-                    if (!int.TryParse(curPage, out int page))
-                        page = 1;
-                    UpdatePRef(page);
+                    UpdatePRef();
                     //DISABILITA CAMPI & BOTTONI
                     UpdateFields("P", "CE", false);
                     UpdateFields("P", "E", false);
@@ -1992,13 +1910,9 @@ namespace mangaerordini
 
                     cmd.ExecuteNonQuery();
 
-                    string curPage = DataFornitoriCurPage.Text.Trim();
-                    if (!int.TryParse(curPage, out int page))
-                        page = 1;
-
                     UpdateFields("F", "CA", true);
                     UpdateFields("F", "A", true);
-                    UpdateFornitori(page);
+                    UpdateFornitori();
 
                     MessageBox.Show("Fornitore aggiunto al database");
                 }
@@ -2019,7 +1933,6 @@ namespace mangaerordini
 
             string nome = ChangeDatiFornitoreNome.Text.Trim();
             string idF = ChangeDatiFornitoreID.Text;
-            int idQ = -1;
 
             string er_list = "";
 
@@ -2028,13 +1941,9 @@ namespace mangaerordini
                 er_list += "Nome non valido o vuoto" + Environment.NewLine;
             }
 
-            if (!int.TryParse(idF, out int value))
+            if (!int.TryParse(idF, out int idQ))
             {
                 er_list += "ID non valido o vuoto" + Environment.NewLine;
-            }
-            else
-            {
-                idQ = Int32.Parse(ChangeDatiFornitoreID.Text);
             }
 
             if (er_list != "")
@@ -2070,10 +1979,7 @@ namespace mangaerordini
 
                     cmd.ExecuteNonQuery();
 
-                    string curPage = DataFornitoriCurPage.Text.Trim();
-                    if (!int.TryParse(curPage, out int page))
-                        page = 1;
-                    UpdateFornitori(page);
+                    UpdateFornitori();
 
                     //DISABILITA CAMPI & BOTTONI
                     UpdateFields("F", "CE", false);
@@ -2098,8 +2004,6 @@ namespace mangaerordini
 
             string nome = ChangeDatiFornitoreNome.Text.Trim();
             string idF = ChangeDatiFornitoreID.Text;
-            int idQ = -1;
-
 
             string er_list = "";
 
@@ -2108,13 +2012,9 @@ namespace mangaerordini
                 er_list += "Nome non valido o vuoto" + Environment.NewLine;
             }
 
-            if (!int.TryParse(idF, out int value))
+            if (!int.TryParse(idF, out int idQ))
             {
                 er_list += "ID non valido o vuoto" + Environment.NewLine;
-            }
-            else
-            {
-                idQ = Int32.Parse(ChangeDatiFornitoreID.Text);
             }
 
             if (er_list != "")
@@ -2144,10 +2044,7 @@ namespace mangaerordini
 
                     cmd.ExecuteNonQuery();
 
-                    string curPage = DataFornitoriCurPage.Text.Trim();
-                    if (!int.TryParse(curPage, out int page))
-                        page = 1;
-                    UpdateFornitori(page);
+                    UpdateFornitori();
 
                     //DISABILITA CAMPI & BOTTONI
                     UpdateFields("F", "CE", false);
@@ -2320,10 +2217,7 @@ namespace mangaerordini
                     UpdateFields("M", "CA", true);
                     UpdateFields("M", "A", true);
 
-                    string curPage = DataMacchinaCurPage.Text.Trim();
-                    if (!int.TryParse(curPage, out int page))
-                        page = 1;
-                    UpdateMacchine(page);
+                    UpdateMacchine();
 
                     MessageBox.Show("Macchina aggiunta al database");
                 }
@@ -2346,7 +2240,6 @@ namespace mangaerordini
             string seriale = ChangeDatiMacchinaSeriale.Text.Trim();
             string codice = ChangeDatiMacchinaCodice.Text.Trim();
             string idF = ChangeDatiMacchinaID.Text;
-            int idQ = -1;
 
             ValidationResult answer = new ValidationResult();
             string commandText = "";
@@ -2370,13 +2263,9 @@ namespace mangaerordini
                 return;
             }
 
-            if (!int.TryParse(idF, out int value))
+            if (!int.TryParse(idF, out int idQ))
             {
                 er_list += "ID non valido o vuoto" + Environment.NewLine;
-            }
-            else
-            {
-                idQ = Int32.Parse(ChangeDatiMacchinaID.Text);
             }
 
             if (er_list != "")
@@ -2412,10 +2301,7 @@ namespace mangaerordini
 
                     cmd.ExecuteNonQuery();
 
-                    string curPage = DataMacchinaCurPage.Text.Trim();
-                    if (!int.TryParse(curPage, out int page))
-                        page = 1;
-                    UpdateMacchine(page);
+                    UpdateMacchine();
                     //DISABILITA CAMPI & BOTTONI
                     UpdateFields("M", "CE", false);
                     UpdateFields("M", "E", false);
@@ -2439,7 +2325,6 @@ namespace mangaerordini
 
             string nome = ChangeDatiMacchinaNome.Text.Trim();
             string idF = ChangeDatiMacchinaID.Text;
-            int idQ = -1;
 
             string er_list = "";
 
@@ -2448,13 +2333,9 @@ namespace mangaerordini
                 er_list += "Nome non valido o vuoto" + Environment.NewLine;
             }
 
-            if (!int.TryParse(idF, out int value))
+            if (!int.TryParse(idF, out int idQ))
             {
                 er_list += "ID non valido o vuoto" + Environment.NewLine;
-            }
-            else
-            {
-                idQ = Int32.Parse(ChangeDatiMacchinaID.Text);
             }
 
             if (er_list != "")
@@ -2486,11 +2367,7 @@ namespace mangaerordini
 
                     cmd.ExecuteNonQuery();
 
-                    string curPage = DataMacchinaCurPage.Text.Trim();
-                    if (!int.TryParse(curPage, out int page))
-                        page = 1;
-
-                    UpdateMacchine(page);
+                    UpdateMacchine();
 
                     UpdateFields("M", "CE", false);
                     UpdateFields("M", "E", false);
@@ -2697,7 +2574,6 @@ namespace mangaerordini
             int stato = Convert.ToInt32(AddOffCreaStato.SelectedValue.GetHashCode());
 
             DateTime dataoffValue;
-            string format = "dd/MM/yyyy";
 
             stato = (stato < 0) ? 0 : stato;
 
@@ -2711,7 +2587,7 @@ namespace mangaerordini
                 er_list += "Numero Offerta non valido o vuoto" + Environment.NewLine;
             }
 
-            if (!DateTime.TryParseExact(dataoffString, format, provider, DateTimeStyles.None, out dataoffValue))
+            if (!DateTime.TryParseExact(dataoffString, dateFormat, provider, DateTimeStyles.None, out dataoffValue))
             {
                 er_list += "Data non valida o vuota" + Environment.NewLine;
             }
@@ -2824,10 +2700,8 @@ namespace mangaerordini
                     UpdateFields("OC", "CA", true);
                     UpdateFields("OC", "A", true);
 
-                    string curPage = OffCreaCurPage.Text.Trim();
-                    if (!int.TryParse(curPage, out int page))
-                        page = 1;
-                    UpdateOfferteCrea(page);
+
+                    UpdateOfferteCrea();
 
                     string temp_info = "";
                     if (stato == 1)
@@ -3393,7 +3267,6 @@ namespace mangaerordini
             int stato = Convert.ToInt32(AddOffCreaStato.SelectedItem.GetHashCode());
 
             DateTime dataoffValue;
-            string format = "dd/MM/yyyy";
 
             ValidationResult answer;
             string commandText;
@@ -3406,13 +3279,9 @@ namespace mangaerordini
                 er_list += "Numero Offerta non valido o vuoto" + Environment.NewLine;
             }
 
-            if (!DateTime.TryParseExact(dataoffString, format, provider, DateTimeStyles.None, out dataoffValue))
+            if (!DateTime.TryParseExact(dataoffString, dateFormat, provider, DateTimeStyles.None, out dataoffValue))
             {
                 er_list += "Data non valida o vuota" + Environment.NewLine;
-            }
-            else
-            {
-                dataoffValue = DateTime.ParseExact(dataoffString, format, provider);
             }
 
             answer = ValidateCliente(cliente);
@@ -3530,16 +3399,12 @@ namespace mangaerordini
 
                     cmd.ExecuteNonQuery();
 
-                    string curPage = OffCreaCurPage.Text.Trim();
-                    if (!int.TryParse(curPage, out int page))
-                        page = 1;
-
                     int temp_SelOffCrea = SelOffCrea.SelectedItem.GetHashCode();
 
                     int temp_FieldOrdOfferta = ComboBoxOrdOfferta.SelectedIndex;
                     int temp_FieldOrdCliente = ComboBoxOrdCliente.SelectedIndex;
 
-                    UpdateOfferteCrea(page);
+                    UpdateOfferteCrea();
                     UpdateOrdini(OrdiniViewCurPage);
 
                     //DISABILITA CAMPI & BOTTONI
@@ -3629,14 +3494,10 @@ namespace mangaerordini
                     cmd.ExecuteNonQuery();
                     transaction.Commit();
 
-                    string curPage = OffCreaCurPage.Text.Trim();
-                    if (!int.TryParse(curPage, out int page))
-                        page = 1;
-
                     int temp = SelOffCrea.SelectedItem.GetHashCode();
                     MessageBox.Show("" + temp);
 
-                    UpdateOfferteCrea(page);
+                    UpdateOfferteCrea();
 
                     //DISABILITA CAMPI & BOTTONI
                     UpdateFields("OC", "CA", true);
@@ -3857,11 +3718,8 @@ namespace mangaerordini
                     transaction.Commit();
 
                     LoadOfferteCreaTable();
-                    string curPage = OffCreaCurPage.Text.Trim();
-                    if (!int.TryParse(curPage, out int page))
-                        page = 1;
 
-                    UpdateOfferteCrea(page, false);
+                    UpdateOfferteCrea(0, false);
                     LoadOfferteOggettiCreaTable(idof);
 
                     //DISABILITA CAMPI & BOTTONI
@@ -4452,7 +4310,6 @@ namespace mangaerordini
             decimal? spedizioniV = null;
             DateTime dataOrdValue;
             DateTime dataETAOrdValue;
-            string format = "dd/MM/yyyy";
 
             ValidationResult answer;
 
@@ -4478,22 +4335,14 @@ namespace mangaerordini
                 er_list += "Numero Ordine non valido o vuoto" + Environment.NewLine;
             }
 
-            if (!DateTime.TryParseExact(dataOrdString, format, provider, DateTimeStyles.None, out dataOrdValue))
+            if (!DateTime.TryParseExact(dataOrdString, dateFormat, provider, DateTimeStyles.None, out dataOrdValue))
             {
                 er_list += "Data non valida o vuota" + Environment.NewLine;
-            }
-            else
-            {
-                dataOrdValue = DateTime.ParseExact(dataOrdString, format, provider);
             }
 
-            if (!DateTime.TryParseExact(dataETAString, format, provider, DateTimeStyles.None, out dataETAOrdValue))
+            if (!DateTime.TryParseExact(dataETAString, dateFormat, provider, DateTimeStyles.None, out dataETAOrdValue))
             {
                 er_list += "Data non valida o vuota" + Environment.NewLine;
-            }
-            else
-            {
-                dataETAOrdValue = DateTime.ParseExact(dataETAString, format, provider);
             }
 
             if (DateTime.Compare(dataOrdValue, dataETAOrdValue) > 0)
@@ -5255,7 +5104,6 @@ namespace mangaerordini
             }
 
             DateTime dataETAOrdValue;
-            string format = "dd/MM/yyyy";
 
             string er_list = "";
 
@@ -5264,13 +5112,9 @@ namespace mangaerordini
                 er_list += "Selezionare un ricambio dal menù a tendina." + Environment.NewLine;
             }
 
-            if (!DateTime.TryParseExact(dataETAString, format, provider, DateTimeStyles.None, out dataETAOrdValue))
+            if (!DateTime.TryParseExact(dataETAString, dateFormat, provider, DateTimeStyles.None, out dataETAOrdValue))
             {
                 er_list += "Data non valida o vuota" + Environment.NewLine;
-            }
-            else
-            {
-                dataETAOrdValue = DateTime.ParseExact(dataETAString, format, provider);
             }
 
             if (!Decimal.TryParse(prezzo_originale, style, culture, out decimal prezzo_originaleV))
@@ -5610,14 +5454,10 @@ namespace mangaerordini
                                 }
                             }
 
-                            string curPage = OrdCurPage.Text.Trim();
-                            if (!int.TryParse(curPage, out int page))
-                                page = 1;
-
 
                             int temp = ComboSelOrd.SelectedItem.GetHashCode();
 
-                            UpdateOrdini(page);
+                            UpdateOrdini();
 
                             //DISABILITA CAMPI & BOTTONI
                             UpdateFields("OCR", "CA", true);
@@ -5787,10 +5627,6 @@ namespace mangaerordini
 
                     transaction.Commit();
 
-                    string curPage = OrdCurPage.Text.Trim();
-                    if (!int.TryParse(curPage, out int page))
-                        page = 1;
-
                     if (Boolean.Parse(settings["calendario"]["aggiornaCalendario"]) == true)
                     {
                         string ordinecode = "";
@@ -5833,7 +5669,7 @@ namespace mangaerordini
                         }
                     }
 
-                    UpdateOrdini(page);
+                    UpdateOrdini();
                     UpdateOrdiniOggettiOfferta(idordine);
                     UpdateOrdiniOggetti(idordine);
 
@@ -5898,7 +5734,6 @@ namespace mangaerordini
             decimal? spedizioniV = null;
             DateTime dataOrdValue;
             DateTime dataETAOrdValue;
-            string format = "dd/MM/yyyy";
 
             string er_list = "";
             if (string.IsNullOrEmpty(n_ordine) || !Regex.IsMatch(n_ordine, @"^\d+$"))
@@ -5906,22 +5741,18 @@ namespace mangaerordini
                 er_list += "Numero Ordine non valido o vuoto" + Environment.NewLine;
             }
 
-            if (!DateTime.TryParseExact(dataOrdString, format, provider, DateTimeStyles.None, out dataOrdValue))
+            if (!DateTime.TryParseExact(dataOrdString, dateFormat, provider, DateTimeStyles.None, out dataOrdValue))
             {
                 er_list += "Data non valida o vuota" + Environment.NewLine;
             }
             else
             {
-                dataOrdValue = DateTime.ParseExact(dataOrdString, format, provider);
+                dataOrdValue = DateTime.ParseExact(dataOrdString, dateFormat, provider);
             }
 
-            if (!DateTime.TryParseExact(dataETAString, format, provider, DateTimeStyles.None, out dataETAOrdValue))
+            if (!DateTime.TryParseExact(dataETAString, dateFormat, provider, DateTimeStyles.None, out dataETAOrdValue))
             {
                 er_list += "Data non valida o vuota" + Environment.NewLine;
-            }
-            else
-            {
-                dataETAOrdValue = DateTime.ParseExact(dataETAString, format, provider);
             }
 
             if (DateTime.Compare(dataOrdValue, dataETAOrdValue) > 0)
@@ -6165,17 +5996,12 @@ namespace mangaerordini
             string pezzi = FieldOrdOggQta.Text.Trim();
 
             DateTime dataETAOrdValue;
-            string format = "dd/MM/yyyy";
 
             string er_list = "";
 
-            if (!DateTime.TryParseExact(dataETAString, format, provider, DateTimeStyles.None, out dataETAOrdValue))
+            if (!DateTime.TryParseExact(dataETAString, dateFormat, provider, DateTimeStyles.None, out dataETAOrdValue))
             {
                 er_list += "Data non valida o vuota" + Environment.NewLine;
-            }
-            else
-            {
-                dataETAOrdValue = DateTime.ParseExact(dataETAString, format, provider);
             }
 
             if (!Decimal.TryParse(prezzo_originale, style, culture, out decimal prezzo_originaleV))
@@ -7270,9 +7096,8 @@ namespace mangaerordini
 
             DateTime dataETAOrdValue;
             DateTime dateAppoint = DateTime.MinValue;
-            string format = "dd/MM/yyyy";
 
-            if (!DateTime.TryParseExact(opde, format, provider, DateTimeStyles.None, out dataETAOrdValue))
+            if (!DateTime.TryParseExact(opde, dateFormat, provider, DateTimeStyles.None, out dataETAOrdValue))
             {
                 MessageBox.Show("Data non valida o vuota");
             }
@@ -7289,7 +7114,7 @@ namespace mangaerordini
 
                 while (dateAppoint == DateTime.MinValue)
                 {
-                    string input = Interaction.InputBox("Inserire data in cui ricevere la notifica relativa all'ordine", "Data Notifica Ordine", (dataETAOrdValue).ToString(format));
+                    string input = Interaction.InputBox("Inserire data in cui ricevere la notifica relativa all'ordine", "Data Notifica Ordine", (dataETAOrdValue).ToString(dateFormat));
                     if (String.ReferenceEquals(input, String.Empty))
                     {
                         MessageBox.Show("Azione Cancellata");
@@ -7297,8 +7122,11 @@ namespace mangaerordini
                         return;
                     }
 
-                    if (DateTime.TryParse(input, out dateAppoint))
+                    if (!DateTime.TryParse(input, out dateAppoint))
                     {
+                        MessageBox.Show("Controllare formato data. Impossibile convertire in formato data crretto.");
+                        dateAppoint = DateTime.MinValue;
+                        continue;
                     }
 
                     if (DateTime.Compare(dateAppoint, DateTime.MinValue) != 0 && DateTime.Compare(dateAppoint, dataETAOrdValue) > 0)
@@ -7338,16 +7166,15 @@ namespace mangaerordini
             string ETA = VisOrdETA.Text;
 
             DateTime dataETAOrdValue;
-            string format = "dd/MM/yyyy";
 
-            if (!DateTime.TryParseExact(ETA, format, provider, DateTimeStyles.None, out dataETAOrdValue))
+            if (!DateTime.TryParseExact(ETA, dateFormat, provider, DateTimeStyles.None, out dataETAOrdValue))
             {
                 MessageBox.Show("Data non valida o vuota");
                 return;
             }
             else
             {
-                dataETAOrdValue = DateTime.ParseExact(ETA, format, provider).AddDays(1);
+                dataETAOrdValue = DateTime.ParseExact(ETA, dateFormat, provider).AddDays(1);
             }
 
             if (FindAppointment(nordine, dataETAOrdValue) == true)
@@ -7371,14 +7198,13 @@ namespace mangaerordini
                 Thread.CurrentThread.CurrentCulture = new CultureInfo("it-IT");
 
                 DateTime dateAppoint = DateTime.MinValue;
-                string format = "dd/MM/yyyy";
 
                 if (delete == true)
                 {
                     while (dateAppoint == DateTime.MinValue)
                     {
                         string input = Interaction.InputBox("Inserire la data per l'appunatmento sul calendario? Una volta creato, sarà necessario salvarlo." + Environment.NewLine + Environment.NewLine
-                                                            + "ATTENZIONE: NON rimuovere la stringa finale ##ManaOrdini[numero_ordine]## dal titolo dell'appunatmento. Serve per riconoscere l'evento.", "Modifica Appuntamento Calendario", (estDate).ToString(format));
+                                                            + "ATTENZIONE: NON rimuovere la stringa finale ##ManaOrdini[numero_ordine]## dal titolo dell'appunatmento. Serve per riconoscere l'evento.", "Modifica Appuntamento Calendario", (estDate).ToString(dateFormat));
                         if (String.ReferenceEquals(input, String.Empty))
                         {
                             MessageBox.Show("Azione Cancellata");
@@ -7388,6 +7214,9 @@ namespace mangaerordini
 
                         if (DateTime.TryParse(input, out dateAppoint))
                         {
+                            MessageBox.Show("Controllare formato data. Impossibile convertire in formato data crretto.");
+                            dateAppoint = DateTime.MinValue;
+                            continue;
                         }
 
                         if (DateTime.Compare(dateAppoint, DateTime.MinValue) != 0 && DateTime.Compare(dateAppoint, estDate) > 0)
@@ -8762,6 +8591,12 @@ namespace mangaerordini
             ComboBox[] nomi_ctr = { AddDatiCompSupplier, ChangeDatiCompSupplier };
 
             Populate_combobox_fornitore(nomi_ctr);
+
+            string curPage = DataFornitoriCurPage.Text.Trim();
+            if (!int.TryParse(curPage, out page))
+                page = 1;
+
+
             LoadFornitoriTable(page);
         }
 
@@ -8769,6 +8604,11 @@ namespace mangaerordini
         {
 
             ComboBox[] nomi_ctr = { AddDatiCompMachine, ChangeDatiCompMachine, FieldOrdOggMach };
+
+            string curPage = DataMacchinaCurPage.Text.Trim();
+            if (!int.TryParse(curPage, out page))
+                page = 1;
+
             Populate_combobox_machine(nomi_ctr);
             LoadMacchinaTable(page);
         }
@@ -8791,6 +8631,10 @@ namespace mangaerordini
                     DataGridViewFilterCliente,
                     dataGridViewMacchina_Filtro_Cliente
             };
+
+            string curPage = DataClientiCurPage.Text.Trim();
+            if (!int.TryParse(curPage, out page))
+                page = 1;
 
             Populate_combobox_clienti(nomi_ctr);
 
@@ -8831,11 +8675,19 @@ namespace mangaerordini
                 }
             }
 
+            string curPage = DataPRefCurPage.Text.Trim();
+            if (!int.TryParse(curPage, out page))
+                page = 1;
+
             LoadPrefTable(page);
         }
 
         private void UpdateRicambi(int page = 1)
         {
+            string curPage = DataCompCurPage.Text.Trim();
+            if (!int.TryParse(curPage, out page))
+                page = 1;
+
             LoadCompTable(page);
             if (AddOffCreaOggettoRica.Enabled == true && AddOffCreaOggettoRica.SelectedIndex > -1)
             {
@@ -8845,7 +8697,7 @@ namespace mangaerordini
             }
         }
 
-        private void UpdateOfferteCrea(int page = 1, bool EditedList = true)
+        private void UpdateOfferteCrea(int page = 0, bool EditedList = true)
         {
             if (EditedList == true)
             {
@@ -8855,6 +8707,13 @@ namespace mangaerordini
                 };
 
                 Populate_combobox_offerte_crea(nomi_ctr);
+            }
+
+            if (page == 0)
+            {
+                string curPage = OffCreaCurPage.Text.Trim();
+                if (!int.TryParse(curPage, out page))
+                    page = 1;
             }
 
             LoadOfferteCreaTable(page);
@@ -8887,8 +8746,15 @@ namespace mangaerordini
             Populate_combobox_statoOrdini(nomi_ctr);
         }
 
-        private void UpdateOrdini(int page = 1)
+        private void UpdateOrdini(int page = 0)
         {
+            if (page == 0)
+            {
+                string curPage = OrdCurPage.Text.Trim();
+                if (!int.TryParse(curPage, out page))
+                    page = 1;
+            }
+
             LoadOrdiniTable(page);
             LoadVisualizzaOrdiniTable(OrdiniViewCurPage);
             Populate_combobox_ordini(ComboSelOrd);
@@ -9391,6 +9257,7 @@ namespace mangaerordini
             }
         }
 
+        //COMBOBOX
         private int FindIndexFromValue(ComboBox nome_ctr, int value)
         {
             int i = 0;
@@ -9410,11 +9277,7 @@ namespace mangaerordini
                 return -1;
         }
 
-        private void DataGridViewOrd_ColumnSortModeChanged(object sender, DataGridViewColumnEventArgs e)
-        {
-            MessageBox.Show(Convert.ToString(e.Column));
-            MessageBox.Show("w");
-        }
+        //DATABASE
 
         private void Form1_FormClosing(object sender, FormClosingEventArgs e)
         {
@@ -9441,27 +9304,15 @@ namespace mangaerordini
                 return ex.Message;
         }
 
-        private void Csvhelper_github_LinkClicked(object sender, LinkLabelLinkClickedEventArgs e)
-        {
-            System.Diagnostics.Process.Start("https://joshclose.github.io/CsvHelper/");
 
+        //ALTRO
+        private void DataGridViewOrd_ColumnSortModeChanged(object sender, DataGridViewColumnEventArgs e)
+        {
+            MessageBox.Show(Convert.ToString(e.Column));
+            MessageBox.Show("w");
         }
 
-        private void Autoupdaternet_github_LinkClicked(object sender, LinkLabelLinkClickedEventArgs e)
-        {
-            System.Diagnostics.Process.Start("https://github.com/ravibpatel/AutoUpdater.NET");
-        }
-
-        private void Fody_github_LinkClicked(object sender, LinkLabelLinkClickedEventArgs e)
-        {
-            System.Diagnostics.Process.Start("https://github.com/Fody/Fody");
-        }
-
-        private void CosturaFody_github_LinkClicked(object sender, LinkLabelLinkClickedEventArgs e)
-        {
-            System.Diagnostics.Process.Start("https://github.com/Fody/Costura");
-        }
-
+       
         //Validate functions
 
         public class ValidationResult
@@ -9592,6 +9443,73 @@ namespace mangaerordini
 
             return answer;
         }
+
+        public ValidationResult ValidateMacchina(int id)
+        {
+            string commandText = "SELECT COUNT(*) FROM " + schemadb + @"[clienti_macchine] WHERE ([Id] = @user) LIMIT 1;";
+            ValidationResult answer = new ValidationResult();
+
+            if (id > 0)
+            {
+                using (SQLiteCommand cmd = new SQLiteCommand(commandText, connection))
+                {
+                    try
+                    {
+                        cmd.CommandText = commandText;
+                        cmd.Parameters.AddWithValue("@user", id);
+
+                        answer.IntValue = Convert.ToInt32(cmd.ExecuteScalar());
+                        answer.Success = true;
+                    }
+                    catch (SQLiteException ex)
+                    {
+                        answer.Error = "Errore durante verifica ID Macchina. Codice: " + ReturnErorrCode(ex);
+                        answer.Success = false;
+
+                        return answer;
+                    }
+                }
+                if (answer.IntValue < 1)
+                {
+                    answer.BoolValue = false;
+                    answer.Error = "Macchina non presente nel database" + Environment.NewLine;
+                }
+                else
+                {
+                    answer.BoolValue = true;
+                }
+                return answer;
+            }
+            answer.BoolValue = false;
+            answer.Error = "Selezionare Macchina." + Environment.NewLine;
+
+            return answer;
+        }
+
+        
+        //CREDITI
+
+        private void Csvhelper_github_LinkClicked(object sender, LinkLabelLinkClickedEventArgs e)
+        {
+            System.Diagnostics.Process.Start("https://joshclose.github.io/CsvHelper/");
+
+        }
+
+        private void Autoupdaternet_github_LinkClicked(object sender, LinkLabelLinkClickedEventArgs e)
+        {
+            System.Diagnostics.Process.Start("https://github.com/ravibpatel/AutoUpdater.NET");
+        }
+
+        private void Fody_github_LinkClicked(object sender, LinkLabelLinkClickedEventArgs e)
+        {
+            System.Diagnostics.Process.Start("https://github.com/Fody/Fody");
+        }
+
+        private void CosturaFody_github_LinkClicked(object sender, LinkLabelLinkClickedEventArgs e)
+        {
+            System.Diagnostics.Process.Start("https://github.com/Fody/Costura");
+        }
+
     }
 
     public class ComboBoxList
