@@ -759,8 +759,7 @@ namespace mangaerordini
                     cmd.ExecuteNonQuery();
 
                     string IdAddOffCreaOggettoId = AddOffCreaOggettoId.Text.Trim();
-                    int tempid = 0;
-                    if (!String.IsNullOrEmpty(IdAddOffCreaOggettoId) && int.TryParse(IdAddOffCreaOggettoId, out tempid))
+                    if (!String.IsNullOrEmpty(IdAddOffCreaOggettoId) && int.TryParse(IdAddOffCreaOggettoId, out int tempid))
                     {
                         if (tempid == idQ)
                         {
@@ -4916,6 +4915,12 @@ namespace mangaerordini
             string pezzi = FieldOrdOggQta.Text.Trim();
             int idiri = 0;
 
+            ValidationResult dataETAOrdValue;
+            ValidationResult prezzo_originaleV;
+            ValidationResult prezzo_scontatoV;
+
+            string er_list = "";
+
             if (CheckBoxOrdOggCheckAddNotOffer.Checked == true)
             {
                 idiri = Convert.ToInt32(FieldOrdOggPezzo.SelectedItem.GetHashCode());
@@ -4925,43 +4930,19 @@ namespace mangaerordini
                 idiri = Convert.ToInt32(FieldOrdOggIdRic.Text);
             }
 
-            DateTime dataETAOrdValue;
-
-            string er_list = "";
-
             if (idiri < 1)
             {
                 er_list += "Selezionare un ricambio dal menù a tendina." + Environment.NewLine;
             }
 
-            if (!DateTime.TryParseExact(dataETAString, dateFormat, provider, DateTimeStyles.None, out dataETAOrdValue))
-            {
-                er_list += "Data non valida o vuota" + Environment.NewLine;
-            }
+            dataETAOrdValue = ValidateDate(dataETAString);
+            er_list += dataETAOrdValue.Error;
 
-            if (!Decimal.TryParse(prezzo_originale, style, culture, out decimal prezzo_originaleV))
-            {
-                er_list += "Prezzo (" + prezzo_originale + ") non valido(##,##) o vuoto" + Environment.NewLine;
-            }
-            else
-            {
-                if (prezzo_originaleV < 0)
-                {
-                    er_list += "Il prezzo deve essere positivo" + Environment.NewLine;
-                }
-            }
+            prezzo_originaleV = ValidatePrezzo(prezzo_originale);
+            er_list += prezzo_originaleV.Error;
 
-            if (!Decimal.TryParse(prezzo_scontato, style, culture, out decimal prezzo_scontatoV))
-            {
-                er_list += "Prezzo finale non valido(##,##) o vuoto" + Environment.NewLine;
-            }
-            else
-            {
-                if (prezzo_scontatoV < 0)
-                {
-                    er_list += "Il prezzo finale deve essere positivo" + Environment.NewLine;
-                }
-            }
+            prezzo_scontatoV = ValidatePrezzo(prezzo_scontato);
+            er_list += prezzo_originaleV.Error;
 
             if (!Int32.TryParse(pezzi, style, culture, out int pezziV))
             {
@@ -4974,8 +4955,6 @@ namespace mangaerordini
                     er_list += "Il numero di pezzi deve essere positivo" + Environment.NewLine;
                 }
             }
-
-
 
             if (er_list != "")
             {
@@ -5036,10 +5015,10 @@ namespace mangaerordini
                     cmd.CommandText = commandText;
                     cmd.Parameters.AddWithValue("@idord", idordine);
                     cmd.Parameters.AddWithValue("@idri", idiri);
-                    cmd.Parameters.AddWithValue("@por", prezzo_originaleV);
-                    cmd.Parameters.AddWithValue("@pos", prezzo_scontatoV);
+                    cmd.Parameters.AddWithValue("@por", prezzo_originaleV.DecimalValue);
+                    cmd.Parameters.AddWithValue("@pos", prezzo_scontatoV.DecimalValue);
                     cmd.Parameters.AddWithValue("@pezzi", pezziV);
-                    cmd.Parameters.AddWithValue("@eta", dataETAOrdValue);
+                    cmd.Parameters.AddWithValue("@eta", dataETAOrdValue.DateValue);
                     cmd.Parameters.AddWithValue("@Outside_Offer", (CheckBoxOrdOggCheckAddNotOffer.Checked == true) ? 1 : 0);
                     cmd.Parameters.AddWithValue("@idoggoff", idoggOff);
 

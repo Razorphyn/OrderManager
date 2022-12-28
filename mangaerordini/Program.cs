@@ -217,28 +217,6 @@ namespace mangaerordini
 
                             if (success)
                             {
-                                /*commandText = "UPDATE " + schemadb + @"[informazioni] SET versione=@ver WHERE id=1;";
-                                using (SQLiteConnection conn = new SQLiteConnection(connectionString))
-                                using (SQLiteCommand cmd = new SQLiteCommand(commandText, conn))
-                                {
-                                    try
-                                    {
-                                        cmd.CommandText = commandText;
-                                        cmd.Parameters.AddWithValue("@ver", dec);
-                                        conn.Open();
-                                        cmd.ExecuteNonQuery();
-                                        MessageBox.Show("Database aggiornato alla versione: " + fnames_ver[index_str]);
-                                        version = Convert.ToDecimal(fnames_ver[index_str]);
-                                    }
-                                    catch (SQLiteException ex)
-                                    {
-                                        MessageBox.Show("Errore durante aggiornamento tabella informazioni alla versione " + file.Name + " . Codice: " + ex.Message);
-                                    }
-                                    finally
-                                    {
-                                        conn.Close();
-                                    }
-                                }*/
                                 DelTempFileBkDb();
                             }
                             else
@@ -454,47 +432,5 @@ namespace mangaerordini
                 System.Environment.Exit(1);
             }
         }
-
-        static void Application_ThreadException(object sender, ThreadExceptionEventArgs e)
-        {
-            string createText = e.Exception.Message + Environment.NewLine;
-            string path = Path.GetDirectoryName(Application.ExecutablePath) + @"\error.log";
-            File.WriteAllText(path, createText);
-
-            // Log the exception, display it, etc
-            //Debug.WriteLine(e.Exception.Message);
-        }
-
-        static void CurrentDomain_UnhandledException(object sender, UnhandledExceptionEventArgs e)
-        {
-            string createText = (e.ExceptionObject as Exception).Message + Environment.NewLine;
-            string path = Path.GetDirectoryName(Application.ExecutablePath) + @"\error.log";
-
-            File.AppendAllText(path, createText);
-            // Log the exception, display it, etc
-            //Debug.WriteLine((e.ExceptionObject as Exception).Message);
-        }
-        static void FirstChanceHandler(object source, FirstChanceExceptionEventArgs e)
-        {
-            string createText = String.Format("FirstChanceException event raised in {0}: {1}", AppDomain.CurrentDomain.FriendlyName, e.Exception.Message) + Environment.NewLine;
-            string path = Path.GetDirectoryName(Application.ExecutablePath) + @"\error.log";
-
-            File.AppendAllText(path, createText);
-
-        }
-
-        public static IEnumerable<string> CustomSort(this IEnumerable<string> list)
-        {
-            int maxLen = list.Select(s => s.Length).Max();
-
-            return list.Select(s => new
-            {
-                OrgStr = s,
-                SortStr = Regex.Replace(s, @"(\d+)|(\D+)", m => m.Value.PadLeft(maxLen, char.IsDigit(m.Value[0]) ? ' ' : '\xffff'))
-            })
-            .OrderBy(x => x.SortStr)
-            .Select(x => x.OrgStr);
-        }
-
     }
 }
