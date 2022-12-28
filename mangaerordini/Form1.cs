@@ -620,7 +620,6 @@ namespace mangaerordini
             er_list += ValidateCodiceRicambio(codice);
 
             ValidationResult answer = ValidatePrezzo(prezzo);
-
             er_list += answer.Error;
 
             if (fornitoreId < 1)
@@ -692,26 +691,20 @@ namespace mangaerordini
 
             answer = ValidateMacchina(macchinaId);
 
-            if (answer.Success)
-            {
-                er_list += answer.Error;
-            }
-            else
+            if (!answer.Success)
             {
                 MessageBox.Show(answer.Error);
                 return;
             }
+            er_list += answer.Error;
 
             answer = ValidateFornitore(fornitoreId);
-            if (answer.Success)
-            {
-                er_list += answer.Error;
-            }
-            else
+            if (!answer.Success)
             {
                 MessageBox.Show(answer.Error);
                 return;
             }
+            er_list += answer.Error;
 
             er_list += ValidateCodiceRicambio(codice);
 
@@ -1579,16 +1572,12 @@ namespace mangaerordini
             }
 
             answer = ValidateCliente(cliente);
-
-            if (answer.Success)
-            {
-                er_list += answer.Error;
-            }
-            else
+            if (!answer.Success)
             {
                 MessageBox.Show(answer.Error);
                 return;
             }
+            er_list += answer.Error;
 
             if (!int.TryParse(idF, out int idQ))
             {
@@ -2150,16 +2139,12 @@ namespace mangaerordini
             }
 
             answer = ValidateCliente(idcl);
-
-            if (answer.Success)
-            {
-                er_list += answer.Error;
-            }
-            else
+            if (!answer.Success)
             {
                 MessageBox.Show(answer.Error);
                 return;
             }
+            er_list += answer.Error;
 
             if (er_list != "")
             {
@@ -2209,8 +2194,8 @@ namespace mangaerordini
             string codice = ChangeDatiMacchinaCodice.Text.Trim();
             string idF = ChangeDatiMacchinaID.Text;
 
-            ValidationResult answer = new ValidationResult();
-            string commandText = "";
+            ValidationResult answer;
+            string commandText;
 
             string er_list = "";
 
@@ -2220,16 +2205,12 @@ namespace mangaerordini
             }
 
             answer = ValidateCliente(cliente);
-
-            if (answer.Success)
-            {
-                er_list += answer.Error;
-            }
-            else
+            if (!answer.Success)
             {
                 MessageBox.Show(answer.Error);
                 return;
             }
+            er_list += answer.Error;
 
             if (!int.TryParse(idF, out int idQ))
             {
@@ -2541,7 +2522,7 @@ namespace mangaerordini
             int idpref = Convert.ToInt32(AddOffCreaPRef.SelectedValue.GetHashCode());
             int stato = Convert.ToInt32(AddOffCreaStato.SelectedValue.GetHashCode());
 
-            DateTime dataoffValue;
+            ValidationResult dataoffValue = new ValidationResult();
 
             stato = (stato < 0) ? 0 : stato;
 
@@ -2556,36 +2537,26 @@ namespace mangaerordini
                 er_list += "Numero Offerta non valido o vuoto" + Environment.NewLine;
             }
 
-            if (!DateTime.TryParseExact(dataoffString, dateFormat, provider, DateTimeStyles.None, out dataoffValue))
-            {
-                er_list += "Data non valida o vuota" + Environment.NewLine;
-            }
+            dataoffValue = ValidateDate(dataoffString);
+            er_list += dataoffValue.Error;
 
             answer = ValidateCliente(idcl);
-
-            if (answer.Success)
-            {
-                er_list += answer.Error;
-            }
-            else
+            if (!answer.Success)
             {
                 MessageBox.Show(answer.Error);
                 return;
             }
+            er_list += answer.Error;
 
             if (idpref > 0)
             {
                 answer = ValidatePRef(idpref);
-
-                if (answer.Success)
-                {
-                    er_list += answer.Error;
-                }
-                else
+                if (!answer.Success)
                 {
                     MessageBox.Show(answer.Error);
                     return;
                 }
+                er_list += answer.Error;
             }
 
             if (!string.IsNullOrEmpty(spedizioni))
@@ -2612,7 +2583,7 @@ namespace mangaerordini
                 try
                 {
                     cmd.CommandText = commandText;
-                    cmd.Parameters.AddWithValue("@data", dataoffValue);
+                    cmd.Parameters.AddWithValue("@data", dataoffValue.DateValue);
                     cmd.Parameters.AddWithValue("@code", numeroOff);
                     cmd.Parameters.AddWithValue("@idcl", idcl);
                     cmd.Parameters.AddWithValue("@stato", stato);
@@ -2623,7 +2594,7 @@ namespace mangaerordini
 
                     if (prezzoSpedizione.DecimalValue.HasValue)
                     {
-                        cmd.Parameters.AddWithValue("@cossp", prezzoSpedizione.DecimalValue );
+                        cmd.Parameters.AddWithValue("@cossp", prezzoSpedizione.DecimalValue);
                         cmd.Parameters.AddWithValue("@gestsp", gestSP);
                     }
                     else
@@ -2694,7 +2665,6 @@ namespace mangaerordini
             {
                 try
                 {
-
                     cmdCount.Parameters.AddWithValue("@idcl", idcl);
                     cmdCount.Parameters.AddWithValue("@stato", stato);
                     count = Convert.ToInt32(cmdCount.ExecuteScalar());
@@ -3206,10 +3176,9 @@ namespace mangaerordini
             int pref = Convert.ToInt32(AddOffCreaPRef.SelectedItem.GetHashCode());
             int stato = Convert.ToInt32(AddOffCreaStato.SelectedItem.GetHashCode());
 
-            DateTime dataoffValue;
-
             ValidationResult answer;
             ValidationResult prezzoSpedizione = new ValidationResult();
+            ValidationResult dataoffValue = new ValidationResult();
 
             string commandText;
 
@@ -3220,36 +3189,26 @@ namespace mangaerordini
                 er_list += "Numero Offerta non valido o vuoto" + Environment.NewLine;
             }
 
-            if (!DateTime.TryParseExact(dataoffString, dateFormat, provider, DateTimeStyles.None, out dataoffValue))
-            {
-                er_list += "Data non valida o vuota" + Environment.NewLine;
-            }
+            dataoffValue = ValidateDate(dataoffString);
+            er_list += dataoffValue.Error;
 
             answer = ValidateCliente(cliente);
-
-            if (answer.Success)
-            {
-                er_list += answer.Error;
-            }
-            else
+            if (!answer.Success)
             {
                 MessageBox.Show(answer.Error);
                 return;
             }
+            er_list += answer.Error;
 
             if (pref > 0)
             {
                 answer = ValidatePRef(pref);
-
-                if (answer.Success)
-                {
-                    er_list += answer.Error;
-                }
-                else
+                if (!answer.Success)
                 {
                     MessageBox.Show(answer.Error);
                     return;
                 }
+                er_list += answer.Error;
             }
 
             if (!string.IsNullOrEmpty(spedizioni))
@@ -3291,7 +3250,7 @@ namespace mangaerordini
                     cmd.Parameters.Clear();
 
                     cmd.CommandText = commandText;
-                    cmd.Parameters.AddWithValue("@date", dataoffValue);
+                    cmd.Parameters.AddWithValue("@date", dataoffValue.DateValue);
                     cmd.Parameters.AddWithValue("@noff", numeroOff);
                     cmd.Parameters.AddWithValue("@idcl", cliente);
                     cmd.Parameters.AddWithValue("@stato", stato);
@@ -3929,7 +3888,7 @@ namespace mangaerordini
             string sconto = FieldOrdSconto.Text.Trim();
             string prezzoIS = FieldOrdTot.Text.Trim();
             decimal prezzoI;
-            decimal scontoV = 0;
+            ValidationResult scontoV = new ValidationResult();
 
             if (!string.IsNullOrEmpty(prezzoIS))
                 prezzoI = Convert.ToDecimal(prezzoIS);
@@ -3943,24 +3902,15 @@ namespace mangaerordini
                 return;
             }
 
-            if (!Regex.IsMatch(sconto, @"^[\d,.]+$") || !Decimal.TryParse(sconto, style, culture, out scontoV))
-            {
-                er_list += "Sconto non valido(##,##) o vuoto" + Environment.NewLine;
-            }
-            else
-            {
-                if (scontoV < 0 || scontoV > 100)
-                {
-                    er_list += "Lo Sconto deve essere tra 0 e 100%" + Environment.NewLine;
-                }
-            }
+            scontoV = ValidateSconto(sconto);
+            er_list += scontoV.Error;
 
             if (er_list != "")
             {
                 MessageBox.Show(er_list);
                 return;
             }
-            FieldOrdPrezF.Text = ((prezzoI * (1 - scontoV / 100)).ToString("N2", nfi)).Replace(".", "");
+            FieldOrdPrezF.Text = (prezzoI * (1 - scontoV.DecimalValue / 100)).Value.ToString("N2", nfi).Replace(".", "");
         }
         private void ApplySconto(object sender, KeyEventArgs e)
         {
@@ -4222,27 +4172,25 @@ namespace mangaerordini
             int stato_ordine = FieldOrdStato.SelectedItem.GetHashCode();
             stato_ordine = (stato_ordine < 0) ? 0 : stato_ordine;
 
-            DateTime dataOrdValue;
-            DateTime dataETAOrdValue;
-
             ValidationResult answer;
             ValidationResult prezzoSpedizione = new ValidationResult();
+            ValidationResult dataOrdValue = new ValidationResult();
+            ValidationResult dataETAOrdValue = new ValidationResult();
+            ValidationResult tot_ordineV = new ValidationResult();
+            ValidationResult prezzo_finaleV = new ValidationResult();
+            ValidationResult scontoV = new ValidationResult();
 
             string er_list = "";
 
             if (CheckBoxOrdOffertaNonPresente.Checked)
             {
                 answer = ValidateCliente((int)id_cl);
-
-                if (answer.Success)
-                {
-                    er_list += answer.Error;
-                }
-                else
+                if (!answer.Success)
                 {
                     MessageBox.Show(answer.Error);
                     return;
                 }
+                er_list += answer.Error;
             }
 
             if (string.IsNullOrEmpty(n_ordine) || !Regex.IsMatch(n_ordine, @"^\d+$"))
@@ -4250,31 +4198,15 @@ namespace mangaerordini
                 er_list += "Numero Ordine non valido o vuoto" + Environment.NewLine;
             }
 
-            if (!DateTime.TryParseExact(dataOrdString, dateFormat, provider, DateTimeStyles.None, out dataOrdValue))
-            {
-                er_list += "Data non valida o vuota" + Environment.NewLine;
-            }
+            dataOrdValue = ValidateDate(dataOrdString);
+            er_list += dataOrdValue.Error;
 
-            if (!DateTime.TryParseExact(dataETAString, dateFormat, provider, DateTimeStyles.None, out dataETAOrdValue))
-            {
-                er_list += "Data non valida o vuota" + Environment.NewLine;
-            }
+            dataETAOrdValue = ValidateDate(dataETAString);
+            er_list += dataETAOrdValue.Error;
 
-            if (DateTime.Compare(dataOrdValue, dataETAOrdValue) > 0)
+            if (DateTime.Compare(dataOrdValue.DateValue, dataETAOrdValue.DateValue) > 0)
             {
                 er_list += "Data di Arrivo(ETA) antecedente a quella di creazione dell'ordine" + Environment.NewLine;
-            }
-
-            if (!Decimal.TryParse(sconto, style, culture, out decimal scontoV))
-            {
-                er_list += "Prezzo non valido(##,##) o vuoto" + Environment.NewLine;
-            }
-            else
-            {
-                if (scontoV < 0 || scontoV > 100)
-                {
-                    er_list += "Il prezzo deve essere positivo" + Environment.NewLine;
-                }
             }
 
             if (!string.IsNullOrEmpty(spedizioni))
@@ -4286,29 +4218,26 @@ namespace mangaerordini
                 }
             }
 
-            if (!Decimal.TryParse(tot_ordine, style, culture, out decimal tot_ordineV))
+            if (CheckBoxCopiaOffertainOrdine.Checked == false)
             {
-                er_list += "Prezzo non valido(##,##) o vuoto" + Environment.NewLine;
+                tot_ordineV.DecimalValue = 0;
+                prezzo_finaleV.DecimalValue = 0;
             }
             else
             {
-                if (tot_ordineV < 0)
-                {
-                    er_list += "Il prezzo deve essere positivo" + Environment.NewLine;
-                }
+                tot_ordineV = ValidatePrezzo(tot_ordine);
+                er_list += tot_ordineV.Error;
+
+                prezzo_finaleV = ValidatePrezzo(prezzo_finale);
+                er_list += prezzo_finaleV.Error;
+
+                prezzo_finaleV = ValidateSconto(prezzo_finale);
+                er_list += prezzo_finaleV.Error;
             }
 
-            if (!Decimal.TryParse(prezzo_finale, style, culture, out decimal prezzo_finaleV))
-            {
-                er_list += "Prezzo finale non valido(##,##) o vuoto" + Environment.NewLine;
-            }
-            else
-            {
-                if (prezzo_finaleV < 0)
-                {
-                    er_list += "Il prezzo finale deve essere positivo" + Environment.NewLine;
-                }
-            }
+            scontoV = ValidateSconto(sconto);
+            er_list += scontoV.Error;
+
 
             if (CheckBoxOrdOffertaNonPresente.Checked == false)
             {
@@ -4354,22 +4283,16 @@ namespace mangaerordini
             {
                 try
                 {
-                    if (CheckBoxCopiaOffertainOrdine.Checked == false)
-                    {
-                        tot_ordineV = 0;
-                        prezzo_finaleV = 0;
-                    }
-
                     cmd.CommandText = commandText;
                     cmd.Parameters.AddWithValue("@codo", n_ordine);
                     cmd.Parameters.AddWithValue("@idoof", id_offerta);
                     cmd.Parameters.AddWithValue("@idlc", id_cl);
                     cmd.Parameters.AddWithValue("@idcont", id_contatto);
-                    cmd.Parameters.AddWithValue("@dataord", dataOrdValue);
-                    cmd.Parameters.AddWithValue("@dataeta", dataETAOrdValue);
-                    cmd.Parameters.AddWithValue("@totord", tot_ordineV);
-                    cmd.Parameters.AddWithValue("@sconto", scontoV);
-                    cmd.Parameters.AddWithValue("@prezzoF", prezzo_finaleV);
+                    cmd.Parameters.AddWithValue("@dataord", dataOrdValue.DateValue);
+                    cmd.Parameters.AddWithValue("@dataeta", dataETAOrdValue.DateValue);
+                    cmd.Parameters.AddWithValue("@totord", tot_ordineV.DecimalValue);
+                    cmd.Parameters.AddWithValue("@sconto", scontoV.DecimalValue);
+                    cmd.Parameters.AddWithValue("@prezzoF", prezzo_finaleV.DecimalValue);
                     cmd.Parameters.AddWithValue("@stato", stato_ordine);
                     if (prezzoSpedizione.DecimalValue.HasValue)
                     {
@@ -5628,12 +5551,13 @@ namespace mangaerordini
             int stato_ordine = FieldOrdStato.SelectedItem.GetHashCode();
             stato_ordine = (stato_ordine < 0) ? 0 : stato_ordine;
 
-            decimal scontoV = 0;
-
-            DateTime dataOrdValue;
-            DateTime dataETAOrdValue;
+            ValidationResult dataOrdValue;
+            ValidationResult dataETAOrdValue;
 
             ValidationResult prezzoSpedizione = new ValidationResult();
+            ValidationResult scontoV = new ValidationResult();
+            ValidationResult tot_ordineV = new ValidationResult();
+            ValidationResult prezzo_finaleV = new ValidationResult();
 
             string er_list = "";
             if (string.IsNullOrEmpty(n_ordine) || !Regex.IsMatch(n_ordine, @"^\d+$"))
@@ -5641,60 +5565,25 @@ namespace mangaerordini
                 er_list += "Numero Ordine non valido o vuoto" + Environment.NewLine;
             }
 
-            if (!DateTime.TryParseExact(dataOrdString, dateFormat, provider, DateTimeStyles.None, out dataOrdValue))
-            {
-                er_list += "Data non valida o vuota" + Environment.NewLine;
-            }
-            else
-            {
-                dataOrdValue = DateTime.ParseExact(dataOrdString, dateFormat, provider);
-            }
+            dataOrdValue = ValidateDate(dataOrdString);
+            er_list += dataOrdValue.Error;
 
-            if (!DateTime.TryParseExact(dataETAString, dateFormat, provider, DateTimeStyles.None, out dataETAOrdValue))
-            {
-                er_list += "Data non valida o vuota" + Environment.NewLine;
-            }
+            dataETAOrdValue = ValidateDate(dataETAString);
+            er_list += dataETAOrdValue.Error;
 
-            if (DateTime.Compare(dataOrdValue, dataETAOrdValue) > 0)
+            if (DateTime.Compare(dataOrdValue.DateValue, dataETAOrdValue.DateValue) > 0)
             {
                 er_list += "Data di Arrivo(ETA) antecedente a quella di creazione dell'ordine" + Environment.NewLine;
             }
 
-            if (!Regex.IsMatch(sconto, @"^[\d,.]+$") || !Decimal.TryParse(sconto, style, culture, out scontoV))
-            {
-                er_list += "Sconto non valido(##,##) o vuoto" + Environment.NewLine;
-            }
-            else
-            {
-                if (scontoV < 0 || scontoV > 100)
-                {
-                    er_list += "Lo sconto deve essere tra 0 e 100%" + Environment.NewLine;
-                }
-            }
+            scontoV = ValidateSconto(sconto);
+            er_list += scontoV.Error;
 
-            if (!Decimal.TryParse(tot_ordine, style, culture, out decimal tot_ordineV))
-            {
-                er_list += "Prezzo non valido(##,##) o vuoto" + Environment.NewLine;
-            }
-            else
-            {
-                if (tot_ordineV < 0)
-                {
-                    er_list += "Il prezzo deve essere positivo" + Environment.NewLine;
-                }
-            }
+            tot_ordineV = ValidatePrezzo(tot_ordine);
+            er_list += tot_ordineV.Error;
 
-            if (!Decimal.TryParse(prezzo_finale, style, culture, out decimal prezzo_finaleV))
-            {
-                er_list += "Prezzo finale non valido(##,##) o vuoto" + Environment.NewLine;
-            }
-            else
-            {
-                if (prezzo_finaleV < 0)
-                {
-                    er_list += "Il prezzo finale deve essere positivo" + Environment.NewLine;
-                }
-            }
+            prezzo_finaleV = ValidatePrezzo(prezzo_finale);
+            er_list += prezzo_finaleV.Error;
 
             if (!string.IsNullOrEmpty(spedizioni))
             {
@@ -5783,9 +5672,9 @@ namespace mangaerordini
                     cmd.Parameters.AddWithValue("@codo", n_ordine);
                     cmd.Parameters.AddWithValue("@dataord", dataOrdValue);
                     cmd.Parameters.AddWithValue("@dataeta", dataETAOrdValue);
-                    cmd.Parameters.AddWithValue("@totord", tot_ordineV);
-                    cmd.Parameters.AddWithValue("@sconto", scontoV);
-                    cmd.Parameters.AddWithValue("@prezzoF", prezzo_finaleV);
+                    cmd.Parameters.AddWithValue("@totord", tot_ordineV.DecimalValue);
+                    cmd.Parameters.AddWithValue("@sconto", scontoV.DecimalValue);
+                    cmd.Parameters.AddWithValue("@prezzoF", prezzo_finaleV.DecimalValue);
                     cmd.Parameters.AddWithValue("@stato", stato_ordine);
                     cmd.Parameters.AddWithValue("@idord", id_ordine);
                     if (prezzoSpedizione.DecimalValue.HasValue)
@@ -5835,20 +5724,20 @@ namespace mangaerordini
                             }
                             if (removed == false)
                             {
-                                if (DateTime.Compare(oldETA, dataETAOrdValue) == 0 && (oldPrezF != prezzo_finaleV || oldRef != n_ordine))
+                                if (DateTime.Compare(oldETA, dataETAOrdValue.DateValue) == 0 && (oldPrezF != prezzo_finaleV.DecimalValue || oldRef != n_ordine))
                                 {
                                     res = MessageBox.Show("Vuoi aggiornare l'evento del calendario relativo alll'ordine con le nuove informazioni?", "Conferma Aggiornamento Ordine Calendario", MessageBoxButtons.OKCancel, MessageBoxIcon.Information);
                                     if (res != DialogResult.Yes)
                                     {
-                                        UpdateCalendar(oldRef, n_ordine, id_ordine, dataETAOrdValue, false);
+                                        UpdateCalendar(oldRef, n_ordine, id_ordine, dataETAOrdValue.DateValue, false);
                                     }
                                 }
-                                else if (DateTime.Compare(oldETA, dataETAOrdValue) != 0)
+                                else if (DateTime.Compare(oldETA, dataETAOrdValue.DateValue) != 0)
                                 {
                                     res = MessageBox.Show("Vuoi aggiornare l'evento del calendario relativo alll'ordine con le nuove informazioni?" + Environment.NewLine + "L'evento verrà cancellato per poi essere inserito nuovamente.", "Conferma Aggiornamento Ordine Calendario", MessageBoxButtons.OKCancel, MessageBoxIcon.Information);
                                     if (res != DialogResult.Yes)
                                     {
-                                        UpdateCalendar(oldRef, n_ordine, id_ordine, dataETAOrdValue);
+                                        UpdateCalendar(oldRef, n_ordine, id_ordine, dataETAOrdValue.DateValue);
                                     }
                                 }
                             }
@@ -9210,12 +9099,11 @@ namespace mangaerordini
         public class ValidationResult
         {
             public bool Success { get; set; } = false;
-
             public bool BoolValue { get; set; } = false;
             public decimal? DecimalValue { get; set; } = null;
             public int? IntValue { get; set; } = null;
-
             public string Error { get; set; } = "";
+            public DateTime DateValue { get; set; } = DateTime.MinValue;
         }
 
         public ValidationResult ValidateCliente(int idcl)
@@ -9295,6 +9183,36 @@ namespace mangaerordini
             }
 
             answer.DecimalValue = prezzoD;
+            return answer;
+        }
+
+        public ValidationResult ValidateSconto(string sconto)
+        {
+            ValidationResult answer = new ValidationResult
+            {
+                Success = true
+            };
+
+            if (!Decimal.TryParse(sconto, style, culture, out decimal scontoV) || !Regex.IsMatch(sconto, @"^[\d,.]+$"))
+            {
+                answer.Success = false;
+            }
+
+            if (!answer.Success)
+            {
+                answer.Error = "Sconto non valido(##,##) o vuoto" + Environment.NewLine;
+                return answer;
+            }
+            else if (scontoV < 0 || scontoV > 100)
+            {
+                answer.Error = "Lo socnto deve essere compreso tra 0 e 100. " + Environment.NewLine;
+                return answer;
+            }
+            else
+            {
+                answer.DecimalValue = scontoV;
+            }
+
             return answer;
         }
 
@@ -9450,6 +9368,21 @@ namespace mangaerordini
             return answer;
         }
 
+        public ValidationResult ValidateDate(string stringDate)
+        {
+            ValidationResult answer = new ValidationResult();
+
+            if (!DateTime.TryParseExact(stringDate, dateFormat, provider, DateTimeStyles.None, out DateTime dataOrdValue))
+            {
+                answer.Error += "Valore: " + stringDate + ". Data non valida o vuota" + Environment.NewLine;
+            }
+            else
+            {
+                answer.DateValue = dataOrdValue;
+            }
+
+            return answer;
+        }
 
         //CREDITI
 
