@@ -386,14 +386,6 @@ namespace mangaerordini
             return;
         }
 
-        private void Timer_RunSQLiteOptimize_Tick(object sender, EventArgs e)
-        {
-            if (connection != null && connection.State == ConnectionState.Open)
-            {
-                RunSQLiteOptimize();
-            }
-        }
-
         private void ExportToCSV_Click(object sender, EventArgs e)
         {
             bool exportOfferte = false;
@@ -623,11 +615,7 @@ namespace mangaerordini
 
             string er_list = "";
 
-            //Aggiungere controllo input;
-            if (string.IsNullOrEmpty(nome))
-            {
-                er_list += "Nome Componenete non valido o vuoto" + Environment.NewLine;
-            }
+            er_list += ValidateComponenteNome(nome);
 
             er_list += ValidateCodiceRicambio(codice);
 
@@ -694,17 +682,13 @@ namespace mangaerordini
             int fornitoreId = Convert.ToInt32(ChangeDatiCompSupplier.SelectedItem.GetHashCode());
             int macchinaId = Convert.ToInt32(ChangeDatiCompMachine.SelectedItem.GetHashCode());
             string idF = ChangeDatiCompID.Text;
-            decimal prezzod = 0;
 
             ValidationResult answer = new ValidationResult();
             string er_list = "";
 
             string commandText;
 
-            if (string.IsNullOrEmpty(nome))
-            {
-                er_list += "Nome non valido o vuoto" + Environment.NewLine;
-            }
+            er_list += ValidateComponenteNome(nome);
 
             answer = ValidateMacchina(macchinaId);
 
@@ -736,17 +720,8 @@ namespace mangaerordini
                 er_list += "ID non valido o vuoto" + Environment.NewLine;
             }
 
-            if (!Decimal.TryParse(prezzo, style, culture, out prezzod))
-            {
-                er_list += "Prezzo non valido(##,##) o vuoto" + Environment.NewLine;
-            }
-            else
-            {
-                if (prezzod < 0)
-                {
-                    er_list += "Il prezzo deve essere positivo" + Environment.NewLine;
-                }
-            }
+            ValidationResult prezzod = ValidatePrezzo(prezzo);
+            er_list += prezzod.Error;
 
             if (er_list != "")
             {
@@ -779,7 +754,7 @@ namespace mangaerordini
                     cmd.Parameters.AddWithValue("@nome", nome);
                     cmd.Parameters.AddWithValue("@codice", codice);
                     cmd.Parameters.AddWithValue("@descrizione", descrizione);
-                    cmd.Parameters.AddWithValue("@prezzod", prezzod);
+                    cmd.Parameters.AddWithValue("@prezzod", prezzod.DecimalValue);
                     cmd.Parameters.AddWithValue("@idif", fornitoreId);
                     cmd.Parameters.AddWithValue("@idq", idQ);
                     if (macchinaId < 1)
@@ -828,10 +803,7 @@ namespace mangaerordini
 
             string er_list = "";
 
-            if (string.IsNullOrEmpty(nome))
-            {
-                er_list += "Nome non valido o vuoto" + Environment.NewLine;
-            }
+            er_list += ValidateComponenteNome(nome);
 
             if (!int.TryParse(idF, out int idQ))
             {
@@ -1165,10 +1137,8 @@ namespace mangaerordini
 
             string er_list = "";
 
-            if (string.IsNullOrEmpty(nome))
-            {
-                er_list += "Nome Componenete non valido o vuoto" + Environment.NewLine;
-            }
+            er_list += ValidateComponenteNome(nome);
+
             if (string.IsNullOrEmpty(stato))
             {
                 er_list += "Stato non valido o vuoto" + Environment.NewLine;
@@ -1236,10 +1206,8 @@ namespace mangaerordini
 
             string er_list = "";
 
-            if (string.IsNullOrEmpty(nome))
-            {
-                er_list += "Nome Componenete non valido o vuoto" + Environment.NewLine;
-            }
+            er_list += ValidateComponenteNome(nome);
+
             if (string.IsNullOrEmpty(stato))
             {
                 er_list += "Stato non valido o vuoto" + Environment.NewLine;
@@ -2578,8 +2546,9 @@ namespace mangaerordini
             stato = (stato < 0) ? 0 : stato;
 
             string commandText = "";
-            int UserExist = 0;
+
             ValidationResult answer = new ValidationResult();
+            ValidationResult prezzoSpedizione = new ValidationResult();
 
             string er_list = "";
             if (string.IsNullOrEmpty(numeroOff) || !Regex.IsMatch(numeroOff, @"^\d+$"))
@@ -2606,52 +2575,23 @@ namespace mangaerordini
 
             if (idpref > 0)
             {
-                commandText = "SELECT COUNT(*) FROM " + schemadb + @"[clienti_riferimenti] WHERE ([Id] = @user) LIMIT 1;";
-                UserExist = 0;
+                answer = ValidatePRef(idpref);
 
-                using (SQLiteCommand cmd = new SQLiteCommand(commandText, connection))
+                if (answer.Success)
                 {
-                    try
-                    {
-                        cmd.CommandText = commandText;
-                        cmd.Parameters.AddWithValue("@user", idpref);
-
-                        UserExist = Convert.ToInt32(cmd.ExecuteScalar());
-                        if (UserExist < 1)
-                        {
-                            er_list += "Persona di riferimento non valido o vuoto" + Environment.NewLine;
-                        }
-                    }
-                    catch (SQLiteException ex)
-                    {
-                        MessageBox.Show("Errore durante verifica ID Cliente. Codice: " + ReturnErorrCode(ex));
-                        return;
-                    }
-                }
-            }
-
-            decimal? spedizioniV = null;
-            if (!string.IsNullOrEmpty(spedizioni))
-            {
-                if (!Decimal.TryParse(spedizioni, style, culture, out decimal test))
-                {
-                    er_list += "Prezzo spedizione non valido(##,##) o vuoto" + Environment.NewLine;
+                    er_list += answer.Error;
                 }
                 else
                 {
-                    if (spedizioniV < 0)
-                    {
-                        er_list += "Il prezzo spedizione deve essere positivo" + Environment.NewLine;
-                    }
-                    else
-                    {
-                        spedizioniV = test;
-                    }
+                    MessageBox.Show(answer.Error);
+                    return;
                 }
-                if (gestSP < 0)
-                {
-                    er_list += "Selezionare opzione per la gestione del costo della spedizione" + Environment.NewLine;
-                }
+            }
+
+            if (!string.IsNullOrEmpty(spedizioni))
+            {
+                prezzoSpedizione = ValidateSpedizione(spedizioni, gestSP);
+                er_list += prezzoSpedizione.Error;
             }
 
             if (er_list != "")
@@ -2681,9 +2621,9 @@ namespace mangaerordini
                     else
                         cmd.Parameters.AddWithValue("@idref", DBNull.Value);
 
-                    if (spedizioniV.HasValue)
+                    if (prezzoSpedizione.DecimalValue.HasValue)
                     {
-                        cmd.Parameters.AddWithValue("@cossp", spedizioniV);
+                        cmd.Parameters.AddWithValue("@cossp", prezzoSpedizione.DecimalValue );
                         cmd.Parameters.AddWithValue("@gestsp", gestSP);
                     }
                     else
@@ -3269,8 +3209,9 @@ namespace mangaerordini
             DateTime dataoffValue;
 
             ValidationResult answer;
+            ValidationResult prezzoSpedizione = new ValidationResult();
+
             string commandText;
-            int UserExist = 0;
 
             string er_list = "";
 
@@ -3298,51 +3239,25 @@ namespace mangaerordini
 
             if (pref > 0)
             {
-                commandText = "SELECT COUNT(*) FROM " + schemadb + @"[clienti_riferimenti] WHERE ([Id] = @user) LIMIT 1;";
-                UserExist = 0;
+                answer = ValidatePRef(pref);
 
-                using (SQLiteCommand cmd = new SQLiteCommand(commandText, connection))
+                if (answer.Success)
                 {
-                    try
-                    {
-                        cmd.CommandText = commandText;
-                        cmd.Parameters.AddWithValue("@user", pref);
-
-                        UserExist = Convert.ToInt32(cmd.ExecuteScalar());
-                        if (UserExist < 1)
-                        {
-                            er_list += "Persona di riferimento non valido o vuoto" + Environment.NewLine;
-                        }
-                    }
-                    catch (SQLiteException ex)
-                    {
-                        MessageBox.Show("Errore durante verifica ID Persona di riferimento. Codice: " + ReturnErorrCode(ex));
-                        return;
-                    }
-                }
-            }
-
-            decimal? spedizioniV = null;
-            if (!string.IsNullOrEmpty(spedizioni))
-            {
-                if (!Decimal.TryParse(spedizioni, style, culture, out decimal test))
-                {
-                    er_list += "Prezzo spedizione non valido(##,##) o vuoto" + Environment.NewLine;
+                    er_list += answer.Error;
                 }
                 else
                 {
-                    if (spedizioniV < 0)
-                    {
-                        er_list += "Il prezzo spedizione deve essere positivo" + Environment.NewLine;
-                    }
-                    else
-                    {
-                        spedizioniV = test;
-                    }
+                    MessageBox.Show(answer.Error);
+                    return;
                 }
-                if (gestSP < 0)
+            }
+
+            if (!string.IsNullOrEmpty(spedizioni))
+            {
+                if (!string.IsNullOrEmpty(spedizioni))
                 {
-                    er_list += "Selezionare opzione per la gestione del costo della spedizione" + Environment.NewLine;
+                    prezzoSpedizione = ValidateSpedizione(spedizioni, gestSP);
+                    er_list += prezzoSpedizione.Error;
                 }
             }
 
@@ -3386,9 +3301,9 @@ namespace mangaerordini
                     else
                         cmd.Parameters.AddWithValue("@idref", DBNull.Value);
 
-                    if (spedizioniV.HasValue)
+                    if (prezzoSpedizione.DecimalValue.HasValue)
                     {
-                        cmd.Parameters.AddWithValue("@cossp", spedizioniV);
+                        cmd.Parameters.AddWithValue("@cossp", prezzoSpedizione.DecimalValue);
                         cmd.Parameters.AddWithValue("@gestsp", gestSP);
                     }
                     else
@@ -4307,11 +4222,11 @@ namespace mangaerordini
             int stato_ordine = FieldOrdStato.SelectedItem.GetHashCode();
             stato_ordine = (stato_ordine < 0) ? 0 : stato_ordine;
 
-            decimal? spedizioniV = null;
             DateTime dataOrdValue;
             DateTime dataETAOrdValue;
 
             ValidationResult answer;
+            ValidationResult prezzoSpedizione = new ValidationResult();
 
             string er_list = "";
 
@@ -4364,24 +4279,10 @@ namespace mangaerordini
 
             if (!string.IsNullOrEmpty(spedizioni))
             {
-                if (!Decimal.TryParse(spedizioni, style, culture, out decimal test))
+                if (!string.IsNullOrEmpty(spedizioni))
                 {
-                    er_list += "Prezzo spedizione non valido(##,##) o vuoto" + Environment.NewLine;
-                }
-                else
-                {
-                    if (spedizioniV < 0)
-                    {
-                        er_list += "Il prezzo spedizione deve essere positivo" + Environment.NewLine;
-                    }
-                    else
-                    {
-                        spedizioniV = test;
-                    }
-                }
-                if (gestSP < 0)
-                {
-                    er_list += "Selezionare opzione per la gestione del costo della spedizione" + Environment.NewLine;
+                    prezzoSpedizione = ValidateSpedizione(spedizioni, gestSP);
+                    er_list += prezzoSpedizione.Error;
                 }
             }
 
@@ -4470,9 +4371,9 @@ namespace mangaerordini
                     cmd.Parameters.AddWithValue("@sconto", scontoV);
                     cmd.Parameters.AddWithValue("@prezzoF", prezzo_finaleV);
                     cmd.Parameters.AddWithValue("@stato", stato_ordine);
-                    if (spedizioniV.HasValue)
+                    if (prezzoSpedizione.DecimalValue.HasValue)
                     {
-                        cmd.Parameters.AddWithValue("@cossp", spedizioniV);
+                        cmd.Parameters.AddWithValue("@cossp", prezzoSpedizione.DecimalValue);
                         cmd.Parameters.AddWithValue("@gestsp", gestSP);
                     }
                     else
@@ -4577,8 +4478,6 @@ namespace mangaerordini
                     CheckBoxOrdOffertaNonPresente.Checked = false;
 
                     ComboSelOrdCl_SelectedIndexChanged(this, EventArgs.Empty);
-
-
 
                     MessageBox.Show("Ordine Creato.");
 
@@ -5731,9 +5630,10 @@ namespace mangaerordini
 
             decimal scontoV = 0;
 
-            decimal? spedizioniV = null;
             DateTime dataOrdValue;
             DateTime dataETAOrdValue;
+
+            ValidationResult prezzoSpedizione = new ValidationResult();
 
             string er_list = "";
             if (string.IsNullOrEmpty(n_ordine) || !Regex.IsMatch(n_ordine, @"^\d+$"))
@@ -5798,24 +5698,10 @@ namespace mangaerordini
 
             if (!string.IsNullOrEmpty(spedizioni))
             {
-                if (!Decimal.TryParse(spedizioni, style, culture, out decimal test))
+                if (!string.IsNullOrEmpty(spedizioni))
                 {
-                    er_list += "Prezzo spedizione non valido(##,##) o vuoto" + Environment.NewLine;
-                }
-                else
-                {
-                    if (spedizioniV < 0)
-                    {
-                        er_list += "Il prezzo spedizione deve essere positivo" + Environment.NewLine;
-                    }
-                    else
-                    {
-                        spedizioniV = test;
-                    }
-                }
-                if (gestSP < 0)
-                {
-                    er_list += "Selezionare opzione per la gestione del costo della spedizione" + Environment.NewLine;
+                    prezzoSpedizione = ValidateSpedizione(spedizioni, gestSP);
+                    er_list += prezzoSpedizione.Error;
                 }
             }
 
@@ -5902,9 +5788,9 @@ namespace mangaerordini
                     cmd.Parameters.AddWithValue("@prezzoF", prezzo_finaleV);
                     cmd.Parameters.AddWithValue("@stato", stato_ordine);
                     cmd.Parameters.AddWithValue("@idord", id_ordine);
-                    if (spedizioniV.HasValue)
+                    if (prezzoSpedizione.DecimalValue.HasValue)
                     {
-                        cmd.Parameters.AddWithValue("@cossp", spedizioniV);
+                        cmd.Parameters.AddWithValue("@cossp", prezzoSpedizione.DecimalValue);
                         cmd.Parameters.AddWithValue("@gestsp", gestSP);
                     }
                     else
@@ -5912,7 +5798,6 @@ namespace mangaerordini
                         cmd.Parameters.AddWithValue("@cossp", DBNull.Value);
                         cmd.Parameters.AddWithValue("@gestsp", DBNull.Value);
                     }
-
 
                     cmd.ExecuteScalar();
 
@@ -9304,6 +9189,13 @@ namespace mangaerordini
                 return ex.Message;
         }
 
+        private void Timer_RunSQLiteOptimize_Tick(object sender, EventArgs e)
+        {
+            if (connection != null && connection.State == ConnectionState.Open)
+            {
+                RunSQLiteOptimize();
+            }
+        }
 
         //ALTRO
         private void DataGridViewOrd_ColumnSortModeChanged(object sender, DataGridViewColumnEventArgs e)
@@ -9312,16 +9204,16 @@ namespace mangaerordini
             MessageBox.Show("w");
         }
 
-       
+
         //Validate functions
 
         public class ValidationResult
         {
-            public bool Success { get; set; }
+            public bool Success { get; set; } = false;
 
             public bool BoolValue { get; set; } = false;
-            public decimal DecimalValue { get; set; } = -1;
-            public int IntValue { get; set; } = -1;
+            public decimal? DecimalValue { get; set; } = null;
+            public int? IntValue { get; set; } = null;
 
             public string Error { get; set; } = "";
         }
@@ -9406,7 +9298,6 @@ namespace mangaerordini
             return answer;
         }
 
-
         public ValidationResult ValidateFornitore(int id)
         {
             string commandText = "SELECT COUNT(*) FROM " + schemadb + @"[fornitori] WHERE ([Id] = @user) LIMIT 1";
@@ -9486,7 +9377,80 @@ namespace mangaerordini
             return answer;
         }
 
-        
+        public ValidationResult ValidatePRef(int id)
+        {
+            string commandText = "SELECT COUNT(*) FROM " + schemadb + @"[clienti_riferimenti] WHERE ([Id] = @user) LIMIT 1;";
+
+            ValidationResult answer = new ValidationResult();
+
+            using (SQLiteCommand cmd = new SQLiteCommand(commandText, connection))
+            {
+                try
+                {
+                    cmd.CommandText = commandText;
+                    cmd.Parameters.AddWithValue("@user", id);
+
+                    answer.IntValue = Convert.ToInt32(cmd.ExecuteScalar());
+                    answer.Success = true;
+
+                    if (answer.IntValue < 1)
+                    {
+                        answer.BoolValue = false;
+                        answer.Error = "Persona di riferimento non valida o vuota." + Environment.NewLine;
+                    }
+                    else
+                    {
+                        answer.BoolValue = true;
+                    }
+                }
+                catch (SQLiteException ex)
+                {
+                    answer.Success = false;
+                    answer.Error = "Errore durante verifica ID Persona Riferiemnto. Codice: " + ReturnErorrCode(ex);
+                }
+            }
+
+            return answer;
+        }
+
+        public string ValidateComponenteNome(string nome)
+        {
+            if (string.IsNullOrEmpty(nome))
+            {
+                return "Nome Componenete non valido o vuoto" + Environment.NewLine;
+            }
+            return "";
+        }
+
+        public ValidationResult ValidateSpedizione(string spedizioni, int gestSP)
+        {
+            ValidationResult answer = new ValidationResult();
+
+            if (!Decimal.TryParse(spedizioni, style, culture, out decimal prezzo))
+            {
+                answer.Error += "Prezzo spedizione non valido(##,##) o vuoto" + Environment.NewLine;
+            }
+            else
+            {
+                if (prezzo < 0)
+                {
+                    answer.Error += "Il prezzo spedizione deve essere positivo" + Environment.NewLine;
+                }
+                else
+                {
+                    answer.DecimalValue = prezzo;
+                }
+            }
+
+            if (gestSP < 0)
+            {
+                answer.Error += "Selezionare opzione per la gestione del costo della spedizione" + Environment.NewLine;
+            }
+
+            return answer;
+        }
+
+
         //CREDITI
 
         private void Csvhelper_github_LinkClicked(object sender, LinkLabelLinkClickedEventArgs e)
