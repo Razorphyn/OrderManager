@@ -351,11 +351,6 @@ namespace mangaerordini
                 {
                     MessageBox.Show("Errore durante Ottimizzzazione. Errore: " + ReturnErorrCode(ex));
                 }
-                finally
-                {
-
-
-                }
             }
 
             foreach (TabPage c in TabPagelist)
@@ -379,19 +374,12 @@ namespace mangaerordini
 
 
                     cmd.CommandText = commandText;
-                    //cmd.Parameters.AddWithValue("@lktentry", entry);
-
-
                     cmd.ExecuteNonQuery();
 
                 }
                 catch (SQLiteException ex)
                 {
                     MessageBox.Show("Errore durante Ottimizzzazione. Errore: " + ReturnErorrCode(ex));
-                }
-                finally
-                {
-
                 }
             }
             return;
@@ -491,7 +479,6 @@ namespace mangaerordini
                                 {
                                     csv.WriteHeader<Offerte>();
                                     csv.NextRecord();
-                                    //csv.Context.RegisterClassMap<OfferteMap>();
 
                                     foreach (DataRow row in ds.Rows)
                                     {
@@ -511,11 +498,6 @@ namespace mangaerordini
 
 
                                 return;
-                            }
-                            finally
-                            {
-
-
                             }
                         }
 
@@ -599,7 +581,6 @@ namespace mangaerordini
                                 {
                                     csv.WriteHeader<Ordini>();
                                     csv.NextRecord();
-                                    //csv.Context.RegisterClassMap<OfferteMap>();
 
                                     foreach (DataRow row in ds.Rows)
                                     {
@@ -619,11 +600,6 @@ namespace mangaerordini
 
 
                                 return;
-                            }
-                            finally
-                            {
-
-
                             }
                         }
                     }
@@ -652,23 +628,11 @@ namespace mangaerordini
                 er_list += "Nome Componenete non valido o vuoto" + Environment.NewLine;
             }
 
-            Regex rgx = new Regex(@"^[a-zA-Z]{1}\d{1,}[-]\d{1,}$");
+            er_list += ValidateCodiceRicambio(codice);
 
-            if (string.IsNullOrEmpty(codice) || !rgx.IsMatch(codice))
-            {
-                er_list += "Codice non valido o vuoto" + Environment.NewLine;
-            }
+            ValidationResult answer = ValidatePrezzo(prezzo);
 
-
-
-            if (!Decimal.TryParse(prezzo, style, culture, out decimal prezzod))
-            {
-                er_list += "Prezzo non valido(##,##) o vuoto" + Environment.NewLine;
-            }
-            if (prezzod < 0)
-            {
-                er_list += "Il prezzo deve essere positivo" + Environment.NewLine;
-            }
+            er_list += answer.Error;
 
             if (fornitoreId < 1)
             {
@@ -684,8 +648,6 @@ namespace mangaerordini
 
             string commandText = "INSERT INTO " + schemadb + @"[pezzi_ricambi](nome, codice, descrizione, prezzo,ID_fornitore,ID_macchina) VALUES (@nome,@codice,@desc,@prezzo,@idif,@idma);";
 
-
-
             using (SQLiteCommand cmd = new SQLiteCommand(commandText, connection))
             {
                 try
@@ -694,7 +656,7 @@ namespace mangaerordini
                     cmd.Parameters.AddWithValue("@nome", nome);
                     cmd.Parameters.AddWithValue("@codice", codice);
                     cmd.Parameters.AddWithValue("@desc", descrizione);
-                    cmd.Parameters.AddWithValue("@prezzo", prezzod);
+                    cmd.Parameters.AddWithValue("@prezzo", answer.DecimalValue);
                     cmd.Parameters.AddWithValue("@idif", fornitoreId);
                     if (macchinaId < 1)
                         cmd.Parameters.AddWithValue("@idma", DBNull.Value);
@@ -703,8 +665,6 @@ namespace mangaerordini
 
 
                     cmd.ExecuteNonQuery();
-
-
 
                     string curPage = DataCompCurPage.Text.Trim();
                     if (!int.TryParse(curPage, out int page))
@@ -721,11 +681,6 @@ namespace mangaerordini
                 {
                     MessageBox.Show("Errore durante aggiunta al database. Errore: " + ReturnErorrCode(ex));
                     UpdateFields("R", "A", true);
-                }
-                finally
-                {
-
-
                 }
             }
             return;
@@ -776,11 +731,6 @@ namespace mangaerordini
 
                         return;
                     }
-                    finally
-                    {
-
-
-                    }
                 }
                 if (UserExist < 1)
                 {
@@ -789,43 +739,18 @@ namespace mangaerordini
                 }
             }
 
-            commandText = "SELECT COUNT(*) FROM " + schemadb + @"[fornitori] WHERE ([Id] = @user) LIMIT 1";
-            UserExist = 0;
-
-            using (SQLiteCommand cmd = new SQLiteCommand(commandText, connection))
+            ValidationResult answer = ValidateFornitore(fornitoreId);
+            if (answer.Success)
             {
-                try
-                {
-                    cmd.CommandText = commandText;
-                    cmd.Parameters.AddWithValue("@user", fornitoreId);
-
-                    UserExist = Convert.ToInt32(cmd.ExecuteScalar());
-                }
-                catch (SQLiteException ex)
-                {
-                    MessageBox.Show("Errore durante verifica ID Fornitore. Codice: " + ReturnErorrCode(ex));
-
-
-                    return;
-                }
-                finally
-                {
-
-
-                }
+                er_list += answer.Error;
+            }
+            else
+            {
+                MessageBox.Show(answer.Error);
+                return;
             }
 
-            if (UserExist < 1)
-            {
-                er_list += "Fornitore non presente nel database" + Environment.NewLine;
-            }
-
-            Regex rgx = new Regex(@"^[a-zA-Z]{1}\d{1,}[-]\d{1,}$");
-
-            if (string.IsNullOrEmpty(codice) || !rgx.IsMatch(codice))
-            {
-                er_list += "Codice non valido o vuoto" + Environment.NewLine;
-            }
+            er_list += ValidateCodiceRicambio(codice);
 
             if (!int.TryParse(idF, out int value))
             {
@@ -919,11 +844,6 @@ namespace mangaerordini
                     //ABILITA CAMPI & BOTTONI
                     UpdateFields("R", "E", true);
                 }
-                finally
-                {
-
-
-                }
             }
             return;
         }
@@ -999,12 +919,6 @@ namespace mangaerordini
                     //ABILITA CAMPI & BOTTONI
                     UpdateFields("R", "E", true);
                 }
-                finally
-                {
-
-
-
-                }
             }
             return;
         }
@@ -1018,11 +932,6 @@ namespace mangaerordini
 
         private void DataGridViewComp_CellDoubleClick(object sender, DataGridViewCellEventArgs e)
         {
-            /*DataGridView dgv = sender as DataGridView;
-            if (dgv == null)
-            {
-                return;
-            }*/
 
             if (!(sender is DataGridView dgv))
             {
@@ -1074,11 +983,6 @@ namespace mangaerordini
 
 
                             return;
-                        }
-                        finally
-                        {
-
-
                         }
                     }
 
@@ -1176,8 +1080,6 @@ namespace mangaerordini
             string addInfo = "";
             List<string> paramsQuery = new List<string>();
 
-            //if (Regex.IsMatch(codiceRicambioFilter, @"^[kdKD0-9\-]{1,}$"))
-            //if (!String.IsNullOrEmpty(codiceRicambioFilter) && Regex.IsMatch(codiceRicambioFilter, @"^[a-zA-Z]{1}\d{1,}[-]\d{1,}$"))
             if (codiceRicambioFilter != dataGridViewComp_Filtro_Codice.PlaceholderText && String.IsNullOrEmpty(codiceRicambioFilter) == false)
                 paramsQuery.Add(" [pezzi_ricambi].codice LIKE @codiceRicambioFilter");
 
@@ -1264,8 +1166,6 @@ namespace mangaerordini
                             data_grid.Columns[i].HeaderText = columnNames[data_grid.Columns[i].HeaderText];
 
                         data_grid.Columns[i].AutoSizeMode = DataGridViewAutoSizeColumnMode.DisplayedCells;
-                        //if(i== colCount-1)
-                        //dataGridViewFornitori.Columns[i].AutoSizeMode = DataGridViewAutoSizeColumnMode.Fill;
 
                         int colw = data_grid.Columns[i].Width;
                         data_grid.Columns[i].AutoSizeMode = DataGridViewAutoSizeColumnMode.None;
@@ -1278,11 +1178,6 @@ namespace mangaerordini
 
 
                     return;
-                }
-                finally
-                {
-
-
                 }
             }
             return;
@@ -1369,11 +1264,6 @@ namespace mangaerordini
                 {
                     UpdateFields("C", "A", true);
                     MessageBox.Show("Errore durante aggiunta al database. Codice: " + ReturnErorrCode(ex));
-                }
-                finally
-                {
-
-
                 }
             }
             return;
@@ -1485,11 +1375,6 @@ namespace mangaerordini
                     //ABILITA CAMPI & BOTTONI
                     UpdateFields("C", "E", true);
                 }
-                finally
-                {
-
-
-                }
             }
             return;
         }
@@ -1565,11 +1450,6 @@ namespace mangaerordini
                     MessageBox.Show("Errore durante eliminazione del cliente. Codice: " + ReturnErorrCode(ex));
                     //ABILITA CAMPI & BOTTONI
                     UpdateFields("C", "E", true);
-                }
-                finally
-                {
-
-
                 }
             }
             return;
@@ -1687,11 +1567,6 @@ namespace mangaerordini
                 {
                     MessageBox.Show("Errore durante popolamento tabella Clienti. Codice: " + ReturnErorrCode(ex));
                 }
-                finally
-                {
-
-
-                }
             }
             return;
         }
@@ -1732,9 +1607,6 @@ namespace mangaerordini
                 {
                     MessageBox.Show("Errore durante verifica ID Cliente. Codice: " + ReturnErorrCode(ex));
                     return;
-                }
-                finally
-                {
                 }
             }
 
@@ -1779,10 +1651,6 @@ namespace mangaerordini
                     MessageBox.Show("Errore durante aggiunta al database. Codice: " + ReturnErorrCode(ex));
                     UpdateFields("P", "A", true);
                 }
-                finally
-                {
-
-                }
             }
             return;
         }
@@ -1813,10 +1681,7 @@ namespace mangaerordini
 
             if (answer.Success)
             {
-                if (!answer.Answer)
-                {
-                    er_list += answer.Error + Environment.NewLine;
-                }
+                er_list += answer.Error;
             }
             else
             {
@@ -1883,10 +1748,6 @@ namespace mangaerordini
                     MessageBox.Show("Errore durante aggiornamento del cliente. Codice: " + ReturnErorrCode(ex));
                     //ABILITA CAMPI & BOTTONI
                     UpdateFields("P", "E", true);
-                }
-                finally
-                {
-
                 }
             }
             return;
@@ -1962,10 +1823,6 @@ namespace mangaerordini
                     MessageBox.Show("Errore durante eliminazione Persona di Riferimento. Codice: " + ReturnErorrCode(ex));
                     //ABILITA CAMPI & BOTTONI
                     UpdateFields("P", "E", true);
-                }
-                finally
-                {
-
                 }
             }
             return;
@@ -2092,10 +1949,6 @@ namespace mangaerordini
                 {
                     MessageBox.Show("Errore durante popolamento Riferimenti. Codice: " + ReturnErorrCode(ex));
                 }
-                finally
-                {
-
-                }
             }
             return;
         }
@@ -2154,10 +2007,6 @@ namespace mangaerordini
                     MessageBox.Show("Errore durante aggiunta al database. Codice: " + ReturnErorrCode(ex));
                     //ABILITA CAMPI & BOTTONI
                     UpdateFields("F", "A", true);
-                }
-                finally
-                {
-
                 }
             }
             return;
@@ -2238,10 +2087,6 @@ namespace mangaerordini
                     //ABILITA CAMPI & BOTTONI
                     UpdateFields("F", "E", true);
                 }
-                finally
-                {
-
-                }
             }
             return;
         }
@@ -2315,10 +2160,6 @@ namespace mangaerordini
                     MessageBox.Show("Errore durante eliminazione del fornitore. Codice: " + ReturnErorrCode(ex));
                     //ABILITA CAMPI & BOTTONI
                     UpdateFields("F", "E", true);
-                }
-                finally
-                {
-
                 }
             }
             return;
@@ -2408,8 +2249,6 @@ namespace mangaerordini
                             data_grid.Columns[i].HeaderText = columnNames[data_grid.Columns[i].HeaderText];
 
                         data_grid.Columns[i].AutoSizeMode = DataGridViewAutoSizeColumnMode.DisplayedCells;
-                        /*if(i== colCount-1)
-							dataGridViewFornitori.Columns[i].AutoSizeMode = DataGridViewAutoSizeColumnMode.Fill;*/
 
                         int colw = data_grid.Columns[i].Width;
                         data_grid.Columns[i].AutoSizeMode = DataGridViewAutoSizeColumnMode.None;
@@ -2419,10 +2258,6 @@ namespace mangaerordini
                 catch (SQLiteException ex)
                 {
                     MessageBox.Show("Errore durante popolamento tabella Fornitori. Codice: " + ReturnErorrCode(ex));
-                }
-                finally
-                {
-
                 }
             }
             return;
@@ -2453,10 +2288,7 @@ namespace mangaerordini
 
             if (answer.Success)
             {
-                if (!answer.Answer)
-                {
-                    er_list += answer.Error + Environment.NewLine;
-                }
+                er_list += answer.Error;
             }
             else
             {
@@ -2500,10 +2332,6 @@ namespace mangaerordini
                     MessageBox.Show("Errore durante aggiunta al database. Codice: " + ReturnErorrCode(ex));
                     UpdateFields("M", "A", true);
                 }
-                finally
-                {
-
-                }
             }
             return;
         }
@@ -2534,10 +2362,7 @@ namespace mangaerordini
 
             if (answer.Success)
             {
-                if (!answer.Answer)
-                {
-                    er_list += answer.Error + Environment.NewLine;
-                }
+                er_list += answer.Error;
             }
             else
             {
@@ -2602,9 +2427,6 @@ namespace mangaerordini
                     MessageBox.Show("Errore durante aggiornamento della macchina. Codice: " + ReturnErorrCode(ex));
                     //ABILITA CAMPI & BOTTONI
                     UpdateFields("M", "E", true);
-                }
-                finally
-                {
                 }
             }
             return;
@@ -2680,9 +2502,6 @@ namespace mangaerordini
                     MessageBox.Show("Errore durante eliminazione macchina. Codice: " + ReturnErorrCode(ex));
                     //ABILITA CAMPI & BOTTONI
                     UpdateFields("M", "E", true);
-                }
-                finally
-                {
                 }
             }
             return;
@@ -2821,8 +2640,6 @@ namespace mangaerordini
                             data_grid.Columns[i].HeaderText = columnNames[data_grid.Columns[i].HeaderText];
 
                         data_grid.Columns[i].AutoSizeMode = DataGridViewAutoSizeColumnMode.DisplayedCells;
-                        /*if(i== colCount-1)
-							dataGridViewFornitori.Columns[i].AutoSizeMode = DataGridViewAutoSizeColumnMode.Fill;*/
 
                         int colw = data_grid.Columns[i].Width;
                         data_grid.Columns[i].AutoSizeMode = DataGridViewAutoSizeColumnMode.None;
@@ -2832,9 +2649,6 @@ namespace mangaerordini
                 catch (SQLiteException ex)
                 {
                     MessageBox.Show("Errore durante popolamento Macchine. Codice: " + ReturnErorrCode(ex));
-                }
-                finally
-                {
                 }
             }
             return;
@@ -2906,10 +2720,7 @@ namespace mangaerordini
 
             if (answer.Success)
             {
-                if (!answer.Answer)
-                {
-                    er_list += answer.Error + Environment.NewLine;
-                }
+                er_list += answer.Error;
             }
             else
             {
@@ -2939,9 +2750,6 @@ namespace mangaerordini
                     {
                         MessageBox.Show("Errore durante verifica ID Cliente. Codice: " + ReturnErorrCode(ex));
                         return;
-                    }
-                    finally
-                    {
                     }
                 }
             }
@@ -3099,9 +2907,6 @@ namespace mangaerordini
                     MessageBox.Show("Errore durante verifica records in elenco offerte. Codice: " + ReturnErorrCode(ex));
                     return;
                 }
-                finally
-                {
-                }
             }
 
 
@@ -3175,9 +2980,6 @@ namespace mangaerordini
 
                     return;
                 }
-                finally
-                {
-                }
             }
             return;
         }
@@ -3230,8 +3032,6 @@ namespace mangaerordini
                                 data_grid.Columns[i].HeaderText = columnNames[data_grid.Columns[i].HeaderText];
 
                             data_grid.Columns[i].AutoSizeMode = DataGridViewAutoSizeColumnMode.DisplayedCells;
-                            /*if(i== colCount-1)
-								dataGridViewFornitori.Columns[i].AutoSizeMode = DataGridViewAutoSizeColumnMode.Fill;*/
 
                             int colw = data_grid.Columns[i].Width;
                             data_grid.Columns[i].AutoSizeMode = DataGridViewAutoSizeColumnMode.None;
@@ -3244,10 +3044,6 @@ namespace mangaerordini
 
 
                         return;
-                    }
-                    finally
-                    {
-
                     }
                 }
             }
@@ -3306,9 +3102,6 @@ namespace mangaerordini
                     {
                         MessageBox.Show("Errore durante selezione cliente. Codice: " + ReturnErorrCode(ex));
                         return;
-                    }
-                    finally
-                    {
                     }
                 }
 
@@ -3409,9 +3202,6 @@ namespace mangaerordini
                     {
                         MessageBox.Show("Errore durante selezione cliente. Codice: " + ReturnErorrCode(ex));
                         return;
-                    }
-                    finally
-                    {
                     }
                 }
             }
@@ -3524,9 +3314,6 @@ namespace mangaerordini
                     MessageBox.Show("Errore durante aggiunta al database. Codice: " + ReturnErorrCode(ex));
                     UpdateFields("OAO", "A", true);
                 }
-                finally
-                {
-                }
             }
             return;
         }
@@ -3632,10 +3419,7 @@ namespace mangaerordini
 
             if (answer.Success)
             {
-                if (!answer.Answer)
-                {
-                    er_list += answer.Error + Environment.NewLine;
-                }
+                er_list += answer.Error;
             }
             else
             {
@@ -3665,9 +3449,6 @@ namespace mangaerordini
                     {
                         MessageBox.Show("Errore durante verifica ID Persona di riferimento. Codice: " + ReturnErorrCode(ex));
                         return;
-                    }
-                    finally
-                    {
                     }
                 }
             }
@@ -3794,9 +3575,6 @@ namespace mangaerordini
                     UpdateFields("OC", "A", true);
                     UpdateFields("OC", "E", true);
                 }
-                finally
-                {
-                }
             }
             return;
         }
@@ -3880,9 +3658,6 @@ namespace mangaerordini
                     UpdateFields("OC", "A", true);
                     UpdateFields("OC", "E", true);
                 }
-                finally
-                {
-                }
             }
             return;
         }
@@ -3951,9 +3726,6 @@ namespace mangaerordini
                             UpdateFields("OAO", "A", true);
                             UpdateFields("OAO", "E", true);
                         }
-                        finally
-                        {
-                        }
                     }
 
                     int curItem = AddOffCreaOggettoMach.SelectedItem.GetHashCode();
@@ -4000,10 +3772,6 @@ namespace mangaerordini
                             //ABILITA CAMPI & BOTTONI
                             UpdateFields("OAO", "A", true);
                             UpdateFields("OAO", "E", true);
-                        }
-                        finally
-                        {
-
                         }
                     }
 
@@ -4120,11 +3888,6 @@ namespace mangaerordini
                     UpdateFields("OAO", "A", true);
                     UpdateFields("OAO", "E", true);
                 }
-                finally
-                {
-
-
-                }
             }
             return;
         }
@@ -4226,10 +3989,6 @@ namespace mangaerordini
                     MessageBox.Show("Errore durante aggiunta al database. Codice: " + ReturnErorrCode(ex));
                     UpdateFields("OAO", "A", true);
                     AddOffCreaOggettoRica.Enabled = false;
-                }
-                finally
-                {
-
                 }
             }
             return;
@@ -4379,10 +4138,6 @@ namespace mangaerordini
                     {
                         MessageBox.Show("Errore durante selezione Offerta. Codice: " + ReturnErorrCode(ex));
                         return;
-                    }
-                    finally
-                    {
-
                     }
                 }
             }
@@ -4557,10 +4312,6 @@ namespace mangaerordini
                     MessageBox.Show("Errore durante verifica records in elenco ordini. Codice: " + ReturnErorrCode(ex));
                     return;
                 }
-                finally
-                {
-
-                }
             }
 
             commandText = @"SELECT  
@@ -4630,8 +4381,6 @@ namespace mangaerordini
                                 data_grid[i].Columns[j].HeaderText = columnNames[data_grid[i].Columns[j].HeaderText];
 
                             data_grid[i].Columns[i].AutoSizeMode = DataGridViewAutoSizeColumnMode.DisplayedCells;
-                            /*if(i== colCount-1)
-								dataGridViewFornitori.Columns[i].AutoSizeMode = DataGridViewAutoSizeColumnMode.Fill;*/
 
                             int colw = data_grid[i].Columns[j].Width;
                             data_grid[i].Columns[j].AutoSizeMode = DataGridViewAutoSizeColumnMode.None;
@@ -4643,10 +4392,6 @@ namespace mangaerordini
                 {
                     MessageBox.Show("Errore durante popolamento tabella Ordini. Codice: " + ReturnErorrCode(ex));
                     return;
-                }
-                finally
-                {
-
                 }
             }
             return;
@@ -4719,10 +4464,7 @@ namespace mangaerordini
 
                 if (answer.Success)
                 {
-                    if (!answer.Answer)
-                    {
-                        er_list += answer.Error + Environment.NewLine;
-                    }
+                    er_list += answer.Error;
                 }
                 else
                 {
@@ -4840,10 +4582,6 @@ namespace mangaerordini
                     {
                         MessageBox.Show("Errore durante verifica ID Offerta. Codice: " + ReturnErorrCode(ex));
                         return;
-                    }
-                    finally
-                    {
-
                     }
                 }
             }
@@ -5004,10 +4742,6 @@ namespace mangaerordini
                     MessageBox.Show("Errore durante aggiunta al database. Codice: " + ReturnErorrCode(ex));
                     UpdateFields("OCR", "A", true);
                 }
-                finally
-                {
-
-                }
             }
             return;
         }
@@ -5128,11 +4862,6 @@ namespace mangaerordini
 
                     return;
                 }
-                finally
-                {
-
-
-                }
             }
             return;
 
@@ -5200,11 +4929,6 @@ namespace mangaerordini
 
                     return;
                 }
-                finally
-                {
-
-
-                }
             }
         }
 
@@ -5264,7 +4988,6 @@ namespace mangaerordini
                     FieldOrdStato.SelectedIndex = FieldOrdStato.FindString(stato);
 
                     UpdateFields("OCR", "A", true);
-                    //UpdateFields("OCR", "AE", true);
 
                     BtCreaOrdine.Enabled = false;
                     CheckBoxCopiaOffertainOrdine.Enabled = false;
@@ -5298,7 +5021,6 @@ namespace mangaerordini
             UpdateFields("OCR", "CA", true);
             UpdateFields("OCR", "E", false);
             UpdateFields("OCR", "A", false);
-            //UpdateFields("OCR", "AE", false);
 
             BtCreaOrdine.Enabled = false;
             CheckBoxCopiaOffertainOrdine.Enabled = false;
@@ -5377,11 +5099,6 @@ namespace mangaerordini
 
                             return;
                         }
-                        finally
-                        {
-
-
-                        }
                     }
                     CheckBoxOrdOggCheckAddNotOffer.Enabled = false;
                     CheckBoxOrdOggCheckAddNotOffer.Checked = false;
@@ -5438,7 +5155,6 @@ namespace mangaerordini
                     int index = 0;
                     bool isnotoffer = false;
 
-                    //IIF(PR.ID_macchina IS NOT NULL, (CM.Id || ' - ' || CM.modello || ' (' || CM.seriale || ')'), '') AS macchina,
                     string commandText = @"SELECT 
 
 											PR.ID_macchina AS macchina,
@@ -5477,11 +5193,6 @@ namespace mangaerordini
 
                             return;
                         }
-                        finally
-                        {
-
-
-                        }
                     }
 
                     CheckBoxOrdOggCheckAddNotOffer.Checked = isnotoffer;
@@ -5492,9 +5203,6 @@ namespace mangaerordini
                     FieldOrdOggMach.SelectedIndex = FindIndexFromValue(FieldOrdOggPezzo, mach);
                     Populate_combobox_ricambi_ordine(new ComboBox[] { FieldOrdOggPezzo }, mach);
                     FieldOrdOggPezzo.SelectedIndex = FindIndexFromValue(FieldOrdOggPezzo, index);
-
-                    //UpdateFields("OCR", "FE", true);
-                    //UpdateFields("OCR", "E", true);
 
                     FieldOrdOggId.Text = idpez;
                     FieldOrdOggPOr.Text = puo;
@@ -5729,7 +5437,6 @@ namespace mangaerordini
                     UpdateFields("OCR", "A", false);
 
                     ComboSelOrd.SelectedIndex = currentOrd;
-                    //ComboSelOrd_SelectedIndexChanged(this, System.EventArgs.Empty);
 
                     int i = 0;
                     foreach (ComboBoxList item in ComboSelOrd.Items)
@@ -5767,11 +5474,6 @@ namespace mangaerordini
                     BtCreaOrdineOgg.Enabled = true;
                     return;
                 }
-                finally
-                {
-
-
-                }
             }
             return;
         }
@@ -5779,7 +5481,6 @@ namespace mangaerordini
         private void BtDelOrd_Click(object sender, EventArgs e)
         {
             //DISABILITA CAMPI
-            //UpdateFields("OCR", "AE", false);
             UpdateFields("OCR", "E", false);
             UpdateFields("OCR", "A", false);
 
@@ -5797,7 +5498,6 @@ namespace mangaerordini
                 MessageBox.Show(er_list);
                 //ABILITA CAMPI & BOTTONI
                 UpdateFields("OCR", "A", true);
-                //UpdateFields("OCR", "AE", false);
                 UpdateFields("OCR", "E", true);
 
                 BtCreaOrdine.Enabled = false;
@@ -5814,7 +5514,6 @@ namespace mangaerordini
             {
                 //ABILITA CAMPI & BOTTONI
                 UpdateFields("OCR", "A", true);
-                //UpdateFields("OCR", "AE", false);
                 UpdateFields("OCR", "E", true);
 
                 BtCreaOrdine.Enabled = false;
@@ -5923,7 +5622,6 @@ namespace mangaerordini
                             //DISABILITA CAMPI & BOTTONI
                             UpdateFields("OCR", "CA", true);
                             UpdateFields("OCR", "E", false);
-                            //UpdateFields("OCR", "AE", false);
                             UpdateFields("OCR", "A", true);
                             UpdateFields("VS", "E", false);
                             UpdateFields("VS", "CA", true);
@@ -5932,8 +5630,6 @@ namespace mangaerordini
 
                             ComboBoxOrdCliente.Enabled = true;
 
-                            /*ClearDataGridView(DataGridViewOrdOffOgg);
-                            ClearDataGridView(DataGridViewOrdOgg);*/
                             UpdateOfferteCrea(offerteCreaCurPage);
 
                             if (ComboSelOrdCl.SelectedItem.GetHashCode() > 0)
@@ -5955,7 +5651,6 @@ namespace mangaerordini
                             //ABILITA CAMPI & BOTTONI
                             UpdateFields("OCR", "A", true);
                             UpdateFields("OCR", "E", true);
-                            //UpdateFields("OCR", "AE", true);
 
                             BtCreaOrdine.Enabled = false;
                             CheckBoxCopiaOffertainOrdine.Enabled = false;
@@ -5967,12 +5662,6 @@ namespace mangaerordini
 
                             return;
                         }
-                        finally
-                        {
-
-
-
-                        }
                     }
                 }
                 catch (SQLiteException ex)
@@ -5981,7 +5670,6 @@ namespace mangaerordini
                     //ABILITA CAMPI & BOTTONI
                     UpdateFields("OCR", "A", true);
                     UpdateFields("OCR", "E", true);
-                    //UpdateFields("OCR", "AE", true);
 
                     BtCreaOrdine.Enabled = false;
                     CheckBoxCopiaOffertainOrdine.Enabled = false;
@@ -5997,9 +5685,6 @@ namespace mangaerordini
         {
             UpdateFields("OCR", "CE", false);
             UpdateFields("OCR", "E2", false);
-
-            /*BtChiudiOrdOgg.Enabled = false;
-            BtCreaOrdineOgg.Enabled = false;*/
         }
 
         private void BtDelOrdOgg_Click(object sender, EventArgs e)
@@ -6184,19 +5869,12 @@ namespace mangaerordini
                     UpdateFields("OCR", "E", true);
                     return;
                 }
-                finally
-                {
-                }
             }
             return;
         }
 
         private void BtSaveModOrd_Click(object sender, EventArgs e)
         {
-
-            //MessageBox.Show("ID: " + FieldOrdId.Text.Trim());
-
-
             int id_ordine = Convert.ToInt32(FieldOrdId.Text.Trim());
 
             string n_ordine = FieldOrdNOrdine.Text.Trim();
@@ -6346,8 +6024,6 @@ namespace mangaerordini
                     cmd.CommandText = commandText;
                     cmd.Parameters.AddWithValue("@idord", id_ordine);
 
-
-                    //oldRef = (string)cmd.ExecuteScalar();
                     SQLiteDataReader reader = cmd.ExecuteReader();
 
                     while (reader.Read())
@@ -6355,8 +6031,6 @@ namespace mangaerordini
                         oldRef = Convert.ToString(reader["codice_ordine"]);
                         oldETA = (DateTime)reader["data_ETA"];
                         oldPrezF = (decimal)(reader["prezzo_finale"]);
-
-                        //MessageBox.Show("Old Stato: " + reader["stato"]);
 
                         oldStato = Convert.ToInt32(reader["stato"]);
                     }
@@ -6475,11 +6149,6 @@ namespace mangaerordini
                 {
                     MessageBox.Show("Errore durante aggiornamento ordine. Codice: " + ReturnErorrCode(ex));
                     UpdateFields("OCR", "A", true);
-                }
-                finally
-                {
-
-
                 }
             }
             return;
@@ -6615,8 +6284,6 @@ namespace mangaerordini
 
                     cmd.ExecuteNonQuery();
 
-                    //ComboSelOrd_SelectedIndexChanged(this, System.EventArgs.Empty);
-
                     if (Boolean.Parse(settings["calendario"]["aggiornaCalendario"]) == true)
                     {
                         if (Convert.ToDecimal(old_prezzo_scontatoV.Text) != prezzo_scontatoV || Convert.ToInt32(old_pezziV.Text) != pezziV || DateTime.Compare(Convert.ToDateTime(old_dataETAOrdValue.Text).Date, dataETAOrdValue) != 0)
@@ -6676,8 +6343,6 @@ namespace mangaerordini
                     UpdateFields("OCR", "E", false);
                     UpdateFields("OCR", "FE", false);
 
-                    //ComboSelOrd_SelectedIndexChanged(this, System.EventArgs.Empty);
-
                     int i = 0;
                     foreach (ComboBoxList item in ComboSelOrd.Items)
                     {
@@ -6701,11 +6366,6 @@ namespace mangaerordini
                     MessageBox.Show("Errore durante aggiornamento oggetto. Codice: " + ReturnErorrCode(ex));
                     UpdateFields("OAO", "E", false);
                     UpdateFields("OCR", "FE", true);
-                }
-                finally
-                {
-
-
                 }
             }
             return;
@@ -6756,8 +6416,6 @@ namespace mangaerordini
         private void TimerDataGridViewFilter_Tick(object sender, EventArgs e)
         {
             TimerDataGridViewFilter.Stop();
-
-            //UpdateOrdini(OrdiniCurPage);
             LoadOrdiniTable();
         }
 
@@ -6771,8 +6429,6 @@ namespace mangaerordini
             if (idcl > 0)
             {
                 idcl = FindIndexFromValue(ComboBoxOrdCliente, idcl);
-
-                //BtChiudiOrd_Click(this, EventArgs.Empty);
 
                 UpdateFields("OCR", "CA", false);
                 UpdateFields("OCR", "E", false);
@@ -6947,10 +6603,6 @@ namespace mangaerordini
 
                             return;
                         }
-                        finally
-                        {
-
-                        }
                     }
                 }
                 else
@@ -7006,14 +6658,8 @@ namespace mangaerordini
 
                     return;
                 }
-                finally
-                {
-
-
-                }
             }
 
-            //int stato = DataGridViewOrdStato.SelectedItem.GetHashCode();
             int stato = 0;
             string addInfo = "";
             if (stato > 0)
@@ -7128,11 +6774,6 @@ namespace mangaerordini
 
                     return;
                 }
-                finally
-                {
-
-
-                }
             }
             return;
         }
@@ -7161,7 +6802,6 @@ namespace mangaerordini
 									WHERE OP.ID_ordine=@idord 
 									GROUP BY OP.Id, PR.nome, PR.codice, OP.prezzo_unitario_originale, OP.prezzo_unitario_sconto, OP.pezzi, OP.ETA, PR.descrizione
 									ORDER BY OP.Id;";
-            //GROUP BY OP.Id, PR.nome, PR.codice, OP.prezzo_unitario_originale, OP.prezzo_unitario_sconto, OP.pezzi, PR.descrizione, PR.descrizione, OP.ETA
 
             using (SQLiteDataAdapter cmd = new SQLiteDataAdapter(commandText, connection))
             {
@@ -7203,11 +6843,6 @@ namespace mangaerordini
                 catch (SQLiteException ex)
                 {
                     MessageBox.Show("Errore durante popolamento tabella oggetti ordini. Codice: " + ReturnErorrCode(ex));
-                }
-                finally
-                {
-
-
                 }
             }
             return;
@@ -7348,13 +6983,7 @@ namespace mangaerordini
                         {
                             MessageBox.Show("Errore durante recupero info visualizzaaione ordine. Codice: " + ReturnErorrCode(ex));
 
-
                             return;
-                        }
-                        finally
-                        {
-
-
                         }
                     }
                 }
@@ -7416,17 +7045,6 @@ namespace mangaerordini
                 newAppointment.Body = body;
                 newAppointment.Subject = "Reminder Ordine Numero:" + ordRef + "\t" + "##ManaOrdini" + ordRef + "##";
 
-                //newAppointment.MeetingStatus = Microsoft.Office.Interop.Outlook.OlMeetingStatus.olMeeting;
-
-                /*Outlook.Recipients recipOptional = newAppointment.Recipients;
-
-                 foreach (string mail in Convert.ToString(settings["calendario"]["destinatari"]).Split(';'))
-                 {
-                     Outlook.Recipient person = recipOptional.Add(mail);
-                     person.Type = (int)Outlook.OlMeetingRecipientType.olOptional;
-
-                 }
-                 newAppointment.Recipients.ResolveAll();*/
                 newAppointment.Display(true);
 
             }
@@ -7669,7 +7287,6 @@ namespace mangaerordini
                     return;
                 }
 
-                //while (dateAppoint == DateTime.MinValue || DateTime.Compare(dateAppoint, dataETAOrdValue) > 0 || DateTime.Compare(dateAppoint, DateTime.Now.Date) < 0)
                 while (dateAppoint == DateTime.MinValue)
                 {
                     string input = Interaction.InputBox("Inserire data in cui ricevere la notifica relativa all'ordine", "Data Notifica Ordine", (dataETAOrdValue).ToString(format));
@@ -7920,13 +7537,7 @@ namespace mangaerordini
                 {
                     MessageBox.Show("Errore durante recupero info ordine(appuntamento). Codice: " + ReturnErorrCode(ex));
 
-
                     return "";
-                }
-                finally
-                {
-
-
                 }
             }
 
@@ -7988,14 +7599,7 @@ namespace mangaerordini
                 catch (SQLiteException ex)
                 {
                     MessageBox.Show("Errore durante recupero oggetti ordine(appuntamento). Codice: " + ReturnErorrCode(ex));
-
-
                     return "";
-                }
-                finally
-                {
-
-
                 }
             }
 
@@ -8542,11 +8146,6 @@ namespace mangaerordini
 
                     return;
                 }
-                finally
-                {
-
-
-                }
             }
 
             int count = nome_ctr.Count();
@@ -8621,11 +8220,6 @@ namespace mangaerordini
 
                     return;
                 }
-                finally
-                {
-
-
-                }
             }
 
             //Setup data binding
@@ -8693,11 +8287,6 @@ namespace mangaerordini
 
                     return;
                 }
-                finally
-                {
-
-
-                }
             }
 
             //Setup data binding
@@ -8744,11 +8333,6 @@ namespace mangaerordini
 
                     return;
                 }
-                finally
-                {
-
-
-                }
             }
 
             int count = nome_ctr.Count();
@@ -8791,11 +8375,6 @@ namespace mangaerordini
 
 
                     return;
-                }
-                finally
-                {
-
-
                 }
             }
 
@@ -8846,11 +8425,6 @@ namespace mangaerordini
 
 
                     return;
-                }
-                finally
-                {
-
-
                 }
             }
 
@@ -8915,11 +8489,6 @@ namespace mangaerordini
 
 
                     return;
-                }
-                finally
-                {
-
-
                 }
             }
 
@@ -9035,11 +8604,6 @@ namespace mangaerordini
 
                     return;
                 }
-                finally
-                {
-
-
-                }
             }
 
             nome_ctr.DataSource = null;
@@ -9111,11 +8675,6 @@ namespace mangaerordini
 
 
                     return;
-                }
-                finally
-                {
-
-
                 }
             }
 
@@ -9200,8 +8759,6 @@ namespace mangaerordini
 
         private void UpdateFornitori(int page = 1)
         {
-            /*populate_combobox_fornitore(AddDatiCompSupplier);
-            populate_combobox_fornitore(ChangeDatiCompSupplier);*/
             ComboBox[] nomi_ctr = { AddDatiCompSupplier, ChangeDatiCompSupplier };
 
             Populate_combobox_fornitore(nomi_ctr);
@@ -9210,8 +8767,6 @@ namespace mangaerordini
 
         private void UpdateMacchine(int page = 1)
         {
-            /*populate_combobox_machine(AddDatiCompMachine);
-            populate_combobox_machine(ChangeDatiCompMachine);*/
 
             ComboBox[] nomi_ctr = { AddDatiCompMachine, ChangeDatiCompMachine, FieldOrdOggMach };
             Populate_combobox_machine(nomi_ctr);
@@ -9268,7 +8823,6 @@ namespace mangaerordini
                     if (curItemValue > 0)
                     {
                         Populate_combobox_pref(nome_ctr[i], curItemValue);
-                        //nome_ctr[i].Enabled = true;
                     }
                 }
                 else
@@ -9324,8 +8878,6 @@ namespace mangaerordini
 
         private void UpdateOrdiniStato()
         {
-            /*populate_combobox_statoOrdini(DataGridViewOrdStato);
-            populate_combobox_statoOrdini(FieldOrdStato);*/
 
             ComboBox[] nomi_ctr = {
                 DataGridViewOrdStato,
@@ -9576,7 +9128,6 @@ namespace mangaerordini
                             AddOffCreaNOff.Text = "";
                             AddOffCreaData.Text = t;
                             AddOffCreaCliente.SelectedIndex = 0;
-                            //AddOffCreaPRef.SelectedIndex = 0;
                             AddOffCreaStato.SelectedIndex = 0;
                             AddOffCreaSpedizioneGest.SelectedIndex = 0;
                             AddOffCreaId.Text = "";
@@ -9662,7 +9213,6 @@ namespace mangaerordini
                             CheckBoxOrdOggSconto.Enabled = stat;
                             CheckBoxOrdOggSconto.Checked = true;
 
-                            //FieldOrdOggCheckAddNotOffer.Checked = false;
 
                             CheckBoxOrdOggCheckAddNotOffer.Enabled = false;
                             FieldOrdOggMach.Enabled = false;
@@ -9724,8 +9274,6 @@ namespace mangaerordini
                             if (stat == true)
                                 ComboBoxOrdCliente.SelectedIndex = 0;
 
-                            //FieldOrdOfferta.SelectedIndex = 0;
-
                             if (FieldOrdStato.DataSource != null)
                                 FieldOrdStato.SelectedIndex = 0;
                             if (FieldOrdSpedGestione.DataSource != null)
@@ -9764,9 +9312,6 @@ namespace mangaerordini
                             old_dataETAOrdValue.Text = "";
 
                             FieldOrdOggMach.SelectedIndex = 0;
-                            //FieldOrdOggPezzo.SelectedIndex = 0;
-
-                            //FieldOrdSpedGestione.SelectedIndex=0;
                             return;
                     }
                     return;
@@ -9780,7 +9325,6 @@ namespace mangaerordini
 
                             VisOrdChiudi.Enabled = stat;
 
-                            //BtStartToastNotification.Enabled = stat;
                             AggiornaEventoCalendario.Enabled = stat;
                             return;
                         case "FE":
@@ -9890,7 +9434,6 @@ namespace mangaerordini
                 { 2067, Environment.NewLine + "Esiste già un elemento nel database con le stesse uniche informazioni." }
             };
 
-            //MessageBox.Show("" + ex.ErrorCode);
 
             if (er.ContainsKey(ex.ErrorCode))
                 return er[ex.ErrorCode];
@@ -9923,9 +9466,12 @@ namespace mangaerordini
 
         public class ValidationResult
         {
-
             public bool Success { get; set; }
-            public bool Answer { get; set; }
+
+            public bool BoolValue { get; set; } = false;
+            public decimal DecimalValue { get; set; } = -1;
+            public int IntValue { get; set; } = -1;
+
             public string Error { get; set; } = "";
         }
 
@@ -9936,14 +9482,13 @@ namespace mangaerordini
             if (idcl < 0)
             {
                 answer.Success = true;
-                answer.Answer = false;
+                answer.BoolValue = false;
                 answer.Error = "Selezionare cliente dalla lista." + Environment.NewLine;
 
                 return answer;
             }
 
             string commandText = "SELECT COUNT(*) FROM " + schemadb + @"[clienti_elenco] WHERE ([Id] = @user) LIMIT 1;";
-            int UserExist = 0;
 
             using (SQLiteCommand cmd = new SQLiteCommand(commandText, connection))
             {
@@ -9952,31 +9497,100 @@ namespace mangaerordini
                     cmd.CommandText = commandText;
                     cmd.Parameters.AddWithValue("@user", idcl);
 
-                    UserExist = Convert.ToInt32(cmd.ExecuteScalar());
-                    if (UserExist < 1)
-                    {
-                        answer.Success = true;
-                        answer.Answer = false;
-                        answer.Error = "Cliente non valido o vuoto" + Environment.NewLine;
-
-                        return answer;
-                    }
+                    answer.IntValue = Convert.ToInt32(cmd.ExecuteScalar());
+                    answer.Success = true;
                 }
                 catch (SQLiteException ex)
                 {
                     answer.Success = false;
-                    answer.Answer = false;
                     answer.Error = "Errore durante verifica ID Cliente. Codice: " + ReturnErorrCode(ex);
                     return answer;
                 }
-                finally
+
+                if (answer.IntValue < 1)
                 {
+                    answer.BoolValue = false;
+                    answer.Error = "Cliente non valido o vuoto" + Environment.NewLine;
+                }
+                else
+                {
+                    answer.BoolValue = true;
                 }
 
-                answer.Success = true;
-                answer.Answer = true;
                 return answer;
             }
+        }
+
+        public string ValidateCodiceRicambio(string codice)
+        {
+            Regex rgx = new Regex(@"^[a-zA-Z]{1}\d{1,}[-]\d{1,}$");
+
+            if (string.IsNullOrEmpty(codice) || !rgx.IsMatch(codice))
+            {
+                return "Codice non valido o vuoto" + Environment.NewLine;
+            }
+
+            return "";
+        }
+
+        public ValidationResult ValidatePrezzo(string prezzo)
+        {
+            ValidationResult answer = new ValidationResult
+            {
+                Success = Decimal.TryParse(prezzo, style, culture, out decimal prezzoD)
+            };
+
+            if (!answer.Success)
+            {
+                answer.Error = "Prezzo non valido(##,##) o vuoto" + Environment.NewLine;
+                return answer;
+            }
+            if (prezzoD < 0)
+            {
+                answer.Error = "Il prezzo deve essere positivo" + Environment.NewLine;
+                return answer;
+            }
+
+            answer.DecimalValue = prezzoD;
+            return answer;
+        }
+
+
+        public ValidationResult ValidateFornitore(int id)
+        {
+            string commandText = "SELECT COUNT(*) FROM " + schemadb + @"[fornitori] WHERE ([Id] = @user) LIMIT 1";
+
+            ValidationResult answer = new ValidationResult();
+
+            using (SQLiteCommand cmd = new SQLiteCommand(commandText, connection))
+            {
+                try
+                {
+                    cmd.CommandText = commandText;
+                    cmd.Parameters.AddWithValue("@user", id);
+
+                    answer.IntValue = Convert.ToInt32(cmd.ExecuteScalar());
+                    answer.Success = true;
+                }
+                catch (SQLiteException ex)
+                {
+                    answer.Success = false;
+                    answer.Error = "Errore durante verifica ID Fornitore. Codice: " + ReturnErorrCode(ex);
+                    return answer;
+                }
+            }
+
+            if (answer.IntValue < 1)
+            {
+                answer.BoolValue = false;
+                answer.Error = "Fornitore non presente nel database" + Environment.NewLine;
+            }
+            else
+            {
+                answer.BoolValue = true;
+            }
+
+            return answer;
         }
     }
 
