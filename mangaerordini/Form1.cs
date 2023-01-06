@@ -1,4 +1,5 @@
-﻿using CsvHelper;
+﻿using AutoUpdaterDotNET;
+using CsvHelper;
 using CsvHelper.Configuration.Attributes;
 using Microsoft.VisualBasic;
 using Newtonsoft.Json;
@@ -169,6 +170,7 @@ namespace mangaerordini
             AddOffCreaOggettoPezzoFiltro.PlaceholderText = "Filtra per Id,Nome o Codice";
             FieldOrdOggPezzoFiltro.PlaceholderText = "Filtra per Id,Nome o Codice";
 
+            buildVersionValue.Text = Convert.ToString(Application.ProductVersion);
         }
 
         //ALTRO
@@ -599,6 +601,24 @@ namespace mangaerordini
 
                 }
             }
+        }
+
+        private void ButtonCheckUpdate_Click(object sender, EventArgs e)
+        {
+            ButtonCheckUpdate.Enabled = false;
+
+            var currentDirectory = new DirectoryInfo(Application.StartupPath);
+            AutoUpdater.InstalledVersion = new Version(Application.ProductVersion);
+            AutoUpdater.InstalledVersion = new Version("3.0.0.0");
+            AutoUpdater.Synchronous = true;
+            AutoUpdater.RunUpdateAsAdmin = false;
+            AutoUpdater.ShowRemindLaterButton = false;
+            AutoUpdater.DownloadPath = Application.StartupPath;
+            AutoUpdater.InstallationPath = currentDirectory.Parent.FullName;
+            AutoUpdater.Start("https://github.com/Razorphyn/OrderManager/blob/main/mangaerordini/AutoUpdater.xml?raw=true");
+
+            ButtonCheckUpdate.Enabled = true ;
+            return;
         }
 
         //TAB RICAMBI
@@ -1110,6 +1130,7 @@ namespace mangaerordini
             TimerdataGridViewCompFilter.Stop();
             LoadCompTable(datiGridViewRicambiCurPage);
         }
+        
         private void DataGridViewComp_Filtro_Codice_TextChanged(object sender, EventArgs e)
         {
             TimerdataGridViewCompFilter.Stop();
@@ -3911,6 +3932,7 @@ namespace mangaerordini
             }
             FieldOrdPrezF.Text = (prezzoI * (1 - scontoV.DecimalValue / 100)).Value.ToString("N2", nfi).Replace(".", "");
         }
+        
         private void ApplySconto(object sender, KeyEventArgs e)
         {
             if (e.KeyCode == Keys.Enter)
@@ -9386,6 +9408,7 @@ namespace mangaerordini
             System.Diagnostics.Process.Start("https://github.com/Fody/Costura");
         }
 
+        
     }
 
     public class ComboBoxList
