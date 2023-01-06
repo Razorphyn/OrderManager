@@ -609,7 +609,6 @@ namespace mangaerordini
 
             var currentDirectory = new DirectoryInfo(Application.StartupPath);
             AutoUpdater.InstalledVersion = new Version(Application.ProductVersion);
-            AutoUpdater.InstalledVersion = new Version("3.0.0.0");
             AutoUpdater.Synchronous = true;
             AutoUpdater.RunUpdateAsAdmin = false;
             AutoUpdater.ShowRemindLaterButton = false;
