@@ -616,7 +616,7 @@ namespace mangaerordini
             AutoUpdater.InstallationPath = currentDirectory.Parent.FullName;
             AutoUpdater.Start("https://github.com/Razorphyn/OrderManager/blob/main/mangaerordini/AutoUpdater.xml?raw=true");
 
-            ButtonCheckUpdate.Enabled = true ;
+            ButtonCheckUpdate.Enabled = true;
             return;
         }
 
@@ -1129,7 +1129,7 @@ namespace mangaerordini
             TimerdataGridViewCompFilter.Stop();
             LoadCompTable(datiGridViewRicambiCurPage);
         }
-        
+
         private void DataGridViewComp_Filtro_Codice_TextChanged(object sender, EventArgs e)
         {
             TimerdataGridViewCompFilter.Stop();
@@ -3931,7 +3931,7 @@ namespace mangaerordini
             }
             FieldOrdPrezF.Text = (prezzoI * (1 - scontoV.DecimalValue / 100)).Value.ToString("N2", nfi).Replace(".", "");
         }
-        
+
         private void ApplySconto(object sender, KeyEventArgs e)
         {
             if (e.KeyCode == Keys.Enter)
@@ -9407,7 +9407,7 @@ namespace mangaerordini
             System.Diagnostics.Process.Start("https://github.com/Fody/Costura");
         }
 
-        
+
     }
 
     public class ComboBoxList

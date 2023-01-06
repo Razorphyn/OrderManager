@@ -70,8 +70,21 @@ namespace mangaerordini
             AutoUpdater.RunUpdateAsAdmin = false;
             AutoUpdater.ShowRemindLaterButton = false;
             AutoUpdater.DownloadPath = Application.StartupPath;
-            AutoUpdater.InstallationPath = currentDirectory.Parent.FullName;
+            //AutoUpdater.InstallationPath = currentDirectory.Parent.FullName;
             AutoUpdater.Start("https://github.com/Razorphyn/OrderManager/blob/main/mangaerordini/AutoUpdater.xml?raw=true");
+
+            string zipextractorfile = exeFolderPath + "\\ZipExtractor.exe";
+            string zipextractorlog = exeFolderPath + "\\ZipExtractor.log";
+
+            if (File.Exists(zipextractorfile))
+            {
+                File.Delete(zipextractorfile);
+            }
+            if (File.Exists(zipextractorlog))
+            {
+                File.Delete(zipextractorlog);
+            }
+
 
             decimal version = 0;
 
