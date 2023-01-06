@@ -5768,11 +5768,10 @@ namespace mangaerordini
             string prezzo_scontato = FieldOrdOggPsc.Text.Trim();
             string pezzi = FieldOrdOggQta.Text.Trim();
 
-            DateTime dataETAOrdValue;
 
             string er_list = "";
 
-            if (!DateTime.TryParseExact(dataETAString, dateFormat, provider, DateTimeStyles.None, out dataETAOrdValue))
+            if (!DateTime.TryParseExact(dataETAString, dateFormat, provider, DateTimeStyles.None, out DateTime dataETAOrdValue))
             {
                 er_list += "Data non valida o vuota" + Environment.NewLine;
             }
@@ -6867,10 +6866,9 @@ namespace mangaerordini
             string nordine = VisOrdNumero.Text;
             string opde = VisOrdETA.Text;
 
-            DateTime dataETAOrdValue;
             DateTime dateAppoint = DateTime.MinValue;
 
-            if (!DateTime.TryParseExact(opde, dateFormat, provider, DateTimeStyles.None, out dataETAOrdValue))
+            if (!DateTime.TryParseExact(opde, dateFormat, provider, DateTimeStyles.None, out DateTime dataETAOrdValue))
             {
                 MessageBox.Show("Data non valida o vuota");
             }
@@ -6938,16 +6936,14 @@ namespace mangaerordini
             string nordine = VisOrdNumero.Text;
             string ETA = VisOrdETA.Text;
 
-            DateTime dataETAOrdValue;
-
-            if (!DateTime.TryParseExact(ETA, dateFormat, provider, DateTimeStyles.None, out dataETAOrdValue))
+            if (!DateTime.TryParseExact(ETA, dateFormat, provider, DateTimeStyles.None, out DateTime dataETAOrdValue))
             {
                 MessageBox.Show("Data non valida o vuota");
                 return;
             }
             else
             {
-                dataETAOrdValue = DateTime.ParseExact(ETA, dateFormat, provider).AddDays(1);
+                dataETAOrdValue = dataETAOrdValue.AddDays(1);
             }
 
             if (FindAppointment(nordine, dataETAOrdValue) == true)
