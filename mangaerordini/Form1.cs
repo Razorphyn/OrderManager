@@ -613,7 +613,6 @@ namespace mangaerordini
             AutoUpdater.RunUpdateAsAdmin = false;
             AutoUpdater.ShowRemindLaterButton = false;
             AutoUpdater.DownloadPath = Application.StartupPath;
-            AutoUpdater.InstallationPath = currentDirectory.Parent.FullName;
             AutoUpdater.Start("https://github.com/Razorphyn/OrderManager/blob/main/mangaerordini/AutoUpdater.xml?raw=true");
 
             ButtonCheckUpdate.Enabled = true;
