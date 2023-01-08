@@ -32,8 +32,7 @@ namespace mangaerordini
         static readonly string settingFile = exeFolderPath + @"\" + "ManagerOrdiniSettings.txt";
         static readonly int recordsPerPage = 8;
         static readonly string schemadb = "";
-        //readonly string connectionString = @"Data Source = " + exeFolderPath + db_file_path + db_file_name + @";cache=shared; synchronous  = NORMAL ;  foreign_keys  = 1;  journal_mode=WAL; temp_store = memory;  mmap_size = 30000000000; ";
-
+        
         Dictionary<string, Dictionary<string, string>> settings = new Dictionary<string, Dictionary<string, string>>();
 
         int datiGridViewFornitoriCurPage = 1;
@@ -4252,7 +4251,7 @@ namespace mangaerordini
                 prezzo_finaleV = ValidatePrezzo(prezzo_finale);
                 er_list += prezzo_finaleV.Error;
 
-                prezzo_finaleV = ValidateSconto(prezzo_finale);
+                prezzo_finaleV = ValidatePrezzo(prezzo_finale);
                 er_list += prezzo_finaleV.Error;
             }
 
@@ -8558,7 +8557,7 @@ namespace mangaerordini
             settingCalendarioDestinatari.Text = settings["calendario"]["destinatari"];
             settingCalendarioUpdate.Checked = Boolean.Parse(settings["calendario"]["aggiornaCalendario"]);
         }
-
+        
         private void UpdateFields(string tabC, string action, bool stat, bool clean = true)
         {
             DateTime today = DateTime.Today;
@@ -9214,7 +9213,7 @@ namespace mangaerordini
             }
             else if (scontoV < 0 || scontoV > 100)
             {
-                answer.Error = "Lo socnto deve essere compreso tra 0 e 100. " + Environment.NewLine;
+                answer.Error = "Lo Sconto deve essere compreso tra 0 e 100. " + Environment.NewLine;
                 return answer;
             }
             else
