@@ -1897,7 +1897,7 @@ namespace mangaerordini
             this.tableLayoutPanel1.ColumnStyles.Add(new System.Windows.Forms.ColumnStyle(System.Windows.Forms.SizeType.Percent, 24.62121F));
             this.tableLayoutPanel1.ColumnStyles.Add(new System.Windows.Forms.ColumnStyle());
             this.tableLayoutPanel1.ColumnStyles.Add(new System.Windows.Forms.ColumnStyle(System.Windows.Forms.SizeType.Percent, 21.59092F));
-            this.tableLayoutPanel1.ColumnStyles.Add(new System.Windows.Forms.ColumnStyle(System.Windows.Forms.SizeType.Absolute, 329F));
+            this.tableLayoutPanel1.ColumnStyles.Add(new System.Windows.Forms.ColumnStyle(System.Windows.Forms.SizeType.Absolute, 331F));
             this.tableLayoutPanel1.Controls.Add(this.RimuoviEventoCalendario, 8, 2);
             this.tableLayoutPanel1.Controls.Add(this.VisOrdId, 2, 3);
             this.tableLayoutPanel1.Controls.Add(this.VisOrdSpedGest, 7, 1);
@@ -1948,9 +1948,9 @@ namespace mangaerordini
             // 
             this.RimuoviEventoCalendario.Dock = System.Windows.Forms.DockStyle.Fill;
             this.RimuoviEventoCalendario.Enabled = false;
-            this.RimuoviEventoCalendario.Location = new System.Drawing.Point(846, 84);
+            this.RimuoviEventoCalendario.Location = new System.Drawing.Point(844, 84);
             this.RimuoviEventoCalendario.Name = "RimuoviEventoCalendario";
-            this.RimuoviEventoCalendario.Size = new System.Drawing.Size(325, 36);
+            this.RimuoviEventoCalendario.Size = new System.Drawing.Size(327, 36);
             this.RimuoviEventoCalendario.TabIndex = 124;
             this.RimuoviEventoCalendario.Text = "Rimuovi da Calendario";
             this.RimuoviEventoCalendario.UseVisualStyleBackColor = true;
@@ -1960,7 +1960,7 @@ namespace mangaerordini
             // 
             this.VisOrdId.AutoSize = true;
             this.VisOrdId.Font = new System.Drawing.Font("Segoe UI", 6F);
-            this.VisOrdId.Location = new System.Drawing.Point(194, 123);
+            this.VisOrdId.Location = new System.Drawing.Point(193, 123);
             this.VisOrdId.Name = "VisOrdId";
             this.VisOrdId.Size = new System.Drawing.Size(36, 11);
             this.VisOrdId.TabIndex = 113;
@@ -1971,9 +1971,9 @@ namespace mangaerordini
             // 
             this.VisOrdSpedGest.AutoSize = true;
             this.VisOrdSpedGest.Dock = System.Windows.Forms.DockStyle.Fill;
-            this.VisOrdSpedGest.Location = new System.Drawing.Point(755, 39);
+            this.VisOrdSpedGest.Location = new System.Drawing.Point(754, 39);
             this.VisOrdSpedGest.Name = "VisOrdSpedGest";
-            this.VisOrdSpedGest.Size = new System.Drawing.Size(85, 42);
+            this.VisOrdSpedGest.Size = new System.Drawing.Size(84, 42);
             this.VisOrdSpedGest.TabIndex = 123;
             this.VisOrdSpedGest.Text = "Hold";
             this.VisOrdSpedGest.TextAlign = System.Drawing.ContentAlignment.MiddleLeft;
@@ -1982,9 +1982,9 @@ namespace mangaerordini
             // 
             this.VisOrdSped.AutoSize = true;
             this.VisOrdSped.Dock = System.Windows.Forms.DockStyle.Fill;
-            this.VisOrdSped.Location = new System.Drawing.Point(755, 0);
+            this.VisOrdSped.Location = new System.Drawing.Point(754, 0);
             this.VisOrdSped.Name = "VisOrdSped";
-            this.VisOrdSped.Size = new System.Drawing.Size(85, 39);
+            this.VisOrdSped.Size = new System.Drawing.Size(84, 39);
             this.VisOrdSped.TabIndex = 122;
             this.VisOrdSped.Text = "Hold";
             this.VisOrdSped.TextAlign = System.Drawing.ContentAlignment.MiddleLeft;
@@ -1993,7 +1993,7 @@ namespace mangaerordini
             // 
             this.label122.AutoSize = true;
             this.label122.Dock = System.Windows.Forms.DockStyle.Fill;
-            this.label122.Location = new System.Drawing.Point(609, 39);
+            this.label122.Location = new System.Drawing.Point(608, 39);
             this.label122.Name = "label122";
             this.label122.Size = new System.Drawing.Size(140, 42);
             this.label122.TabIndex = 121;
@@ -2004,7 +2004,7 @@ namespace mangaerordini
             // 
             this.label121.AutoSize = true;
             this.label121.Dock = System.Windows.Forms.DockStyle.Fill;
-            this.label121.Location = new System.Drawing.Point(609, 0);
+            this.label121.Location = new System.Drawing.Point(608, 0);
             this.label121.Name = "label121";
             this.label121.Size = new System.Drawing.Size(140, 39);
             this.label121.TabIndex = 120;
@@ -2026,9 +2026,9 @@ namespace mangaerordini
             // 
             this.AggiornaEventoCalendario.Dock = System.Windows.Forms.DockStyle.Fill;
             this.AggiornaEventoCalendario.Enabled = false;
-            this.AggiornaEventoCalendario.Location = new System.Drawing.Point(846, 42);
+            this.AggiornaEventoCalendario.Location = new System.Drawing.Point(844, 42);
             this.AggiornaEventoCalendario.Name = "AggiornaEventoCalendario";
-            this.AggiornaEventoCalendario.Size = new System.Drawing.Size(325, 36);
+            this.AggiornaEventoCalendario.Size = new System.Drawing.Size(327, 36);
             this.AggiornaEventoCalendario.TabIndex = 119;
             this.AggiornaEventoCalendario.Text = "Aggiorna Evento";
             this.toolTip1.SetToolTip(this.AggiornaEventoCalendario, "Usare questa funzione nel caso in cui i prodotti dell\'ordine siano cambiati e si " +
@@ -2042,7 +2042,7 @@ namespace mangaerordini
             this.VisOrdSoc.Dock = System.Windows.Forms.DockStyle.Fill;
             this.VisOrdSoc.Location = new System.Drawing.Point(83, 0);
             this.VisOrdSoc.Name = "VisOrdSoc";
-            this.VisOrdSoc.Size = new System.Drawing.Size(105, 39);
+            this.VisOrdSoc.Size = new System.Drawing.Size(104, 39);
             this.VisOrdSoc.TabIndex = 91;
             this.VisOrdSoc.Text = "Hold";
             this.VisOrdSoc.TextAlign = System.Drawing.ContentAlignment.MiddleLeft;
@@ -2062,7 +2062,7 @@ namespace mangaerordini
             // 
             this.VisOrdStato.AutoSize = true;
             this.VisOrdStato.Dock = System.Windows.Forms.DockStyle.Fill;
-            this.VisOrdStato.Location = new System.Drawing.Point(506, 39);
+            this.VisOrdStato.Location = new System.Drawing.Point(505, 39);
             this.VisOrdStato.Name = "VisOrdStato";
             this.VisOrdStato.Size = new System.Drawing.Size(97, 42);
             this.VisOrdStato.TabIndex = 117;
@@ -2073,9 +2073,9 @@ namespace mangaerordini
             // 
             this.creaEventoCalendario.Dock = System.Windows.Forms.DockStyle.Fill;
             this.creaEventoCalendario.Enabled = false;
-            this.creaEventoCalendario.Location = new System.Drawing.Point(846, 3);
+            this.creaEventoCalendario.Location = new System.Drawing.Point(844, 3);
             this.creaEventoCalendario.Name = "creaEventoCalendario";
-            this.creaEventoCalendario.Size = new System.Drawing.Size(325, 33);
+            this.creaEventoCalendario.Size = new System.Drawing.Size(327, 33);
             this.creaEventoCalendario.TabIndex = 87;
             this.creaEventoCalendario.Text = "Crea Evento Calendario";
             this.creaEventoCalendario.UseVisualStyleBackColor = true;
@@ -2085,9 +2085,9 @@ namespace mangaerordini
             // 
             this.VisOrdTotFi.AutoSize = true;
             this.VisOrdTotFi.Dock = System.Windows.Forms.DockStyle.Fill;
-            this.VisOrdTotFi.Location = new System.Drawing.Point(755, 123);
+            this.VisOrdTotFi.Location = new System.Drawing.Point(754, 123);
             this.VisOrdTotFi.Name = "VisOrdTotFi";
-            this.VisOrdTotFi.Size = new System.Drawing.Size(85, 42);
+            this.VisOrdTotFi.Size = new System.Drawing.Size(84, 42);
             this.VisOrdTotFi.TabIndex = 112;
             this.VisOrdTotFi.Text = "Hold";
             this.VisOrdTotFi.TextAlign = System.Drawing.ContentAlignment.MiddleLeft;
@@ -2107,9 +2107,9 @@ namespace mangaerordini
             // 
             this.VisOrdTot.AutoSize = true;
             this.VisOrdTot.Dock = System.Windows.Forms.DockStyle.Fill;
-            this.VisOrdTot.Location = new System.Drawing.Point(755, 81);
+            this.VisOrdTot.Location = new System.Drawing.Point(754, 81);
             this.VisOrdTot.Name = "VisOrdTot";
-            this.VisOrdTot.Size = new System.Drawing.Size(85, 42);
+            this.VisOrdTot.Size = new System.Drawing.Size(84, 42);
             this.VisOrdTot.TabIndex = 110;
             this.VisOrdTot.Text = "Hold";
             this.VisOrdTot.TextAlign = System.Drawing.ContentAlignment.MiddleLeft;
@@ -2118,7 +2118,7 @@ namespace mangaerordini
             // 
             this.VisOrdNumero.AutoSize = true;
             this.VisOrdNumero.Dock = System.Windows.Forms.DockStyle.Fill;
-            this.VisOrdNumero.Location = new System.Drawing.Point(506, 0);
+            this.VisOrdNumero.Location = new System.Drawing.Point(505, 0);
             this.VisOrdNumero.Name = "VisOrdNumero";
             this.VisOrdNumero.Size = new System.Drawing.Size(97, 39);
             this.VisOrdNumero.TabIndex = 115;
@@ -2129,7 +2129,7 @@ namespace mangaerordini
             // 
             this.label120.AutoSize = true;
             this.label120.Dock = System.Windows.Forms.DockStyle.Fill;
-            this.label120.Location = new System.Drawing.Point(385, 39);
+            this.label120.Location = new System.Drawing.Point(384, 39);
             this.label120.Name = "label120";
             this.label120.Size = new System.Drawing.Size(115, 42);
             this.label120.TabIndex = 116;
@@ -2153,7 +2153,7 @@ namespace mangaerordini
             this.VisOrdSoStato.Dock = System.Windows.Forms.DockStyle.Fill;
             this.VisOrdSoStato.Location = new System.Drawing.Point(83, 39);
             this.VisOrdSoStato.Name = "VisOrdSoStato";
-            this.VisOrdSoStato.Size = new System.Drawing.Size(105, 42);
+            this.VisOrdSoStato.Size = new System.Drawing.Size(104, 42);
             this.VisOrdSoStato.TabIndex = 96;
             this.VisOrdSoStato.Text = "Hold";
             this.VisOrdSoStato.TextAlign = System.Drawing.ContentAlignment.MiddleLeft;
@@ -2162,7 +2162,7 @@ namespace mangaerordini
             // 
             this.label119.AutoSize = true;
             this.label119.Dock = System.Windows.Forms.DockStyle.Fill;
-            this.label119.Location = new System.Drawing.Point(609, 123);
+            this.label119.Location = new System.Drawing.Point(608, 123);
             this.label119.Name = "label119";
             this.label119.Size = new System.Drawing.Size(140, 42);
             this.label119.TabIndex = 111;
@@ -2173,7 +2173,7 @@ namespace mangaerordini
             // 
             this.label118.AutoSize = true;
             this.label118.Dock = System.Windows.Forms.DockStyle.Fill;
-            this.label118.Location = new System.Drawing.Point(385, 0);
+            this.label118.Location = new System.Drawing.Point(384, 0);
             this.label118.Name = "label118";
             this.label118.Size = new System.Drawing.Size(115, 39);
             this.label118.TabIndex = 114;
@@ -2186,7 +2186,7 @@ namespace mangaerordini
             this.VisOrdSoPro.Dock = System.Windows.Forms.DockStyle.Fill;
             this.VisOrdSoPro.Location = new System.Drawing.Point(83, 81);
             this.VisOrdSoPro.Name = "VisOrdSoPro";
-            this.VisOrdSoPro.Size = new System.Drawing.Size(105, 42);
+            this.VisOrdSoPro.Size = new System.Drawing.Size(104, 42);
             this.VisOrdSoPro.TabIndex = 95;
             this.VisOrdSoPro.Text = "Hold";
             this.VisOrdSoPro.TextAlign = System.Drawing.ContentAlignment.MiddleLeft;
@@ -2195,7 +2195,7 @@ namespace mangaerordini
             // 
             this.label117.AutoSize = true;
             this.label117.Dock = System.Windows.Forms.DockStyle.Fill;
-            this.label117.Location = new System.Drawing.Point(609, 81);
+            this.label117.Location = new System.Drawing.Point(608, 81);
             this.label117.Name = "label117";
             this.label117.Size = new System.Drawing.Size(140, 42);
             this.label117.TabIndex = 109;
@@ -2208,7 +2208,7 @@ namespace mangaerordini
             this.VisOrdSoCitta.Dock = System.Windows.Forms.DockStyle.Fill;
             this.VisOrdSoCitta.Location = new System.Drawing.Point(83, 123);
             this.VisOrdSoCitta.Name = "VisOrdSoCitta";
-            this.VisOrdSoCitta.Size = new System.Drawing.Size(105, 42);
+            this.VisOrdSoCitta.Size = new System.Drawing.Size(104, 42);
             this.VisOrdSoCitta.TabIndex = 97;
             this.VisOrdSoCitta.Text = "Hold";
             this.VisOrdSoCitta.TextAlign = System.Drawing.ContentAlignment.MiddleLeft;
@@ -2217,7 +2217,7 @@ namespace mangaerordini
             // 
             this.label116.AutoSize = true;
             this.label116.Dock = System.Windows.Forms.DockStyle.Fill;
-            this.label116.Location = new System.Drawing.Point(194, 0);
+            this.label116.Location = new System.Drawing.Point(193, 0);
             this.label116.Name = "label116";
             this.label116.Size = new System.Drawing.Size(70, 39);
             this.label116.TabIndex = 98;
@@ -2228,7 +2228,7 @@ namespace mangaerordini
             // 
             this.label114.AutoSize = true;
             this.label114.Dock = System.Windows.Forms.DockStyle.Fill;
-            this.label114.Location = new System.Drawing.Point(194, 39);
+            this.label114.Location = new System.Drawing.Point(193, 39);
             this.label114.Name = "label114";
             this.label114.Size = new System.Drawing.Size(70, 42);
             this.label114.TabIndex = 100;
@@ -2239,7 +2239,7 @@ namespace mangaerordini
             // 
             this.label112.AutoSize = true;
             this.label112.Dock = System.Windows.Forms.DockStyle.Fill;
-            this.label112.Location = new System.Drawing.Point(194, 81);
+            this.label112.Location = new System.Drawing.Point(193, 81);
             this.label112.Name = "label112";
             this.label112.Size = new System.Drawing.Size(70, 42);
             this.label112.TabIndex = 102;
@@ -2250,7 +2250,7 @@ namespace mangaerordini
             // 
             this.VisOrdCont.AutoSize = true;
             this.VisOrdCont.Dock = System.Windows.Forms.DockStyle.Fill;
-            this.VisOrdCont.Location = new System.Drawing.Point(270, 0);
+            this.VisOrdCont.Location = new System.Drawing.Point(269, 0);
             this.VisOrdCont.Name = "VisOrdCont";
             this.VisOrdCont.Size = new System.Drawing.Size(109, 39);
             this.VisOrdCont.TabIndex = 99;
@@ -2261,7 +2261,7 @@ namespace mangaerordini
             // 
             this.VisOrdETA.AutoSize = true;
             this.VisOrdETA.Dock = System.Windows.Forms.DockStyle.Fill;
-            this.VisOrdETA.Location = new System.Drawing.Point(506, 123);
+            this.VisOrdETA.Location = new System.Drawing.Point(505, 123);
             this.VisOrdETA.Name = "VisOrdETA";
             this.VisOrdETA.Size = new System.Drawing.Size(97, 42);
             this.VisOrdETA.TabIndex = 108;
@@ -2272,7 +2272,7 @@ namespace mangaerordini
             // 
             this.VisOrdContTel.AutoSize = true;
             this.VisOrdContTel.Dock = System.Windows.Forms.DockStyle.Fill;
-            this.VisOrdContTel.Location = new System.Drawing.Point(270, 39);
+            this.VisOrdContTel.Location = new System.Drawing.Point(269, 39);
             this.VisOrdContTel.Name = "VisOrdContTel";
             this.VisOrdContTel.Size = new System.Drawing.Size(109, 42);
             this.VisOrdContTel.TabIndex = 104;
@@ -2283,7 +2283,7 @@ namespace mangaerordini
             // 
             this.VisOrdData.AutoSize = true;
             this.VisOrdData.Dock = System.Windows.Forms.DockStyle.Fill;
-            this.VisOrdData.Location = new System.Drawing.Point(506, 81);
+            this.VisOrdData.Location = new System.Drawing.Point(505, 81);
             this.VisOrdData.Name = "VisOrdData";
             this.VisOrdData.Size = new System.Drawing.Size(97, 42);
             this.VisOrdData.TabIndex = 106;
@@ -2294,7 +2294,7 @@ namespace mangaerordini
             // 
             this.label113.AutoSize = true;
             this.label113.Dock = System.Windows.Forms.DockStyle.Fill;
-            this.label113.Location = new System.Drawing.Point(385, 123);
+            this.label113.Location = new System.Drawing.Point(384, 123);
             this.label113.Name = "label113";
             this.label113.Size = new System.Drawing.Size(115, 42);
             this.label113.TabIndex = 107;
@@ -2305,7 +2305,7 @@ namespace mangaerordini
             // 
             this.VisOrdContMail.AutoSize = true;
             this.VisOrdContMail.Dock = System.Windows.Forms.DockStyle.Fill;
-            this.VisOrdContMail.Location = new System.Drawing.Point(270, 81);
+            this.VisOrdContMail.Location = new System.Drawing.Point(269, 81);
             this.VisOrdContMail.Name = "VisOrdContMail";
             this.VisOrdContMail.Size = new System.Drawing.Size(109, 42);
             this.VisOrdContMail.TabIndex = 103;
@@ -2316,7 +2316,7 @@ namespace mangaerordini
             // 
             this.label110.AutoSize = true;
             this.label110.Dock = System.Windows.Forms.DockStyle.Fill;
-            this.label110.Location = new System.Drawing.Point(385, 81);
+            this.label110.Location = new System.Drawing.Point(384, 81);
             this.label110.Name = "label110";
             this.label110.Size = new System.Drawing.Size(115, 42);
             this.label110.TabIndex = 105;
@@ -2329,9 +2329,9 @@ namespace mangaerordini
             this.VisOrdChiudi.AutoSize = true;
             this.VisOrdChiudi.AutoSizeMode = System.Windows.Forms.AutoSizeMode.GrowAndShrink;
             this.VisOrdChiudi.Enabled = false;
-            this.VisOrdChiudi.Location = new System.Drawing.Point(846, 128);
+            this.VisOrdChiudi.Location = new System.Drawing.Point(844, 128);
             this.VisOrdChiudi.Name = "VisOrdChiudi";
-            this.VisOrdChiudi.Size = new System.Drawing.Size(325, 31);
+            this.VisOrdChiudi.Size = new System.Drawing.Size(327, 31);
             this.VisOrdChiudi.TabIndex = 88;
             this.VisOrdChiudi.Text = "Chiudi";
             this.VisOrdChiudi.UseVisualStyleBackColor = true;
@@ -2839,7 +2839,7 @@ namespace mangaerordini
             this.ComboBoxOrdCliente.Anchor = ((System.Windows.Forms.AnchorStyles)((System.Windows.Forms.AnchorStyles.Left | System.Windows.Forms.AnchorStyles.Right)));
             this.tableLayoutPanel21.SetColumnSpan(this.ComboBoxOrdCliente, 3);
             this.ComboBoxOrdCliente.FormattingEnabled = true;
-            this.ComboBoxOrdCliente.Location = new System.Drawing.Point(114, 3);
+            this.ComboBoxOrdCliente.Location = new System.Drawing.Point(114, 5);
             this.ComboBoxOrdCliente.Name = "ComboBoxOrdCliente";
             this.ComboBoxOrdCliente.Size = new System.Drawing.Size(471, 29);
             this.ComboBoxOrdCliente.TabIndex = 154;
@@ -2861,7 +2861,7 @@ namespace mangaerordini
             this.ComboBoxOrdContatto.Anchor = ((System.Windows.Forms.AnchorStyles)((System.Windows.Forms.AnchorStyles.Left | System.Windows.Forms.AnchorStyles.Right)));
             this.tableLayoutPanel21.SetColumnSpan(this.ComboBoxOrdContatto, 2);
             this.ComboBoxOrdContatto.FormattingEnabled = true;
-            this.ComboBoxOrdContatto.Location = new System.Drawing.Point(114, 37);
+            this.ComboBoxOrdContatto.Location = new System.Drawing.Point(114, 41);
             this.ComboBoxOrdContatto.Name = "ComboBoxOrdContatto";
             this.ComboBoxOrdContatto.Size = new System.Drawing.Size(302, 29);
             this.ComboBoxOrdContatto.TabIndex = 156;

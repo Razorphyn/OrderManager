@@ -1,9 +1,11 @@
 ﻿using AutoUpdaterDotNET;
 using CsvHelper;
 using CsvHelper.Configuration.Attributes;
+using ManagerOrdini.Properties;
 using Microsoft.VisualBasic;
 using Newtonsoft.Json;
 using System;
+using System.Collections;
 using System.Collections.Generic;
 using System.ComponentModel.DataAnnotations;
 using System.Data;
@@ -32,7 +34,7 @@ namespace mangaerordini
         static readonly string schemadb = "";
         //readonly string connectionString = @"Data Source = " + exeFolderPath + db_file_path + db_file_name + @";cache=shared; synchronous  = NORMAL ;  foreign_keys  = 1;  journal_mode=WAL; temp_store = memory;  mmap_size = 30000000000; ";
 
-        Dictionary<string, Dictionary<string, string>> settings;
+        Dictionary<string, Dictionary<string, string>> settings = new Dictionary<string, Dictionary<string, string>>();
 
         int datiGridViewFornitoriCurPage = 1;
         int datiGridViewClientiCurPage = 1;
@@ -7379,13 +7381,25 @@ namespace mangaerordini
 
         private void ReadSettingApp()
         {
-            string json = File.ReadAllText(settingFile);
-            settings = JsonConvert.DeserializeObject<Dictionary<string, Dictionary<string, string>>>(json);
+            settings.Add("calendario", new Dictionary<string, string>());
+            settings["calendario"].Add("aggiornaCalendario", "true");
+            settings["calendario"].Add("destinatari", "");
+            settings["calendario"].Add("nomeCalendario", "");
 
-            if (!settings["calendario"].ContainsKey("destinatari"))
+            string json = File.ReadAllText(settingFile);
+            Dictionary<string, Dictionary<string, string>> read_settings = JsonConvert.DeserializeObject<Dictionary<string, Dictionary<string, string>>>(json);
+
+            CopyDict(read_settings);
+        }
+
+        public void CopyDict(Dictionary<string, Dictionary<string, string>> dict)
+        {
+            foreach (KeyValuePair<string, Dictionary<string, string>> rootKv in dict)
             {
-                settings["calendario"]["destinatari"] = "";
-                UpdateSettingApp();
+                foreach (KeyValuePair<string, string> childKv in rootKv.Value)
+                {
+                    settings[rootKv.Key][childKv.Key] = dict[rootKv.Key][childKv.Key];
+                }
             }
         }
 

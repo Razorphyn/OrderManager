@@ -38,7 +38,8 @@ namespace mangaerordini
         [STAThread]
         private static void Main()
         {
-
+            //Mutex based on GuidAttribute to prevent multiple program execution. Avoid accessing to DB on multiple instances.
+            // NOt all information are collected everytiime from DB
             string appGuid =
        ((GuidAttribute)Assembly.GetExecutingAssembly().
            GetCustomAttributes(typeof(GuidAttribute), false).
@@ -64,15 +65,15 @@ namespace mangaerordini
             Application.EnableVisualStyles();
             Application.SetCompatibleTextRenderingDefault(false);
 
-
+            //Check for updates
             var currentDirectory = new DirectoryInfo(Application.StartupPath);
             AutoUpdater.InstalledVersion = new Version(Application.ProductVersion);
             AutoUpdater.RunUpdateAsAdmin = false;
             AutoUpdater.ShowRemindLaterButton = false;
             AutoUpdater.DownloadPath = Application.StartupPath;
-            //AutoUpdater.InstallationPath = currentDirectory.Parent.FullName;
             AutoUpdater.Start("https://github.com/Razorphyn/OrderManager/blob/main/mangaerordini/AutoUpdater.xml?raw=true");
 
+            //Remove exec and log use in AutoUpdater
             string zipextractorfile = exeFolderPath + "\\ZipExtractor.exe";
             string zipextractorlog = exeFolderPath + "\\ZipExtractor.log";
 
@@ -90,8 +91,9 @@ namespace mangaerordini
 
             string connectionString = @"Data Source = " + exeFolderPath + db_path + db_name + @";cache=shared; synchronous  = NORMAL ;  journal_mode=WAL; temp_store = memory;  mmap_size = 30000000000; ";
             string schemadb = "";
-
             SQLiteConnection connection = new SQLiteConnection(connectionString);
+
+            //Check if DB file exists otherwise create/copy one
 
             if (File.Exists(db_check_file) == false)
             {
@@ -102,7 +104,7 @@ namespace mangaerordini
                 }
                 else if (dialogResult == DialogResult.No)
                 {
-                    dialogResult = MessageBox.Show("Vuoi selezionare un file da copiare e incollare nella destinazione? Altriemnti premere No ed uscire dal programma", "Errore - File Databse non trovato", MessageBoxButtons.YesNo);
+                    dialogResult = MessageBox.Show("Vuoi selezionare un file da copiare nella destinazione? Altriemnti premere No ed uscire dal programma", "Errore - File Databse non trovato", MessageBoxButtons.YesNo);
                     if (dialogResult == DialogResult.Yes)
                     {
                         var fileContent = string.Empty;
@@ -141,19 +143,11 @@ namespace mangaerordini
                 }
                 else
                 {
-                    if (System.Windows.Forms.Application.MessageLoop)
-                    {
-                        // WinForms app
-                        System.Windows.Forms.Application.Exit();
-                    }
-                    else
-                    {
-                        // Console app
-                        System.Environment.Exit(1);
-                    }
+                    ExitProgram();
                 }
             }
 
+            //Retrieve database version, if not exist add default
             string commandText = "SELECT versione FROM " + schemadb + @"[informazioni] WHERE Id=1 LIMIT 1;";
             using (SQLiteConnection conn = new SQLiteConnection(connectionString))
             using (SQLiteCommand cmd = new SQLiteCommand(commandText, conn))
@@ -192,7 +186,8 @@ namespace mangaerordini
                 }
             }
 
-            //DB UPDATE
+            //Search for files with version lower than retrieved database
+            // Add hash check?
             if (Directory.Exists(exeFolderPath + db__query_folder))
             {
                 DirectoryInfo d = new DirectoryInfo(exeFolderPath + db__query_folder);
@@ -224,16 +219,22 @@ namespace mangaerordini
                                 bkAsked = true;
                             }
 
+                            //do backup anyway to rollback in case of errors
                             BkBackup(true);
 
                             bool success = RunSqlScriptFile(exeFolderPath + db__query_folder + @"\" + file.Name, connectionString);
 
                             if (success)
                             {
+                                //delete automatic backup
                                 DelTempFileBkDb();
+
+                                //delete update file
+                                File.Delete(exeFolderPath + db__query_folder + @"\" + file.Name);
                             }
                             else
                             {
+                                //if error then restore db and delete temp backup
                                 BtDbRestore();
                                 DelTempFileBkDb();
 
@@ -250,6 +251,7 @@ namespace mangaerordini
                 }
             }
 
+            // check if setting file exists, otherwise create it
             if (!File.Exists(settingFile))
             {
                 string input = null;
@@ -263,15 +265,16 @@ namespace mangaerordini
                     Outlook.Folder primaryCalendar = OlApp.Session.GetDefaultFolder(
                         Outlook.OlDefaultFolders.olFolderCalendar)
                         as Outlook.Folder;
-
-                    //input = primaryCalendar.Name;
                 }
 
-                Dictionary<string, Dictionary<string, string>> settings = new Dictionary<string, Dictionary<string, string>>();
-                settings["calendario"] = new Dictionary<string, string>();
-
-                settings["calendario"].Add("nomeCalendario", input);
-                settings["calendario"].Add("destinatari", "");
+                Dictionary<string, Dictionary<string, string>> settings = new Dictionary<string, Dictionary<string, string>>
+                {
+                    ["calendario"] = new Dictionary<string, string>
+                                        {
+                                            { "nomeCalendario", input },
+                                            { "destinatari", "" }
+                                        }
+                };
 
                 DialogResult dialogResult = MessageBox.Show("Vuoi che il software identifichi se necessario e aggiornare un evento di calendario? Prima di procedere chiede conferma. " + Environment.NewLine + "Se disabilitato, il tutto dovrà essere fatto manualemnte", "Aggiornamento Automatico Eventi Calendario", MessageBoxButtons.YesNo);
                 if (dialogResult == DialogResult.Yes)
@@ -378,6 +381,7 @@ namespace mangaerordini
             }
         }
 
+        //Run query from file to update DB
         private static bool RunSqlScriptFile(string pathStoreProceduresFile, string connectionString)
         {
             try
@@ -394,7 +398,6 @@ namespace mangaerordini
                     {
                         if (commandString.Trim() != "")
                         {
-
                             using (var command = new SQLiteCommand(commandString, connection))
                             {
                                 try
@@ -404,6 +407,7 @@ namespace mangaerordini
 
                                     while (reader.Read())
                                     {
+                                        //If message is needed--> return as "retentry" from query
                                         if (!string.IsNullOrEmpty(Convert.ToString(reader["retentry"])))
                                             message = message + Environment.NewLine + Convert.ToString(reader["retentry"]);
                                     }
@@ -436,14 +440,13 @@ namespace mangaerordini
         {
             if (System.Windows.Forms.Application.MessageLoop)
             {
-                // WinForms app
                 System.Windows.Forms.Application.Exit();
             }
             else
             {
-                // Console app
                 System.Environment.Exit(1);
             }
         }
     }
+
 }
