@@ -32,7 +32,7 @@ namespace mangaerordini
         static readonly string settingFile = exeFolderPath + @"\" + "ManagerOrdiniSettings.txt";
         static readonly int recordsPerPage = 8;
         static readonly string schemadb = "";
-        
+
         Dictionary<string, Dictionary<string, string>> settings = new Dictionary<string, Dictionary<string, string>>();
 
         int datiGridViewFornitoriCurPage = 1;
@@ -466,9 +466,7 @@ namespace mangaerordini
                                 cmd.SelectCommand.Parameters.AddWithValue("@startdate", start);
                                 cmd.SelectCommand.Parameters.AddWithValue("@enddate", end);
 
-
                                 cmd.Fill(ds);
-
 
                                 using (var writer = new StreamWriter(folderPath + @"\" + "OFFERTE_" + iden + ".csv", true, Encoding.UTF8))
                                 using (var csv = new CsvWriter(writer, provider))
@@ -2559,6 +2557,8 @@ namespace mangaerordini
             dataoffValue = ValidateDate(dataoffString);
             er_list += dataoffValue.Error;
 
+            MessageBox.Show("" + dataoffValue.DateValue);
+
             answer = ValidateCliente(idcl);
             if (!answer.Success)
             {
@@ -3245,6 +3245,7 @@ namespace mangaerordini
 
                 UpdateFields("OC", "A", true);
                 UpdateFields("OC", "E", true);
+
                 return;
             }
 
@@ -3375,8 +3376,6 @@ namespace mangaerordini
             string commandText = @" DELETE FROM " + schemadb + @"[offerte_pezzi] WHERE ID_offerta=@idq; 
                                     DELETE FROM " + schemadb + @"[offerte_elenco] WHERE Id=@idq LIMIT 1;";
 
-
-
             using (var transaction = connection.BeginTransaction())
             using (SQLiteCommand cmd = new SQLiteCommand(commandText, connection, transaction))
             {
@@ -3388,7 +3387,6 @@ namespace mangaerordini
                     transaction.Commit();
 
                     int temp = SelOffCrea.SelectedItem.GetHashCode();
-                    MessageBox.Show("" + temp);
 
                     UpdateOfferteCrea();
 
@@ -4381,7 +4379,7 @@ namespace mangaerordini
                                                     cmd3.Parameters.AddWithValue("@prezor", reader["prezzo_unitario_originale"]);
                                                     cmd3.Parameters.AddWithValue("@prezsco", reader["prezzo_unitario_sconto"]);
                                                     cmd3.Parameters.AddWithValue("@qta", reader["pezzi"]);
-                                                    cmd3.Parameters.AddWithValue("@dataeta", dataETAOrdValue);
+                                                    cmd3.Parameters.AddWithValue("@dataeta", dataETAOrdValue.DateValue);
                                                     cmd3.Parameters.AddWithValue("@idoffogg", reader["Id"]);
 
                                                     cmd3.ExecuteNonQuery();
@@ -4580,7 +4578,6 @@ namespace mangaerordini
             {
                 try
                 {
-
                     cmd.SelectCommand.Parameters.AddWithValue("@idofferta", id_ordine);
                     DataTable ds = new DataTable();
                     cmd.Fill(ds);
@@ -5083,7 +5080,7 @@ namespace mangaerordini
                             DialogResult dialogResult = MessageBox.Show("Vuoi aggiornare l'evento sul calendario con le nuove informazioni?", "Aggiornare Evento Ordine Calendario", MessageBoxButtons.YesNo);
                             if (dialogResult == DialogResult.Yes)
                             {
-                                UpdateCalendar(ordinecode, ordinecode, idordine, eta, false);
+                                UpdateCalendar(ordinecode, ordinecode, idordine, eta, eta, false);
                             }
                         }
                     }
@@ -5486,7 +5483,7 @@ namespace mangaerordini
                             dialogResult = MessageBox.Show("Vuoi aggiornare l'evento sul calendario con le nuove informazioni?", "Aggiornare Evento Ordine Calendario", MessageBoxButtons.YesNo);
                             if (dialogResult == DialogResult.Yes)
                             {
-                                UpdateCalendar(ordinecode, ordinecode, idordine, eta, false);
+                                UpdateCalendar(ordinecode, ordinecode, idordine, eta, eta, false);
                             }
                         }
                     }
@@ -5598,6 +5595,7 @@ namespace mangaerordini
             {
                 MessageBox.Show(er_list);
                 UpdateFields("OCR", "A", true);
+                BtCreaOrdine.Enabled = false;
                 return;
             }
 
@@ -5670,8 +5668,8 @@ namespace mangaerordini
                 {
                     cmd.CommandText = commandText;
                     cmd.Parameters.AddWithValue("@codo", n_ordine);
-                    cmd.Parameters.AddWithValue("@dataord", dataOrdValue);
-                    cmd.Parameters.AddWithValue("@dataeta", dataETAOrdValue);
+                    cmd.Parameters.AddWithValue("@dataord", dataOrdValue.DateValue);
+                    cmd.Parameters.AddWithValue("@dataeta", dataETAOrdValue.DateValue);
                     cmd.Parameters.AddWithValue("@totord", tot_ordineV.DecimalValue);
                     cmd.Parameters.AddWithValue("@sconto", scontoV.DecimalValue);
                     cmd.Parameters.AddWithValue("@prezzoF", prezzo_finaleV.DecimalValue);
@@ -5729,7 +5727,7 @@ namespace mangaerordini
                                     res = MessageBox.Show("Vuoi aggiornare l'evento del calendario relativo alll'ordine con le nuove informazioni?", "Conferma Aggiornamento Ordine Calendario", MessageBoxButtons.OKCancel, MessageBoxIcon.Information);
                                     if (res != DialogResult.Yes)
                                     {
-                                        UpdateCalendar(oldRef, n_ordine, id_ordine, dataETAOrdValue.DateValue, false);
+                                        UpdateCalendar(oldRef, n_ordine, id_ordine, oldETA, dataETAOrdValue.DateValue, false);
                                     }
                                 }
                                 else if (DateTime.Compare(oldETA, dataETAOrdValue.DateValue) != 0)
@@ -5737,7 +5735,7 @@ namespace mangaerordini
                                     res = MessageBox.Show("Vuoi aggiornare l'evento del calendario relativo alll'ordine con le nuove informazioni?" + Environment.NewLine + "L'evento verrà cancellato per poi essere inserito nuovamente.", "Conferma Aggiornamento Ordine Calendario", MessageBoxButtons.OKCancel, MessageBoxIcon.Information);
                                     if (res != DialogResult.Yes)
                                     {
-                                        UpdateCalendar(oldRef, n_ordine, id_ordine, dataETAOrdValue.DateValue);
+                                        UpdateCalendar(oldRef, n_ordine, id_ordine, oldETA, dataETAOrdValue.DateValue);
                                     }
                                 }
                             }
@@ -5922,7 +5920,7 @@ namespace mangaerordini
                                 DialogResult dialogResult = MessageBox.Show("Vuoi aggiornare l'evento sul calendario con le nuove informazioni?", "Aggiornare Evento Ordine Calendario", MessageBoxButtons.YesNo);
                                 if (dialogResult == DialogResult.Yes)
                                 {
-                                    UpdateCalendar(ordinecode, ordinecode, idordine, eta, false);
+                                    UpdateCalendar(ordinecode, ordinecode, idordine, eta, eta, false);
                                 }
                             }
                         }
@@ -6599,21 +6597,16 @@ namespace mangaerordini
 
         private void AddAppointment(string ordRef, string body, DateTime estDate, DateTime orderEstDate)
         {
-
-
             if (FindAppointment(ordRef, orderEstDate) == true)
             {
                 MessageBox.Show("Evento già presente. Rimuoverlo o aggiornarlo se necessario");
                 return;
             }
 
-
             try
             {
                 Outlook.Application outlookApp = new Outlook.Application();
-
                 Outlook.Folder calendar = outlookApp.Session.GetDefaultFolder(Outlook.OlDefaultFolders.olFolderCalendar) as Outlook.Folder;
-
                 Outlook.Folder personalCalendar = calendar;
 
                 string newCalendarName = settings["calendario"]["nomeCalendario"];
@@ -6709,7 +6702,7 @@ namespace mangaerordini
                 }
             }
 
-            MessageBox.Show("Sono stati trovati " + c + " con l'identificativo dell'evento. Verrà chiesta conferma prima dell'eliminazione di ciascun evento.");
+            MessageBox.Show("Sono stati trovati " + c + " elemento/i con l'identificativo dell'evento. Verrà chiesta conferma prima dell'eliminazione di ciascun evento.");
 
             for (int i = 0; i < c; i++)
             {
@@ -6867,14 +6860,24 @@ namespace mangaerordini
             string nordine = VisOrdNumero.Text;
             string opde = VisOrdETA.Text;
 
-            DateTime dateAppoint = DateTime.MinValue;
-
-            if (!DateTime.TryParseExact(opde, dateFormat, provider, DateTimeStyles.None, out DateTime dataETAOrdValue))
+            ValidationResult dateAppoint = new ValidationResult
             {
-                MessageBox.Show("Data non valida o vuota");
+                DateValue = DateTime.MinValue
+            };
+
+            ValidationResult dataETAOrdValue = new ValidationResult();
+
+
+            dataETAOrdValue = ValidateDate(opde);
+
+            if (dataETAOrdValue.Error != null)
+            {
+                MessageBox.Show(dataETAOrdValue.Error);
+                UpdateFields("VS", "E", true);
+                return;
             }
 
-            if (FindAppointment(nordine, dataETAOrdValue) == false)
+            if (FindAppointment(nordine, dataETAOrdValue.DateValue) == false)
             {
                 DialogResult dialogResult = MessageBox.Show("Creare l'appuntamento? Una volta creato, sarà necessario salvarlo." + Environment.NewLine + Environment.NewLine
                                                             + "ATTENZIONE: NON rimuovere la stringa finale ##ManaOrdini[numero_ordine]## dal titolo dell'appunatmento. Serve per riconoscere l'evento.", "Creazione Appuntamento Calendario", MessageBoxButtons.YesNo);
@@ -6884,9 +6887,9 @@ namespace mangaerordini
                     return;
                 }
 
-                while (dateAppoint == DateTime.MinValue)
+                while (dateAppoint.DateValue == DateTime.MinValue)
                 {
-                    string input = Interaction.InputBox("Inserire data in cui ricevere la notifica relativa all'ordine", "Data Notifica Ordine", (dataETAOrdValue).ToString(dateFormat));
+                    string input = Interaction.InputBox("Inserire data in cui ricevere la notifica relativa all'ordine.", "Data Notifica Ordine", (dataETAOrdValue.DateValue).ToString(dateFormat));
                     if (String.ReferenceEquals(input, String.Empty))
                     {
                         MessageBox.Show("Azione Cancellata");
@@ -6894,40 +6897,45 @@ namespace mangaerordini
                         return;
                     }
 
-                    if (!DateTime.TryParse(input, out dateAppoint))
+                    dateAppoint = ValidateDate(input);
+
+                    if (dateAppoint.Error != null)
                     {
-                        MessageBox.Show("Controllare formato data. Impossibile convertire in formato data crretto.");
-                        dateAppoint = DateTime.MinValue;
+                        MessageBox.Show("Controllare formato data. Impossibile convertire in formato data corretto.");
+                        dateAppoint.DateValue = DateTime.MinValue;
                         continue;
                     }
 
-                    if (DateTime.Compare(dateAppoint, DateTime.MinValue) != 0 && DateTime.Compare(dateAppoint, dataETAOrdValue) > 0)
+                    if (DateTime.Compare(dateAppoint.DateValue, DateTime.MinValue) != 0 && DateTime.Compare(dateAppoint.DateValue, dataETAOrdValue.DateValue) > 0)
                     {
-                        DialogResult confDataLaterOrder = MessageBox.Show("La data scelta va oltre alla data di consegna dell'ordine, continuare?", "Creazione Appuntamento Calendario", MessageBoxButtons.YesNo);
+                        DialogResult confDataLaterOrder = MessageBox.Show("La data scelta va oltre alla data di consegna dell'ordine, continuare?" + Environment.NewLine + "NOTA: al momento il programma non è in grado di gestire automaticamente le modifiche se la data dell'avviso va oltre a quella di consegna." + Environment.NewLine + "Se necessario aggiornare l'ETA dell'ordine.", "Creazione Appuntamento Calendario", MessageBoxButtons.YesNo);
                         if (confDataLaterOrder == DialogResult.No)
                         {
-                            dateAppoint = DateTime.MinValue;
+                            dateAppoint.DateValue = DateTime.MinValue;
+                            continue;
                         }
                     }
 
-                    if (DateTime.Compare(dateAppoint, DateTime.MinValue) != 0 && DateTime.Compare(dateAppoint, DateTime.Now.Date) < 0)
+                    if (DateTime.Compare(dateAppoint.DateValue, DateTime.MinValue) != 0 && DateTime.Compare(dateAppoint.DateValue, DateTime.Now.Date) < 0)
                     {
                         DialogResult confDataLaterOrder = MessageBox.Show("La data scelta è antecedente alla dato odierna, continuare?", "Creazione Appuntamento Calendario", MessageBoxButtons.YesNo);
                         if (confDataLaterOrder == DialogResult.No)
                         {
-                            dateAppoint = DateTime.MinValue;
+                            dateAppoint.DateValue = DateTime.MinValue;
+                            continue;
                         }
                     }
                 }
 
                 string body = CreateAppointmentBody(Convert.ToInt32(VisOrdId.Text.Trim()));
 
-                AddAppointment(nordine, body, dateAppoint, dataETAOrdValue);
+                AddAppointment(nordine, body, dateAppoint.DateValue, dataETAOrdValue.DateValue);
             }
             else
             {
-                MessageBox.Show("Evento già presente. Rimuoverlo o aggiornarlo se necessario");
+                MessageBox.Show("Evento già presente. Rimuoverlo o aggiornarlo se necessario.");
             }
+
             UpdateFields("VS", "E", true);
             return;
         }
@@ -6957,21 +6965,24 @@ namespace mangaerordini
             }
         }
 
-        private void UpdateCalendar(string oldRef, string newRef, int id_ordine, DateTime estDate, bool delete = true)
+        private void UpdateCalendar(string oldRef, string newRef, int id_ordine, DateTime oldEta, DateTime estDate, bool delete = true)
         {
             bool check = false;
             if (delete == true)
-                check = RemoveAppointment(oldRef, estDate.AddDays(1));
+                check = RemoveAppointment(oldRef, oldEta.AddDays(1));
 
             if (check == true || delete == false)
             {
                 Thread.CurrentThread.CurrentCulture = new CultureInfo("it-IT");
 
-                DateTime dateAppoint = DateTime.MinValue;
+                ValidationResult dateAppoint = new ValidationResult
+                {
+                    DateValue = DateTime.MinValue
+                };
 
                 if (delete == true)
                 {
-                    while (dateAppoint == DateTime.MinValue)
+                    while (dateAppoint.DateValue == DateTime.MinValue)
                     {
                         string input = Interaction.InputBox("Inserire la data per l'appunatmento sul calendario? Una volta creato, sarà necessario salvarlo." + Environment.NewLine + Environment.NewLine
                                                             + "ATTENZIONE: NON rimuovere la stringa finale ##ManaOrdini[numero_ordine]## dal titolo dell'appunatmento. Serve per riconoscere l'evento.", "Modifica Appuntamento Calendario", (estDate).ToString(dateFormat));
@@ -6982,28 +6993,30 @@ namespace mangaerordini
                             return;
                         }
 
-                        if (DateTime.TryParse(input, out dateAppoint))
+                        dateAppoint = ValidateDate(input);
+
+                        if (dateAppoint.Error != null)
                         {
-                            MessageBox.Show("Controllare formato data. Impossibile convertire in formato data crretto.");
-                            dateAppoint = DateTime.MinValue;
+                            MessageBox.Show("Controllare formato data. Impossibile convertire in formato data corretto.");
+                            dateAppoint.DateValue = DateTime.MinValue;
                             continue;
                         }
 
-                        if (DateTime.Compare(dateAppoint, DateTime.MinValue) != 0 && DateTime.Compare(dateAppoint, estDate) > 0)
+                        if (DateTime.Compare(dateAppoint.DateValue, DateTime.MinValue) != 0 && DateTime.Compare(dateAppoint.DateValue, estDate) > 0)
                         {
                             DialogResult confDataLaterOrder = MessageBox.Show("La data scelta va oltre alla data di consegna dell'ordine, continuare?", "Creazione Appuntamento Calendario", MessageBoxButtons.YesNo);
                             if (confDataLaterOrder == DialogResult.No)
                             {
-                                dateAppoint = DateTime.MinValue;
+                                dateAppoint.DateValue = DateTime.MinValue;
                             }
                         }
 
-                        if (DateTime.Compare(dateAppoint, DateTime.MinValue) != 0 && DateTime.Compare(dateAppoint, DateTime.Now.Date) < 0)
+                        if (DateTime.Compare(dateAppoint.DateValue, DateTime.MinValue) != 0 && DateTime.Compare(dateAppoint.DateValue, DateTime.Now.Date) < 0)
                         {
                             DialogResult confDataLaterOrder = MessageBox.Show("La data scelta è antecedente alla dato odierna, continuare?", "Creazione Appuntamento Calendario", MessageBoxButtons.YesNo);
                             if (confDataLaterOrder == DialogResult.No)
                             {
-                                dateAppoint = DateTime.MinValue;
+                                dateAppoint.DateValue = DateTime.MinValue;
                             }
                         }
                     }
@@ -7012,7 +7025,7 @@ namespace mangaerordini
                 string body = CreateAppointmentBody(id_ordine);
 
                 if (delete == true)
-                    AddAppointment(newRef, body, dateAppoint, estDate);
+                    AddAppointment(newRef, body, dateAppoint.DateValue, estDate);
                 else
                     UpdateBodyCalendar(newRef, body, estDate);
                 MessageBox.Show("Appuntamento calendario aggiornato");
@@ -7214,7 +7227,7 @@ namespace mangaerordini
 
             if (FindAppointment(oldRef, estDate.AddDays(1)) == true)
             {
-                UpdateCalendar(oldRef, newRef, id_ordine, estDate, false);
+                UpdateCalendar(oldRef, newRef, id_ordine, estDate, estDate, false);
             }
             else
             {
@@ -8557,7 +8570,7 @@ namespace mangaerordini
             settingCalendarioDestinatari.Text = settings["calendario"]["destinatari"];
             settingCalendarioUpdate.Checked = Boolean.Parse(settings["calendario"]["aggiornaCalendario"]);
         }
-        
+
         private void UpdateFields(string tabC, string action, bool stat, bool clean = true)
         {
             DateTime today = DateTime.Today;
@@ -9110,7 +9123,7 @@ namespace mangaerordini
             public bool BoolValue { get; set; } = false;
             public decimal? DecimalValue { get; set; } = null;
             public int? IntValue { get; set; } = null;
-            public string Error { get; set; } = "";
+            public string Error { get; set; } = null;
             public DateTime DateValue { get; set; } = DateTime.MinValue;
         }
 

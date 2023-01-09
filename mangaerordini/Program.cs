@@ -229,8 +229,6 @@ namespace mangaerordini
                                 //delete automatic backup
                                 DelTempFileBkDb();
 
-                                //delete update file
-                                File.Delete(exeFolderPath + db__query_folder + @"\" + file.Name);
                             }
                             else
                             {
