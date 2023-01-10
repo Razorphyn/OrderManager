@@ -630,11 +630,22 @@ namespace mangaerordini
             int fornitoreId = Convert.ToInt32(AddDatiCompSupplier.SelectedValue.GetHashCode());
             int macchinaId = Convert.ToInt32(AddDatiCompMachine.SelectedValue.GetHashCode());
 
+            ValidationResult answerMacchina = new ValidationResult();
+
             string er_list = "";
 
             er_list += ValidateComponenteNome(nome);
 
             er_list += ValidateCodiceRicambio(codice);
+
+            answerMacchina = ValidateMacchina(macchinaId);
+
+            if (!answerMacchina.Success)
+            {
+                MessageBox.Show(answerMacchina.Error);
+                return;
+            }
+            er_list += answerMacchina.Error;
 
             ValidationResult answer = ValidatePrezzo(prezzo);
             er_list += answer.Error;
@@ -2557,8 +2568,6 @@ namespace mangaerordini
             dataoffValue = ValidateDate(dataoffString);
             er_list += dataoffValue.Error;
 
-            MessageBox.Show("" + dataoffValue.DateValue);
-
             answer = ValidateCliente(idcl);
             if (!answer.Success)
             {
@@ -3309,7 +3318,7 @@ namespace mangaerordini
                     if (SelOffCreaCl.SelectedItem.GetHashCode() > 0)
                         SelOffCreaCl_SelectedIndexChanged(this, EventArgs.Empty);
 
-                    if (temp_SelOffCrea > 0)
+                    if (stato==0 && temp_SelOffCrea > 0)
                         SelOffCrea.SelectedIndex = FindIndexFromValue(SelOffCrea, temp_SelOffCrea);
 
                     if (ComboSelOrdCl.SelectedItem.GetHashCode() > 0)
@@ -9279,6 +9288,8 @@ namespace mangaerordini
             string commandText = "SELECT COUNT(*) FROM " + schemadb + @"[clienti_macchine] WHERE ([Id] = @user) LIMIT 1;";
             ValidationResult answer = new ValidationResult();
 
+            answer.Success = true;
+
             if (id > 0)
             {
                 using (SQLiteCommand cmd = new SQLiteCommand(commandText, connection))
@@ -9289,7 +9300,6 @@ namespace mangaerordini
                         cmd.Parameters.AddWithValue("@user", id);
 
                         answer.IntValue = Convert.ToInt32(cmd.ExecuteScalar());
-                        answer.Success = true;
                     }
                     catch (SQLiteException ex)
                     {
@@ -9310,9 +9320,7 @@ namespace mangaerordini
                 }
                 return answer;
             }
-            answer.BoolValue = false;
-            answer.Error = "Selezionare Macchina." + Environment.NewLine;
-
+            
             return answer;
         }
 
