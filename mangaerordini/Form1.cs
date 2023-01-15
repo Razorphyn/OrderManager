@@ -342,11 +342,7 @@ namespace mangaerordini
                 try
                 {
                     cmd.CommandText = commandText;
-
-
                     cmd.ExecuteNonQuery();
-
-
 
                     MessageBox.Show("Ottimizzzazione Eseguita");
 
@@ -375,8 +371,6 @@ namespace mangaerordini
             {
                 try
                 {
-
-
                     cmd.CommandText = commandText;
                     cmd.ExecuteNonQuery();
 
@@ -425,7 +419,7 @@ namespace mangaerordini
                     string folderPath = csv_path.SelectedPath;
                     string iden = DateTime.Now.ToString("yyMMddHHmmss");
                     iden = iden.Replace(":", "").Replace(" ", "").Replace(@"/", "");
-                    string commandText = "";
+                    string commandText;
 
                     if (exportOfferte)
                     {
@@ -496,8 +490,6 @@ namespace mangaerordini
                                 return;
                             }
                         }
-
-
                     }
 
                     if (exportOrdini)
@@ -568,9 +560,7 @@ namespace mangaerordini
                                 cmd.SelectCommand.Parameters.AddWithValue("@startdate", start);
                                 cmd.SelectCommand.Parameters.AddWithValue("@enddate", end);
 
-
                                 cmd.Fill(ds);
-
 
                                 using (var writer = new StreamWriter(folderPath + @"\" + "ORDINI_" + iden + ".csv", true, Encoding.UTF8))
                                 using (var csv = new CsvWriter(writer, provider))
@@ -593,8 +583,6 @@ namespace mangaerordini
                             catch (SQLiteException ex)
                             {
                                 MessageBox.Show("Errore durante lettura dati Ordini esportazione in csv. Codice: " + ReturnErorrCode(ex));
-
-
                                 return;
                             }
                         }
@@ -632,14 +620,33 @@ namespace mangaerordini
             int fornitoreId = Convert.ToInt32(AddDatiCompSupplier.SelectedValue.GetHashCode());
             int macchinaId = Convert.ToInt32(AddDatiCompMachine.SelectedValue.GetHashCode());
 
+<<<<<<< Updated upstream
+=======
+            ValidationResult prezzoConv = ValidatePrezzo(prezzo);
+
+>>>>>>> Stashed changes
             string er_list = "";
 
             er_list += ValidateComponenteNome(nome);
 
             er_list += ValidateCodiceRicambio(codice);
 
+<<<<<<< Updated upstream
             ValidationResult answer = ValidatePrezzo(prezzo);
             er_list += answer.Error;
+=======
+            ValidationResult answerMacchina = ValidateMacchina(macchinaId);
+
+            if (!answerMacchina.Success)
+            {
+                MessageBox.Show(answerMacchina.Error);
+                return;
+            }
+            er_list += answerMacchina.Error;
+
+
+            er_list += prezzoConv.Error;
+>>>>>>> Stashed changes
 
             if (fornitoreId < 1)
             {
@@ -663,7 +670,7 @@ namespace mangaerordini
                     cmd.Parameters.AddWithValue("@nome", nome);
                     cmd.Parameters.AddWithValue("@codice", codice);
                     cmd.Parameters.AddWithValue("@desc", descrizione);
-                    cmd.Parameters.AddWithValue("@prezzo", answer.DecimalValue);
+                    cmd.Parameters.AddWithValue("@prezzo", prezzoConv.DecimalValue);
                     cmd.Parameters.AddWithValue("@idif", fornitoreId);
                     if (macchinaId < 1)
                         cmd.Parameters.AddWithValue("@idma", DBNull.Value);
@@ -700,30 +707,28 @@ namespace mangaerordini
             int fornitoreId = Convert.ToInt32(ChangeDatiCompSupplier.SelectedItem.GetHashCode());
             int macchinaId = Convert.ToInt32(ChangeDatiCompMachine.SelectedItem.GetHashCode());
             string idF = ChangeDatiCompID.Text;
-
-            ValidationResult answer = new ValidationResult();
             string er_list = "";
 
             string commandText;
 
             er_list += ValidateComponenteNome(nome);
 
-            answer = ValidateMacchina(macchinaId);
+            ValidationResult validateMacchina = ValidateMacchina(macchinaId);
 
-            if (!answer.Success)
+            if (!validateMacchina.Success)
             {
-                MessageBox.Show(answer.Error);
+                MessageBox.Show(validateMacchina.Error);
                 return;
             }
-            er_list += answer.Error;
+            er_list += validateMacchina.Error;
 
-            answer = ValidateFornitore(fornitoreId);
-            if (!answer.Success)
+            ValidationResult validateFornitore = ValidateFornitore(fornitoreId);
+            if (!validateFornitore.Success)
             {
-                MessageBox.Show(answer.Error);
+                MessageBox.Show(validateFornitore.Error);
                 return;
             }
-            er_list += answer.Error;
+            er_list += validateFornitore.Error;
 
             er_list += ValidateCodiceRicambio(codice);
 
@@ -754,7 +759,6 @@ namespace mangaerordini
             }
 
             commandText = "UPDATE " + schemadb + @"[pezzi_ricambi] SET nome=@nome,codice=@codice,descrizione=@descrizione,prezzo=@prezzod,ID_fornitore=@idif,ID_macchina=@idma WHERE Id=@idq LIMIT 1;";
-
 
             using (SQLiteCommand cmd = new SQLiteCommand(commandText, connection))
             {
@@ -806,7 +810,6 @@ namespace mangaerordini
 
         private void BtDelComp_Click(object sender, EventArgs e)
         {
-            //DISABILITA CAMPI
             UpdateFields("R", "E", false);
 
             string nome = ChangeDatiCompNome.Text.Trim();
@@ -824,7 +827,6 @@ namespace mangaerordini
             if (er_list != "")
             {
                 MessageBox.Show(er_list);
-                //ABILITA CAMPI & BOTTONI
                 UpdateFields("R", "E", true);
                 return;
             }
@@ -832,7 +834,6 @@ namespace mangaerordini
             DialogResult dialogResult = MessageBox.Show("Vuoi veramente eliminare il Pezzo di Ricambio?", "Eliminare Pezzo di Ricambio", MessageBoxButtons.YesNo);
             if (dialogResult == DialogResult.No)
             {
-                //ABILITA CAMPI & BOTTONI
                 UpdateFields("R", "E", true);
                 return;
             }
@@ -847,7 +848,6 @@ namespace mangaerordini
                     cmd.CommandText = commandText;
                     cmd.Parameters.AddWithValue("@idq", idQ);
 
-
                     cmd.ExecuteNonQuery();
 
                     UpdateFields("R", "CE", false);
@@ -859,7 +859,6 @@ namespace mangaerordini
                 catch (SQLiteException ex)
                 {
                     MessageBox.Show("Errore durante eliminazione pezzo di ricambio. Codice: " + ReturnErorrCode(ex));
-                    //ABILITA CAMPI & BOTTONI
                     UpdateFields("R", "E", true);
                 }
             }
@@ -875,7 +874,6 @@ namespace mangaerordini
 
         private void DataGridViewComp_CellDoubleClick(object sender, DataGridViewCellEventArgs e)
         {
-
             if (!(sender is DataGridView dgv))
             {
                 return;
@@ -906,10 +904,8 @@ namespace mangaerordini
 
                     using (SQLiteCommand cmd = new SQLiteCommand(commandText, connection))
                     {
-
                         try
                         {
-
                             cmd.Parameters.AddWithValue("@ID", id);
                             SQLiteDataReader reader = cmd.ExecuteReader();
                             while (reader.Read())
@@ -923,8 +919,6 @@ namespace mangaerordini
                         catch (SQLiteException ex)
                         {
                             MessageBox.Show("Errore durante popolamento Macchine e Clienti. Codice: " + ReturnErorrCode(ex));
-
-
                             return;
                         }
                     }
@@ -1028,7 +1022,6 @@ namespace mangaerordini
                 addInfo = " WHERE " + String.Join(" AND ", paramsQuery) + " ";
 
             string commandText = "SELECT COUNT(*) FROM " + schemadb + @"[pezzi_ricambi] " + addInfo;
-
 
             using (SQLiteCommand cmdCount = new SQLiteCommand(commandText, connection))
             {
@@ -1260,7 +1253,6 @@ namespace mangaerordini
 
             string commandText = "UPDATE " + schemadb + @"[clienti_elenco] SET nome=@nome,stato=@stato,citta=@citta,provincia=@provincia WHERE Id=@idq LIMIT 1;";
 
-
             using (SQLiteCommand cmd = new SQLiteCommand(commandText, connection))
             {
                 try
@@ -1373,7 +1365,6 @@ namespace mangaerordini
 
         private void BtCloseChangesClienti_Click(object sender, EventArgs e)
         {
-
             UpdateFields("C", "CE", false);
             UpdateFields("C", "E", false);
         }
@@ -1413,8 +1404,6 @@ namespace mangaerordini
             string commandText = "SELECT COUNT(*) FROM " + schemadb + @"[clienti_elenco]";
             int count = 1;
 
-
-
             using (SQLiteCommand cmdCount = new SQLiteCommand(commandText, connection))
             {
 
@@ -1440,7 +1429,6 @@ namespace mangaerordini
 
             commandText = @"SELECT Id,nome,stato,provincia,citta FROM " + schemadb + @"[clienti_elenco] ORDER BY Id ASC LIMIT @recordperpage OFFSET @startingrecord;";
             page--;
-
 
             using (SQLiteDataAdapter cmd = new SQLiteDataAdapter(commandText, connection))
             {
@@ -1507,29 +1495,13 @@ namespace mangaerordini
             }
             //add check if ID exist databse
 
-            string commandText = "SELECT COUNT(*) FROM " + schemadb + @"[clienti_elenco] WHERE Id = @user LIMIT 1;";
-            int UserExist = 0;
-
-            using (SQLiteCommand cmd = new SQLiteCommand(commandText, connection))
+            ValidationResult validateCliente = ValidateCliente(idcl);
+            if (!validateCliente.Success)
             {
-                try
-                {
-                    cmd.CommandText = commandText;
-                    cmd.Parameters.AddWithValue("@user", idcl);
-
-                    UserExist = Convert.ToInt32(cmd.ExecuteScalar());
-                }
-                catch (SQLiteException ex)
-                {
-                    MessageBox.Show("Errore durante verifica ID Cliente. Codice: " + ReturnErorrCode(ex));
-                    return;
-                }
+                MessageBox.Show(validateCliente.Error);
+                return;
             }
-
-            if (UserExist < 1)
-            {
-                er_list += "Cliente non valido o vuoto" + Environment.NewLine;
-            }
+            er_list += validateCliente.Error;
 
             if (er_list != "")
             {
@@ -1538,7 +1510,7 @@ namespace mangaerordini
                 return;
             }
 
-            commandText = "INSERT INTO " + schemadb + @"[clienti_riferimenti](nome,ID_clienti, mail, telefono) VALUES (@nome,@idcl,@mail,@tel);";
+            string commandText = "INSERT INTO " + schemadb + @"[clienti_riferimenti](nome,ID_clienti, mail, telefono) VALUES (@nome,@idcl,@mail,@tel);";
 
             using (SQLiteCommand cmd = new SQLiteCommand(commandText, connection))
             {
@@ -1580,8 +1552,7 @@ namespace mangaerordini
             string mail = ChangeDatiPRefMail.Text.Trim();
             string idF = ChangeDatiPRefID.Text;
 
-            ValidationResult answer;
-            string commandText = "";
+            string commandText;
 
             string er_list = "";
 
@@ -1590,13 +1561,13 @@ namespace mangaerordini
                 er_list += "Nome Persona di Riferimento non valido o vuoto" + Environment.NewLine;
             }
 
-            answer = ValidateCliente(cliente);
-            if (!answer.Success)
+            ValidationResult validateCliente = ValidateCliente(cliente);
+            if (!validateCliente.Success)
             {
-                MessageBox.Show(answer.Error);
+                MessageBox.Show(validateCliente.Error);
                 return;
             }
-            er_list += answer.Error;
+            er_list += validateCliente.Error;
 
             if (!int.TryParse(idF, out int idQ))
             {
@@ -1606,17 +1577,13 @@ namespace mangaerordini
             if (er_list != "")
             {
                 MessageBox.Show(er_list);
-
-                //ABILITA CAMPI & BOTTONI
                 UpdateFields("P", "E", true);
-
                 return;
             }
 
             DialogResult dialogResult = MessageBox.Show("Vuoi salvare le modifiche?", "Salvare Cambiamenti Persona di Riferimento", MessageBoxButtons.YesNo);
             if (dialogResult == DialogResult.No)
             {
-                //ABILITA CAMPI & BOTTONI
                 UpdateFields("P", "E", true);
                 return;
             }
@@ -1872,9 +1839,7 @@ namespace mangaerordini
                 return;
             }
 
-
             string commandText = "INSERT INTO " + schemadb + @"[fornitori](nome) VALUES (@nome);";
-
 
             using (SQLiteCommand cmd = new SQLiteCommand(commandText, connection))
             {
@@ -1925,10 +1890,7 @@ namespace mangaerordini
             if (er_list != "")
             {
                 MessageBox.Show(er_list);
-
-                //ABILITA CAMPI & BOTTONI
                 UpdateFields("F", "E", true);
-
                 return;
             }
 
@@ -1951,7 +1913,6 @@ namespace mangaerordini
                     cmd.CommandText = commandText;
                     cmd.Parameters.AddWithValue("@nome", nome);
                     cmd.Parameters.AddWithValue("@idq", idQ);
-
 
                     cmd.ExecuteNonQuery();
 
@@ -2147,8 +2108,7 @@ namespace mangaerordini
             string seriale = AddDatiMacchinaSeriale.Text.Trim();
             string codice = AddDatiMacchinaCodice.Text.Trim();
 
-            ValidationResult answer = new ValidationResult();
-            string commandText = "";
+            string commandText;
 
             string er_list = "";
 
@@ -2157,13 +2117,13 @@ namespace mangaerordini
                 er_list += "Nome non valido o vuoto" + Environment.NewLine;
             }
 
-            answer = ValidateCliente(idcl);
-            if (!answer.Success)
+            ValidationResult validateCliente = ValidateCliente(idcl);
+            if (!validateCliente.Success)
             {
-                MessageBox.Show(answer.Error);
+                MessageBox.Show(validateCliente.Error);
                 return;
             }
-            er_list += answer.Error;
+            er_list += validateCliente.Error;
 
             if (er_list != "")
             {
@@ -2213,7 +2173,6 @@ namespace mangaerordini
             string codice = ChangeDatiMacchinaCodice.Text.Trim();
             string idF = ChangeDatiMacchinaID.Text;
 
-            ValidationResult answer;
             string commandText;
 
             string er_list = "";
@@ -2223,13 +2182,13 @@ namespace mangaerordini
                 er_list += "Nome non valido o vuoto" + Environment.NewLine;
             }
 
-            answer = ValidateCliente(cliente);
-            if (!answer.Success)
+            ValidationResult validateCliente = ValidateCliente(cliente);
+            if (!validateCliente.Success)
             {
-                MessageBox.Show(answer.Error);
+                MessageBox.Show(validateCliente.Error);
                 return;
             }
-            er_list += answer.Error;
+            er_list += validateCliente.Error;
 
             if (!int.TryParse(idF, out int idQ))
             {
@@ -2541,13 +2500,11 @@ namespace mangaerordini
             int idpref = Convert.ToInt32(AddOffCreaPRef.SelectedValue.GetHashCode());
             int stato = Convert.ToInt32(AddOffCreaStato.SelectedValue.GetHashCode());
 
-            ValidationResult dataoffValue = new ValidationResult();
-
             stato = (stato < 0) ? 0 : stato;
 
-            string commandText = "";
+            string commandText;
 
-            ValidationResult answer = new ValidationResult();
+            ValidationResult genericAnswer = new ValidationResult();
             ValidationResult prezzoSpedizione = new ValidationResult();
 
             string er_list = "";
@@ -2556,26 +2513,26 @@ namespace mangaerordini
                 er_list += "Numero Offerta non valido o vuoto" + Environment.NewLine;
             }
 
-            dataoffValue = ValidateDate(dataoffString);
+            ValidationResult dataoffValue = ValidateDate(dataoffString);
             er_list += dataoffValue.Error;
 
-            answer = ValidateCliente(idcl);
-            if (!answer.Success)
+            genericAnswer = ValidateCliente(idcl);
+            if (!genericAnswer.Success)
             {
-                MessageBox.Show(answer.Error);
+                MessageBox.Show(genericAnswer.Error);
                 return;
             }
-            er_list += answer.Error;
+            er_list += genericAnswer.Error;
 
             if (idpref > 0)
             {
-                answer = ValidatePRef(idpref);
-                if (!answer.Success)
+                genericAnswer = ValidatePRef(idpref);
+                if (!genericAnswer.Success)
                 {
-                    MessageBox.Show(answer.Error);
+                    MessageBox.Show(genericAnswer.Error);
                     return;
                 }
-                er_list += answer.Error;
+                er_list += genericAnswer.Error;
             }
 
             if (!string.IsNullOrEmpty(spedizioni))
@@ -3136,7 +3093,7 @@ namespace mangaerordini
                     string pref = row.Cells[2].Value.ToString();
                     string nord = row.Cells[3].Value.ToString();
                     string dataoffString = row.Cells[4].Value.ToString();
-                    string totOf = row.Cells[5].Value.ToString();
+                    //string totOf = row.Cells[5].Value.ToString();
                     string spedizione = row.Cells[6].Value.ToString();
                     string gestsp = row.Cells[7].Value.ToString();
                     string stato = row.Cells[8].Value.ToString();
@@ -3195,9 +3152,8 @@ namespace mangaerordini
             int pref = Convert.ToInt32(AddOffCreaPRef.SelectedItem.GetHashCode());
             int stato = Convert.ToInt32(AddOffCreaStato.SelectedItem.GetHashCode());
 
-            ValidationResult answer;
+            ValidationResult genericAnswer;
             ValidationResult prezzoSpedizione = new ValidationResult();
-            ValidationResult dataoffValue = new ValidationResult();
 
             string commandText;
 
@@ -3208,26 +3164,26 @@ namespace mangaerordini
                 er_list += "Numero Offerta non valido o vuoto" + Environment.NewLine;
             }
 
-            dataoffValue = ValidateDate(dataoffString);
+            ValidationResult dataoffValue = ValidateDate(dataoffString);
             er_list += dataoffValue.Error;
 
-            answer = ValidateCliente(cliente);
-            if (!answer.Success)
+            genericAnswer = ValidateCliente(cliente);
+            if (!genericAnswer.Success)
             {
-                MessageBox.Show(answer.Error);
+                MessageBox.Show(genericAnswer.Error);
                 return;
             }
-            er_list += answer.Error;
+            er_list += genericAnswer.Error;
 
             if (pref > 0)
             {
-                answer = ValidatePRef(pref);
-                if (!answer.Success)
+                genericAnswer = ValidatePRef(pref);
+                if (!genericAnswer.Success)
                 {
-                    MessageBox.Show(answer.Error);
+                    MessageBox.Show(genericAnswer.Error);
                     return;
                 }
-                er_list += answer.Error;
+                er_list += genericAnswer.Error;
             }
 
             if (!string.IsNullOrEmpty(spedizioni))
@@ -3308,7 +3264,11 @@ namespace mangaerordini
                     if (SelOffCreaCl.SelectedItem.GetHashCode() > 0)
                         SelOffCreaCl_SelectedIndexChanged(this, EventArgs.Empty);
 
+<<<<<<< Updated upstream
                     if (temp_SelOffCrea > 0)
+=======
+                    if (stato == 0 && temp_SelOffCrea > 0)
+>>>>>>> Stashed changes
                         SelOffCrea.SelectedIndex = FindIndexFromValue(SelOffCrea, temp_SelOffCrea);
 
                     if (ComboSelOrdCl.SelectedItem.GetHashCode() > 0)
@@ -3907,7 +3867,6 @@ namespace mangaerordini
             string sconto = FieldOrdSconto.Text.Trim();
             string prezzoIS = FieldOrdTot.Text.Trim();
             decimal prezzoI;
-            ValidationResult scontoV = new ValidationResult();
 
             if (!string.IsNullOrEmpty(prezzoIS))
                 prezzoI = Convert.ToDecimal(prezzoIS);
@@ -3921,7 +3880,7 @@ namespace mangaerordini
                 return;
             }
 
-            scontoV = ValidateSconto(sconto);
+            ValidationResult scontoV = ValidateSconto(sconto);
             er_list += scontoV.Error;
 
             if (er_list != "")
@@ -4168,7 +4127,7 @@ namespace mangaerordini
         {
             UpdateFields("OCR", "A", false);
 
-            string commandText = "";
+            string commandText;
 
             int? id_offerta = (CheckBoxOrdOffertaNonPresente.Checked == false) ? (int?)ComboBoxOrdOfferta.SelectedItem.GetHashCode() : null;
 
@@ -4192,25 +4151,21 @@ namespace mangaerordini
             int stato_ordine = FieldOrdStato.SelectedItem.GetHashCode();
             stato_ordine = (stato_ordine < 0) ? 0 : stato_ordine;
 
-            ValidationResult answer;
             ValidationResult prezzoSpedizione = new ValidationResult();
-            ValidationResult dataOrdValue = new ValidationResult();
-            ValidationResult dataETAOrdValue = new ValidationResult();
             ValidationResult tot_ordineV = new ValidationResult();
             ValidationResult prezzo_finaleV = new ValidationResult();
-            ValidationResult scontoV = new ValidationResult();
 
             string er_list = "";
 
             if (CheckBoxOrdOffertaNonPresente.Checked)
             {
-                answer = ValidateCliente((int)id_cl);
-                if (!answer.Success)
+                ValidationResult genericAnswer = ValidateCliente((int)id_cl);
+                if (!genericAnswer.Success)
                 {
-                    MessageBox.Show(answer.Error);
+                    MessageBox.Show(genericAnswer.Error);
                     return;
                 }
-                er_list += answer.Error;
+                er_list += genericAnswer.Error;
             }
 
             if (string.IsNullOrEmpty(n_ordine) || !Regex.IsMatch(n_ordine, @"^\d+$"))
@@ -4218,16 +4173,11 @@ namespace mangaerordini
                 er_list += "Numero Ordine non valido o vuoto" + Environment.NewLine;
             }
 
-            dataOrdValue = ValidateDate(dataOrdString);
+            ValidationResult dataOrdValue = ValidateDate(dataOrdString);
             er_list += dataOrdValue.Error;
 
-            dataETAOrdValue = ValidateDate(dataETAString);
+            ValidationResult dataETAOrdValue = ValidateDate(dataETAString, dataOrdValue.DateValue);
             er_list += dataETAOrdValue.Error;
-
-            if (DateTime.Compare(dataOrdValue.DateValue, dataETAOrdValue.DateValue) > 0)
-            {
-                er_list += "Data di Arrivo(ETA) antecedente a quella di creazione dell'ordine" + Environment.NewLine;
-            }
 
             if (!string.IsNullOrEmpty(spedizioni))
             {
@@ -4255,34 +4205,20 @@ namespace mangaerordini
                 er_list += prezzo_finaleV.Error;
             }
 
-            scontoV = ValidateSconto(sconto);
+            ValidationResult scontoV = ValidateSconto(sconto);
             er_list += scontoV.Error;
 
 
             if (CheckBoxOrdOffertaNonPresente.Checked == false)
             {
-                commandText = "SELECT COUNT(*) FROM " + schemadb + @"[offerte_elenco] WHERE ([Id] = @id_offerta) LIMIT 1;";
-                int UserExist = 0;
 
-                using (SQLiteCommand cmd = new SQLiteCommand(commandText, connection))
+                ValidationResult checkIdOfferta = ValidateCliente((int)id_offerta);
+                if (!checkIdOfferta.Success)
                 {
-                    try
-                    {
-                        cmd.CommandText = commandText;
-                        cmd.Parameters.AddWithValue("@id_offerta", id_offerta);
-
-                        UserExist = Convert.ToInt32(cmd.ExecuteScalar());
-                        if (UserExist < 1)
-                        {
-                            er_list += "Offerta non valida" + Environment.NewLine;
-                        }
-                    }
-                    catch (SQLiteException ex)
-                    {
-                        MessageBox.Show("Errore durante verifica ID Offerta. Codice: " + ReturnErorrCode(ex));
-                        return;
-                    }
+                    MessageBox.Show(checkIdOfferta.Error);
+                    return;
                 }
+                er_list += checkIdOfferta.Error;
             }
 
             if (er_list != "")
@@ -4934,7 +4870,7 @@ namespace mangaerordini
             string prezzo_originale = FieldOrdOggPOr.Text.Trim();
             string prezzo_scontato = FieldOrdOggPsc.Text.Trim();
             string pezzi = FieldOrdOggQta.Text.Trim();
-            int idiri = 0;
+            int idiri;
 
             ValidationResult dataETAOrdValue;
             ValidationResult prezzo_originaleV;
@@ -4965,17 +4901,8 @@ namespace mangaerordini
             prezzo_scontatoV = ValidatePrezzo(prezzo_scontato);
             er_list += prezzo_originaleV.Error;
 
-            if (!Int32.TryParse(pezzi, style, culture, out int pezziV))
-            {
-                er_list += "Numero pezzi non valido(##,##) o vuoto" + Environment.NewLine;
-            }
-            else
-            {
-                if (pezziV < 0)
-                {
-                    er_list += "Il numero di pezzi deve essere positivo" + Environment.NewLine;
-                }
-            }
+            ValidationResult pezziV = ValidateNumPezzi(pezzi);
+            er_list += pezziV.Error;
 
             if (er_list != "")
             {
@@ -5038,7 +4965,7 @@ namespace mangaerordini
                     cmd.Parameters.AddWithValue("@idri", idiri);
                     cmd.Parameters.AddWithValue("@por", prezzo_originaleV.DecimalValue);
                     cmd.Parameters.AddWithValue("@pos", prezzo_scontatoV.DecimalValue);
-                    cmd.Parameters.AddWithValue("@pezzi", pezziV);
+                    cmd.Parameters.AddWithValue("@pezzi", pezziV.IntValue);
                     cmd.Parameters.AddWithValue("@eta", dataETAOrdValue.DateValue);
                     cmd.Parameters.AddWithValue("@Outside_Offer", (CheckBoxOrdOggCheckAddNotOffer.Checked == true) ? 1 : 0);
                     cmd.Parameters.AddWithValue("@idoggoff", idoggOff);
@@ -5555,9 +5482,6 @@ namespace mangaerordini
             ValidationResult dataETAOrdValue;
 
             ValidationResult prezzoSpedizione = new ValidationResult();
-            ValidationResult scontoV = new ValidationResult();
-            ValidationResult tot_ordineV = new ValidationResult();
-            ValidationResult prezzo_finaleV = new ValidationResult();
 
             string er_list = "";
             if (string.IsNullOrEmpty(n_ordine) || !Regex.IsMatch(n_ordine, @"^\d+$"))
@@ -5568,21 +5492,16 @@ namespace mangaerordini
             dataOrdValue = ValidateDate(dataOrdString);
             er_list += dataOrdValue.Error;
 
-            dataETAOrdValue = ValidateDate(dataETAString);
+            dataETAOrdValue = ValidateDate(dataETAString, dataOrdValue.DateValue);
             er_list += dataETAOrdValue.Error;
 
-            if (DateTime.Compare(dataOrdValue.DateValue, dataETAOrdValue.DateValue) > 0)
-            {
-                er_list += "Data di Arrivo(ETA) antecedente a quella di creazione dell'ordine" + Environment.NewLine;
-            }
-
-            scontoV = ValidateSconto(sconto);
+            ValidationResult scontoV = ValidateSconto(sconto);
             er_list += scontoV.Error;
 
-            tot_ordineV = ValidatePrezzo(tot_ordine);
+            ValidationResult tot_ordineV = ValidatePrezzo(tot_ordine);
             er_list += tot_ordineV.Error;
 
-            prezzo_finaleV = ValidatePrezzo(prezzo_finale);
+            ValidationResult prezzo_finaleV = ValidatePrezzo(prezzo_finale);
             er_list += prezzo_finaleV.Error;
 
             if (!string.IsNullOrEmpty(spedizioni))
@@ -5608,14 +5527,12 @@ namespace mangaerordini
                 return;
             }
 
-
-
             string oldRef = "";
             DateTime oldETA = DateTime.MinValue;
             decimal oldPrezF = 0;
             int oldStato = -1;
 
-            string commandText = commandText = @"SELECT 
+            string commandText = @"SELECT 
                                                     codice_ordine,
                                                     data_ETA,
                                                     prezzo_finale,
@@ -6023,7 +5940,6 @@ namespace mangaerordini
             int idcl = ComboBoxOrdCliente.SelectedItem.GetHashCode();
             int idcl_index = ComboBoxOrdCliente.SelectedIndex;
             int idcont = ComboBoxOrdContatto.SelectedItem.GetHashCode();
-            bool origanl_state = CheckBoxOrdOffertaNonPresente.Checked;
 
             if (idcl > 0)
             {
@@ -6069,8 +5985,6 @@ namespace mangaerordini
                 CheckBoxCopiaOffertainOrdine.Checked = true;
 
             }
-
-
         }
 
         private void FieldOrdOggCheckAddNotOffer_CheckedChanged(object sender, EventArgs e)
@@ -6867,7 +6781,16 @@ namespace mangaerordini
             string nordine = VisOrdNumero.Text;
             string opde = VisOrdETA.Text;
 
+<<<<<<< Updated upstream
             DateTime dateAppoint = DateTime.MinValue;
+=======
+            ValidationResult dateAppoint = new ValidationResult
+            {
+                DateValue = DateTime.MinValue
+            };
+
+            ValidationResult dataETAOrdValue = ValidateDate(opde);
+>>>>>>> Stashed changes
 
             if (!DateTime.TryParseExact(opde, dateFormat, provider, DateTimeStyles.None, out DateTime dataETAOrdValue))
             {
@@ -6896,8 +6819,13 @@ namespace mangaerordini
 
                     if (!DateTime.TryParse(input, out dateAppoint))
                     {
+<<<<<<< Updated upstream
                         MessageBox.Show("Controllare formato data. Impossibile convertire in formato data crretto.");
                         dateAppoint = DateTime.MinValue;
+=======
+                        MessageBox.Show(dateAppoint.Error);
+                        dateAppoint.DateValue = DateTime.MinValue;
+>>>>>>> Stashed changes
                         continue;
                     }
 
@@ -6984,8 +6912,13 @@ namespace mangaerordini
 
                         if (DateTime.TryParse(input, out dateAppoint))
                         {
+<<<<<<< Updated upstream
                             MessageBox.Show("Controllare formato data. Impossibile convertire in formato data crretto.");
                             dateAppoint = DateTime.MinValue;
+=======
+                            MessageBox.Show(dateAppoint.Error);
+                            dateAppoint.DateValue = DateTime.MinValue;
+>>>>>>> Stashed changes
                             continue;
                         }
 
@@ -7411,7 +7344,7 @@ namespace mangaerordini
                 TextBox pageBox = (TextBox)sender;
                 TextBox txtboxCurPage;
                 Label maxpageLabel;
-                int selCurValue = 1;
+                int selCurValue;
 
                 switch (Convert.ToString(pageBox.Name))
                 {
@@ -9172,6 +9105,31 @@ namespace mangaerordini
             return "";
         }
 
+        public ValidationResult ValidateNumPezzi(string pezzi)
+        {
+            ValidationResult answer = new ValidationResult
+            {
+                Success = Int32.TryParse(pezzi, style, culture, out int pezziV)
+            };
+
+            if (!answer.Success)
+            {
+                answer.Error = "Numero pezzi non valido(##,##) o vuoto" + Environment.NewLine;
+                return answer;
+            }
+            else
+            {
+                if (pezziV < 0)
+                {
+                    answer.Error = "Il numero di pezzi deve essere positivo" + Environment.NewLine;
+                    return answer;
+                }
+            }
+
+            answer.IntValue = pezziV;
+            return answer;
+        }
+
         public ValidationResult ValidatePrezzo(string prezzo)
         {
             ValidationResult answer = new ValidationResult
@@ -9261,13 +9219,51 @@ namespace mangaerordini
             return answer;
         }
 
-        public ValidationResult ValidateMacchina(int id)
+        public ValidationResult ValidateIdOfferta(int id_offerta)
         {
-            string commandText = "SELECT COUNT(*) FROM " + schemadb + @"[clienti_macchine] WHERE ([Id] = @user) LIMIT 1;";
+
+            string commandText = "SELECT COUNT(*) FROM " + schemadb + @"[offerte_elenco] WHERE ([Id] = @id_offerta) LIMIT 1;";
+
             ValidationResult answer = new ValidationResult();
 
+<<<<<<< Updated upstream
+=======
+            using (SQLiteCommand cmd = new SQLiteCommand(commandText, connection))
+            {
+                try
+                {
+                    cmd.CommandText = commandText;
+                    cmd.Parameters.AddWithValue("@id_offerta", id_offerta);
+
+                    answer.IntValue = Convert.ToInt32(cmd.ExecuteScalar());
+                    answer.Success = true;
+
+                    if (answer.IntValue < 1)
+                    {
+                        answer.Error += "Offerta non valida" + Environment.NewLine;
+                    }
+                }
+                catch (SQLiteException ex)
+                {
+                    answer.Error += "Errore durante verifica ID Offerta. Codice: " + ReturnErorrCode(ex);
+                    answer.Success = false;
+                }
+                return answer;
+            }
+        }
+
+        public ValidationResult ValidateMacchina(int id)
+        {
+
+            ValidationResult answer = new ValidationResult
+            {
+                Success = true
+            };
+
+>>>>>>> Stashed changes
             if (id > 0)
             {
+                string commandText = "SELECT COUNT(*) FROM " + schemadb + @"[clienti_macchine] WHERE ([Id] = @user) LIMIT 1;";
                 using (SQLiteCommand cmd = new SQLiteCommand(commandText, connection))
                 {
                     try
@@ -9297,8 +9293,11 @@ namespace mangaerordini
                 }
                 return answer;
             }
+<<<<<<< Updated upstream
             answer.BoolValue = false;
             answer.Error = "Selezionare Macchina." + Environment.NewLine;
+=======
+>>>>>>> Stashed changes
 
             return answer;
         }
@@ -9376,17 +9375,25 @@ namespace mangaerordini
             return answer;
         }
 
-        public ValidationResult ValidateDate(string stringDate)
+        public ValidationResult ValidateDate(string stringDate, DateTime? DateToCompareArg1 = null)
         {
             ValidationResult answer = new ValidationResult();
 
             if (!DateTime.TryParseExact(stringDate, dateFormat, provider, DateTimeStyles.None, out DateTime dataOrdValue))
             {
-                answer.Error += "Valore: " + stringDate + ". Data non valida o vuota" + Environment.NewLine;
+                answer.Error += "Valore Data: " + stringDate + Environment.NewLine + ". Data non valida o vuota." + Environment.NewLine;
             }
             else
             {
                 answer.DateValue = dataOrdValue;
+            }
+
+            if (DateToCompareArg1 != null)
+            {
+                if (Nullable.Compare<DateTime>(DateToCompareArg1, answer.DateValue) > 0)
+                {
+                    answer.Error += "Data di Arrivo(ETA) antecedente a quella di creazione dell'ordine o errata." + Environment.NewLine;
+                }
             }
 
             return answer;
