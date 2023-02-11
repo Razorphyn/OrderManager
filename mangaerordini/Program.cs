@@ -5,6 +5,7 @@ using Microsoft.VisualBasic;
 using Newtonsoft.Json;
 using System;
 using System.Collections.Generic;
+using System.Collections.ObjectModel;
 using System.Data.SQLite;
 using System.Diagnostics;
 using System.IO;
@@ -16,6 +17,7 @@ using System.Text.RegularExpressions;
 using System.Threading;
 using System.Windows.Forms;
 using Windows.Management;
+using static mangaerordini.Form1;
 using Outlook = Microsoft.Office.Interop.Outlook;
 
 namespace mangaerordini
@@ -33,6 +35,9 @@ namespace mangaerordini
         static readonly string db__query_folder = @"\db\updates\";
         static readonly string db_check_file = exeFolderPath + db_path + db_name;
         static readonly string settingFile = exeFolderPath + @"\" + "ManagerOrdiniSettings.txt";
+
+        static readonly Dictionary<string, Dictionary<string, string>> settings = new Dictionary<string, Dictionary<string, string>>();
+
         static readonly string nameTempDbRetsore = "temp_updateDB_then_delete_do_not_use_this_name_pls";
         static readonly string connectionString = @"Data Source = " + exeFolderPath + db_path + db_name + @";cache=shared; synchronous  = NORMAL ;  journal_mode=WAL; temp_store = memory;  mmap_size = 30000000000; ";
         static readonly string schemadb = "";
@@ -76,6 +81,8 @@ namespace mangaerordini
 
             DbCallResult versione = ReturnVersione();
             if (versione.Success != true) return;
+
+            CheckPendingdataUpdate();
 
             CheckDbUpdate(versione);
 
@@ -249,14 +256,14 @@ namespace mangaerordini
                 input = Interaction.InputBox("Impostare un nome per il calendario in cui verranno aggiunti i rememnder per gli ordini." + Environment.NewLine + Environment.NewLine + "Se lasciato vuoto, verrà usato il calendario di default di Outlook", "Nome Calendario Eventi", "ManagerOrdini")
                     .Trim();
 
-            if (String.IsNullOrEmpty(input))
+            /*if (String.IsNullOrEmpty(input))
             {
-                Microsoft.Office.Interop.Outlook.Application OlApp = new Microsoft.Office.Interop.Outlook.Application();
+                Outlook.Application OlApp = new Outlook.Application();
                 Outlook.Folder primaryCalendar = OlApp.Session.GetDefaultFolder(
                     Outlook.OlDefaultFolders.olFolderCalendar)
                     as Outlook.Folder;
                 input = primaryCalendar.Name;
-            }
+            }*/
 
             return input;
         }
@@ -283,7 +290,7 @@ namespace mangaerordini
 
                     if (Decimal.TryParse(fnames_ver[index_str], out decimal dec))
                     {
-                        if (versione.DecimalValue < Convert.ToDecimal(fnames_ver[index_str]))
+                        if (versione.DecimalValue < dec)
                         {
                             if (bkAsked == false)
                             {
@@ -306,7 +313,9 @@ namespace mangaerordini
                                 DelTempFileBkDb();
 
                                 //delete update file
-                                File.Delete(exeFolderPath + db__query_folder + @"\" + file.Name);
+                                //File.Delete(exeFolderPath + db__query_folder + @"\" + file.Name);
+
+                                UpdateDataManipulation(Convert.ToDecimal(fnames_ver[index_str]));
                             }
                             else
                             {
@@ -416,7 +425,6 @@ namespace mangaerordini
             }
         }
 
-        //Run query from file to update DB
         private static bool RunSqlScriptFile(string pathStoreProceduresFile, string connectionString)
         {
             try
@@ -468,6 +476,209 @@ namespace mangaerordini
             {
                 MessageBox.Show(ex.Message, "Warning", MessageBoxButtons.OK, MessageBoxIcon.Warning);
                 return false;
+            }
+        }
+
+        private static void CheckPendingdataUpdate()
+        {
+            DirectoryInfo d = new DirectoryInfo(exeFolderPath + db_path);
+
+            FileInfo[] Files = d.GetFiles("*.pending"); //Getting sql files
+
+            Array.Sort(Files, delegate (FileInfo x, FileInfo y) { return Decimal.Compare(Convert.ToDecimal(Path.GetFileNameWithoutExtension(x.Name)), Convert.ToDecimal(Path.GetFileNameWithoutExtension(y.Name))); });
+
+            foreach (FileInfo file in Files)
+            {
+                if (Decimal.TryParse(Path.GetFileNameWithoutExtension(file.Name), out decimal dec))
+                {
+                    UpdateDataManipulation(dec);
+                }
+            }
+        }
+
+        private static void UpdateDataManipulation(decimal version)
+        {
+            if (version == 5)
+            {
+                string tempfile = exeFolderPath + db_path + version + ".pending";
+                File.Create(tempfile);
+
+                ReadSettingApp();
+                Outlook.Folder cal = FindCalendar(settings["calendario"]["nomeCalendario"]);
+
+                string commandText = @"SELECT  data_ETA FROM " + schemadb + @"[ordini_elenco] ORDER BY data_ETA ASC LIMIT 1;";
+                string parseRes = null;
+
+                using (SQLiteCommand cmd = new SQLiteCommand(commandText, connection))
+                {
+                    try
+                    {
+                        parseRes = Convert.ToString(cmd.ExecuteScalar());
+                    }
+                    catch (SQLiteException ex)
+                    {
+                        MessageBox.Show("Errore durante selezione info dal database. Codice: " + ex.Message);
+                    }
+                }
+
+
+                if (!String.IsNullOrEmpty(parseRes))
+                {
+                    Outlook.Items restrictedItems = CalendarGetItems(cal, Convert.ToDateTime(parseRes));
+
+                    Dictionary<int, DateTime> ordNum = new Dictionary<int, DateTime>();
+
+                    string pattern = @"^.+##ManaOrdini([0-9]+)##$";
+                    string query = "";
+                    int i = 0;
+
+                    foreach (Outlook.AppointmentItem apptItem in restrictedItems)
+                    {
+                        foreach (Match match in Regex.Matches(apptItem.Subject, pattern, RegexOptions.IgnoreCase))
+                        {
+                            query += @"UPDATE OR IGNORE " + schemadb + @"[ordini_elenco]  SET data_calendar_event = @dataVal" + i + " WHERE codice_ordine = @codord" + i + " LIMIT 1;";
+                            ordNum.Add(Convert.ToInt32(match.Groups[1].Value), apptItem.Start);
+                            i++;
+                        }
+                    }
+
+                    //commandText = @"UPDATE OR IGNORE " + schemadb + @"[ordini_elenco]  SET data_calendar_event = @dataVal WHERE codice_ordine = @codord LIMIT 1;";
+                    using (SQLiteCommand cmd = new SQLiteCommand(query, connection))
+                    {
+                        try
+                        {
+                            i = 0;
+                            foreach (KeyValuePair<int, DateTime> entry in ordNum)
+                            {
+                                cmd.Parameters.AddWithValue("@dataVal" + i, entry.Value);
+                                cmd.Parameters.AddWithValue("@codord" + i, entry.Key);
+
+                                //cmd.Parameters.Clear();
+                                i++;
+                            }
+                            cmd.ExecuteNonQuery();
+                        }
+                        catch (SQLiteException ex)
+                        {
+                            MessageBox.Show("Errore durante aggiornamento date calendario al database. Codice: " + ex.Message);
+                        }
+                    }
+
+                }
+                //File.Delete(tempfile);
+            }
+        }
+
+        private static Outlook.Items CalendarGetItems(Outlook.Folder personalCalendar, DateTime startDate)
+        {
+            string AppCode = "##ManaOrdini";
+            string filterDate = "[Start] >= '" + startDate.ToString("g") + "' AND [End] <= '" + DateTime.MaxValue.ToString("g") + "'";
+            string filterSubject = "@SQL=" + "\"" + "urn:schemas:httpmail:subject" + "\"" + " LIKE '%" + AppCode + "%'";
+
+            Outlook.Items calendarItems = personalCalendar.Items.Restrict(filterDate);
+            calendarItems.IncludeRecurrences = true;
+            calendarItems.Sort("[Start]", Type.Missing);
+
+            Outlook.Items restrictedItems = calendarItems.Restrict(filterSubject);
+
+            return restrictedItems;
+        }
+
+        private static Outlook.Folder FindCalendar(string calendarName)
+        {
+            Outlook.Application OlApp = new Outlook.Application();
+
+            Outlook.Folder AppointmentFolder =
+                OlApp.Session.GetDefaultFolder(
+                Outlook.OlDefaultFolders.olFolderCalendar)
+                as Outlook.Folder;
+
+            Outlook.Folder personalCalendar = AppointmentFolder;
+
+            if (!String.IsNullOrEmpty(calendarName) && AppointmentFolder.Name != calendarName)
+            {
+                foreach (Outlook.Folder personalCalendarLoop in AppointmentFolder.Folders)
+                {
+                    if (personalCalendarLoop.Name == calendarName)
+                    {
+                        return personalCalendarLoop;
+                    }
+                }
+
+                CalendarResult re = CreateCustomCalendar(calendarName);
+
+                if (re.Success && !re.Found)
+                    personalCalendar = re.CalendarFolder;
+                else if (!re.Success)
+                    return null;
+            }
+
+            return personalCalendar;
+        }
+
+        private static CalendarResult CreateCustomCalendar(string calName)
+        {
+            CalendarResult answer = new CalendarResult
+            {
+                Success = true
+            };
+
+            if (String.IsNullOrEmpty(calName))
+            {
+                answer.Found = true;
+            }
+            else
+            {
+                try
+                {
+                    Outlook.Application OlApp = new Outlook.Application();
+                    Outlook.Folder primaryCalendar = OlApp.Session.GetDefaultFolder(Outlook.OlDefaultFolders.olFolderCalendar) as Outlook.Folder;
+
+                    foreach (Outlook.Folder Calendar in primaryCalendar.Folders)
+                    {
+                        if (Calendar.Name == calName)
+                        {
+                            answer.Found = true;
+                            break;
+                        }
+                    }
+
+                    if (!answer.Found)
+                    {
+                        answer.CalendarFolder = primaryCalendar.Folders.Add(calName, Outlook.OlDefaultFolders.olFolderCalendar) as Outlook.Folder;
+                    }
+                }
+                catch
+                {
+                    MessageBox.Show("Errore durante verifica necessità cartella OutLook. Impossibile aggiornare informazioni." + Environment.NewLine + "Incrociare dia per evitare danni ai dati");
+                    answer.Success = false;
+                }
+            }
+
+            return answer;
+        }
+
+        private static void ReadSettingApp()
+        {
+            settings.Add("calendario", new Dictionary<string, string>());
+            settings["calendario"].Add("aggiornaCalendario", "true");
+            settings["calendario"].Add("destinatari", "");
+            settings["calendario"].Add("nomeCalendario", "");
+
+            string json = File.ReadAllText(settingFile);
+            Dictionary<string, Dictionary<string, string>> read_settings = JsonConvert.DeserializeObject<Dictionary<string, Dictionary<string, string>>>(json);
+
+            CopyDict(read_settings);
+        }
+
+        public static void CopyDict(Dictionary<string, Dictionary<string, string>> dict)
+        {
+            foreach (KeyValuePair<string, Dictionary<string, string>> rootKv in dict)
+            {
+                foreach (KeyValuePair<string, string> childKv in rootKv.Value)
+                {
+                    settings[rootKv.Key][childKv.Key] = dict[rootKv.Key][childKv.Key];
+                }
             }
         }
 
