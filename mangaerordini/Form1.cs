@@ -6421,18 +6421,6 @@ namespace mangaerordini
                             UpdateFields("VS", "E", true);
                             string nordine = VisOrdNumero.Text.Trim();
 
-                            /*ToastNotifierCompat notifier = ToastNotificationManagerCompat.CreateToastNotifier();
-                            IReadOnlyList<ScheduledToastNotification> scheduledToasts = notifier.GetScheduledToastNotifications();
-                            var toRemove = scheduledToasts.FirstOrDefault(i => i.Group == "ManagerOrdiniLuca" && i.Tag == nordine);
-                            if (toRemove != null)
-                            {
-                                BtStartToastNotification.Enabled = false;
-                            }
-                            else
-                            {
-                                BtStartToastNotification.Enabled = true;
-                            }*/
-
                             LoaVisOrdOggTable(idOrdine);
                         }
                         catch (SQLiteException ex)
@@ -6459,6 +6447,8 @@ namespace mangaerordini
             public bool Success { get; set; } = false;
 
             public bool Found { get; set; } = false;
+
+            public DateTime AppointmentDate { get; set; } = DateTime.MinValue;
 
             public Outlook.Folder CalendarFolder { get; set; } = null;
         }
@@ -6590,7 +6580,7 @@ namespace mangaerordini
             }
             else
             {
-                MessageBox.Show("Evento non presente." + Environment.NewLine + Environment.NewLine + "NOTA: il proramma ricerca solo gli eventi tra la data di creazione ordine e la data di consegna." + Environment.NewLine + " Se l'evento è stato modfiicato a mano oltre queste date, il porgramma non lo troverà.");
+                MessageBox.Show("Evento non presente.");
             }
 
         }
@@ -6718,11 +6708,11 @@ namespace mangaerordini
 
             DateTime start = DateTime.Now.AddDays(-1);
 
-            Outlook.Items restrictedItems = CalendarGetItems(personalCalendar, start, ordRef);
+            Outlook.Items restrictedItems = CalendarGetItems(personalCalendar, start, DateTime.MaxValue, ordRef);
 
             bool found = false;
             int c = 0;
-            List<Outlook.AppointmentItem> listaApp = new List<Outlook.AppointmentItem>();
+            /*List<Outlook.AppointmentItem> listaApp = new List<Outlook.AppointmentItem>();
 
             foreach (Outlook.AppointmentItem apptItem in restrictedItems)
             {
@@ -6731,18 +6721,32 @@ namespace mangaerordini
                     listaApp.Add(apptItem);
                     c++;
                 }
+            }*/
+
+            List<Tuple<string, Outlook.AppointmentItem>> listaApp = new List<Tuple<string, Outlook.AppointmentItem>>();
+
+            string pattern = @"^.+##ManaOrdini([0-9]+)##$";
+
+            foreach (Outlook.AppointmentItem apptItem in restrictedItems)
+            {
+                foreach (Match match in Regex.Matches(apptItem.Subject, pattern, RegexOptions.IgnoreCase))
+                {
+                    listaApp.Add(new Tuple<string, Outlook.AppointmentItem>(match.Groups[1].Value.Trim(), apptItem));
+                    c++;
+                }
             }
 
             MessageBox.Show(c + " elemento/i trovato/i con l'identificativo dell'evento. Verrà chiesta conferma prima dell'eliminazione di ciascun evento.");
 
             for (int i = 0; i < c; i++)
             {
-                DialogResult dialogResult = MessageBox.Show("Cancellare l'appuntamento col nome: '" + listaApp[i].Subject + "' fissato in data: " + (listaApp[i].Start) + "?", "Eliminazione Evento da Calendario", MessageBoxButtons.YesNo);
+                DialogResult dialogResult = MessageBox.Show("Cancellare l'appuntamento col nome: '" + listaApp[i].Item2.Subject + "' fissato in data: " + (listaApp[i].Item2.Start) + "?", "Eliminazione Evento da Calendario", MessageBoxButtons.YesNo);
                 if (dialogResult == DialogResult.Yes)
                 {
                     try
                     {
-                        listaApp[i].Delete();
+                        listaApp[i].Item2.Delete();
+                        UpdateDbDateAppointment(null, listaApp[i].Item1);
                         found = true;
                     }
                     catch
@@ -6752,6 +6756,7 @@ namespace mangaerordini
                     }
                 }
             }
+
 
             if (found == true)
             {
@@ -6774,32 +6779,32 @@ namespace mangaerordini
                 return false;
             }
 
-            Outlook.Items restrictedItems = CalendarGetItems(personalCalendar, DateTime.Now.AddDays(-2));
+            Outlook.Items restrictedItems = CalendarGetItems(personalCalendar, DateTime.Now.AddDays(-2), DateTime.MaxValue);
 
             bool error_free = true;
             int c = 0;
 
             List<Outlook.AppointmentItem> listaApp = new List<Outlook.AppointmentItem>();
-
             foreach (Outlook.AppointmentItem apptItem in restrictedItems)
             {
+
                 if (Regex.IsMatch(apptItem.Subject, @"^.*##ManaOrdini\d{1,}##.*$"))
                 {
                     listaApp.Add(apptItem);
                     c++;
                 }
-            }
 
-            for (int i = 0; i < c; i++)
-            {
-                try
+                for (int i = 0; i < c; i++)
                 {
-                    listaApp[i].Move(newCalendarFolder);
-                }
-                catch (System.Exception ex)
-                {
-                    MessageBox.Show("Si è verificato un errore durante la creazione dell'appuntamento. Errore: " + ex.Message);
-                    error_free = false;
+                    try
+                    {
+                        listaApp[i].Move(newCalendarFolder);
+                    }
+                    catch (System.Exception ex)
+                    {
+                        MessageBox.Show("Si è verificato un errore durante la creazione dell'appuntamento. Errore: " + ex.Message);
+                        error_free = false;
+                    }
                 }
             }
 
@@ -6817,7 +6822,7 @@ namespace mangaerordini
                 return false;
             }
 
-            Outlook.Items restrictedItems = CalendarGetItems(personalCalendar, DateTime.Now.AddDays(-1), ordRef);
+            Outlook.Items restrictedItems = CalendarGetItems(personalCalendar, DateTime.Now.AddDays(-1), DateTime.MaxValue, ordRef);
 
             bool updated = false;
 
@@ -7095,10 +7100,11 @@ namespace mangaerordini
             return personalCalendar;
         }
 
-        private Outlook.Items CalendarGetItems(Outlook.Folder personalCalendar, DateTime startDate, string orderef = "")
+        private Outlook.Items CalendarGetItems(Outlook.Folder personalCalendar, DateTime startDate, DateTime endDate, string orderef = "")
         {
+
             string AppCode = "##ManaOrdini" + orderef;
-            string filterDate = "[Start] >= '" + startDate.ToString("g") + "' AND [End] <= '" + DateTime.MaxValue.ToString("g") + "'";
+            string filterDate = "[Start] >= '" + startDate.ToString("g") + "' AND [End] <= '" + endDate.ToString("g") + "'";
             string filterSubject = "@SQL=" + "\"" + "urn:schemas:httpmail:subject" + "\"" + " LIKE '%" + AppCode + "%'";
 
             Outlook.Items calendarItems = personalCalendar.Items.Restrict(filterDate);
@@ -7124,41 +7130,65 @@ namespace mangaerordini
                     }
                 }
 
-                bool found = false;
+                CalendarResult answer = GetDbDateCalendar(ordRef);
 
-                Outlook.Items restrictedItems = CalendarGetItems(personalCalendar, DateTime.Now.AddDays(-1), ordRef);
+                if (answer.Success && !answer.Found)
+                    return false;
+
+                Outlook.Items restrictedItems = CalendarGetItems(personalCalendar, answer.AppointmentDate.AddDays(-1), answer.AppointmentDate.AddDays(+1), ordRef);
 
                 foreach (Outlook.AppointmentItem apptItem in restrictedItems)
                 {
-                    found = true;
-                    break;
+                    return true;
                 }
 
-                return found;
+                restrictedItems = CalendarGetItems(personalCalendar, DateTime.Now.AddDays(-1), DateTime.MaxValue, ordRef);
+
+                foreach (Outlook.AppointmentItem apptItem in restrictedItems)
+                {
+                    UpdateDbDateAppointment(apptItem.Start, ordRef);
+                    return true;
+                }
+
+                MessageBox.Show("Nel database è presente un appunatmaneto, ma non esiste corrispondenza in Outlook. Verificare informazioni, rischio conflitto.");
+
+                UpdateDbDateAppointment(null, ordRef);
+
+                return false;
             }
             catch
             {
-                MessageBox.Show("Errore durante verifica necessità cartella OutLook. Impossibile aggiornare informazioni." + Environment.NewLine + "Incrociare dia per evitare danni ai dati");
+                MessageBox.Show("Errore durante verifica necessità cartella OutLook. Impossibile aggiornare informazioni." + Environment.NewLine + "Incrociare dita per evitare danni ai dati");
                 return false;
             }
         }
 
-        private void UpdateDbDateAppointment(DateTime AppointmentDate, string ordRef)
+        private void UpdateDbDateAppointment(DateTime? AppointmentDate, string ordRef)
         {
             ValidationResult codice_ordine = ValidateId(ordRef);
-            if (codice_ordine.Error!=null)
+            if (codice_ordine.Error != null)
             {
                 MessageBox.Show("Impossibile aggiornare data evento sul database.");
                 return;
             }
-
 
             string commandText = @"UPDATE  " + schemadb + @"[ordini_elenco] SET data_calendar_event = @dataVal WHERE codice_ordine = @ordCode LIMIT 1;";
             using (SQLiteCommand cmd = new SQLiteCommand(commandText, connection))
             {
                 try
                 {
-                    cmd.Parameters.AddWithValue("@dataVal", AppointmentDate);
+                    if (AppointmentDate != null)
+                    {
+                        DateTime temp = (DateTime)AppointmentDate;
+                        AppointmentDate = new DateTime(temp.Year, temp.Month, temp.Day, 0, 0, 0);
+
+                        cmd.Parameters.AddWithValue("@dataVal", AppointmentDate);
+                    }
+                    else
+                    {
+                        cmd.Parameters.AddWithValue("@dataVal", DBNull.Value);
+                    }
+
                     cmd.Parameters.AddWithValue("@ordCode", codice_ordine.IntValue);
 
                     cmd.ExecuteNonQuery();
@@ -7168,6 +7198,42 @@ namespace mangaerordini
                     MessageBox.Show("Errore durante aggiornamento date calendario al database. Codice: " + ReturnErorrCode(ex));
                 }
             }
+        }
+
+        private CalendarResult GetDbDateCalendar(string ordRef)
+        {
+            CalendarResult answer = new CalendarResult();
+
+            ValidationResult codice_ordine = ValidateId(ordRef);
+            if (codice_ordine.Error != null)
+            {
+                MessageBox.Show("Codice ordine errato.");
+                return answer;
+            }
+
+            string commandText = @"SELECT  data_calendar_event FROM " + schemadb + @"[ordini_elenco] WHERE codice_ordine = @ordCode LIMIT 1;";
+            using (SQLiteCommand cmd = new SQLiteCommand(commandText, connection))
+            {
+                try
+                {
+                    answer.Success = true;
+
+                    cmd.Parameters.AddWithValue("@ordCode", codice_ordine.IntValue);
+                    object res = cmd.ExecuteScalar();
+
+                    if (res != DBNull.Value)
+                    {
+                        answer.Found = true;
+                        answer.AppointmentDate = (DateTime)res;
+                    }
+                }
+                catch (SQLiteException ex)
+                {
+                    MessageBox.Show("Errore durante aggiornamento date calendario al database. Codice: " + ReturnErorrCode(ex));
+                }
+            }
+
+            return answer;
         }
 
         //SETTING

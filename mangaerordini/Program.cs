@@ -501,7 +501,7 @@ namespace mangaerordini
             if (version == 5)
             {
                 string tempfile = exeFolderPath + db_path + version + ".pending";
-                File.Create(tempfile);
+                if(!File.Exists(tempfile)) File.Create(tempfile);
 
                 ReadSettingApp();
                 Outlook.Folder cal = FindCalendar(settings["calendario"]["nomeCalendario"]);
@@ -537,12 +537,11 @@ namespace mangaerordini
                         foreach (Match match in Regex.Matches(apptItem.Subject, pattern, RegexOptions.IgnoreCase))
                         {
                             query += @"UPDATE OR IGNORE " + schemadb + @"[ordini_elenco]  SET data_calendar_event = @dataVal" + i + " WHERE codice_ordine = @codord" + i + " LIMIT 1;";
-                            ordNum.Add(Convert.ToInt32(match.Groups[1].Value), apptItem.Start);
+                            ordNum.Add(Convert.ToInt32(match.Groups[1].Value), new DateTime(apptItem.Start.Year, apptItem.Start.Month, apptItem.Start.Day, 0, 0, 0));
                             i++;
                         }
                     }
 
-                    //commandText = @"UPDATE OR IGNORE " + schemadb + @"[ordini_elenco]  SET data_calendar_event = @dataVal WHERE codice_ordine = @codord LIMIT 1;";
                     using (SQLiteCommand cmd = new SQLiteCommand(query, connection))
                     {
                         try
@@ -553,7 +552,6 @@ namespace mangaerordini
                                 cmd.Parameters.AddWithValue("@dataVal" + i, entry.Value);
                                 cmd.Parameters.AddWithValue("@codord" + i, entry.Key);
 
-                                //cmd.Parameters.Clear();
                                 i++;
                             }
                             cmd.ExecuteNonQuery();
@@ -565,7 +563,7 @@ namespace mangaerordini
                     }
 
                 }
-                //File.Delete(tempfile);
+                File.Delete(tempfile);
             }
         }
 
