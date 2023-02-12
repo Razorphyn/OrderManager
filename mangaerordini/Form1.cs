@@ -1,6 +1,7 @@
 ﻿using AutoUpdaterDotNET;
 using CsvHelper;
 using CsvHelper.Configuration.Attributes;
+using Microsoft.Office.Interop.Outlook;
 using Microsoft.VisualBasic;
 using Newtonsoft.Json;
 using System;
@@ -19,6 +20,7 @@ using System.Text.RegularExpressions;
 using System.Threading;
 using System.Windows;
 using System.Windows.Forms;
+using Windows.UI.Xaml.Controls.Primitives;
 using Application = System.Windows.Forms.Application;
 using MessageBox = System.Windows.Forms.MessageBox;
 using Outlook = Microsoft.Office.Interop.Outlook;
@@ -3226,7 +3228,8 @@ namespace mangaerordini
                     int temp_FieldOrdCliente = ComboBoxOrdCliente.SelectedItem.GetHashCode();
                     int temp_FieldOrdOfferta = ComboBoxOrdOfferta.SelectedItem.GetHashCode();
 
-                    UpdateOfferteCrea();
+                    UpdateOfferteCrea(isFilter: (temp_FieldOrdCliente == cliente) ? true : false);
+
                     UpdateOrdini(OrdiniViewCurPage);
 
                     //DISABILITA CAMPI & BOTTONI
@@ -3234,19 +3237,26 @@ namespace mangaerordini
                     UpdateFields("OC", "E", false);
                     UpdateFields("OC", "A", true);
 
-                    if (SelOffCreaCl.SelectedItem.GetHashCode() > 0)
+                    if (SelOffCreaCl.SelectedItem.GetHashCode() == cliente)
                         SelOffCreaCl_SelectedIndexChanged(this, EventArgs.Empty);
 
                     if (stato == 0 && temp_SelOffCrea > 0)
                         SelOffCrea.SelectedIndex = FindIndexFromValue(SelOffCrea, temp_SelOffCrea);
 
-                    if (ComboSelOrdCl.SelectedItem.GetHashCode() > 0)
+                    if (ComboSelOrdCl.SelectedItem.GetHashCode() == cliente)
                         ComboSelOrdCl_SelectedIndexChanged(this, EventArgs.Empty);
 
-                    if (temp_FieldOrdCliente == cliente)
+                    string temp = FieldOrdId.Text.Trim();
+                    if (temp_FieldOrdCliente == cliente && String.IsNullOrEmpty(temp))
                     {
+                        //MessageBox.Show("" + temp);
+
                         ComboBoxOrdCliente.SelectedIndex = FindIndexFromValue(ComboBoxOrdCliente, temp_FieldOrdCliente);
-                        if (temp_FieldOrdOfferta > 0) ComboBoxOrdOfferta.SelectedIndex = FindIndexFromValue(ComboBoxOrdOfferta, temp_FieldOrdOfferta);
+                        ComboBoxOrdCliente_SelectedIndexChanged(this, EventArgs.Empty);
+
+                        //ComboBoxOrdOfferta.SelectedIndex = FindIndexFromValue(ComboBoxOrdOfferta, temp_FieldOrdOfferta);
+                        ComboBoxOrdOfferta.SelectedIndex = 0;
+                        ComboBoxOrdOfferta_SelectedIndexChanged(this, EventArgs.Empty);
                     }
 
                     string temp_info = "";
@@ -3485,8 +3495,8 @@ namespace mangaerordini
             string IdOgOfOff = AddOffCreaOggettoId.Text.Trim();
             int idof = Convert.ToInt32(SelOffCrea.SelectedItem.GetHashCode());
 
-            int selClIndex = SelOffCreaCl.SelectedIndex;
-            int selOfIndex = SelOffCrea.SelectedIndex;
+            int selClIndex = SelOffCreaCl.SelectedItem.GetHashCode();
+            int selOfIndex = SelOffCrea.SelectedItem.GetHashCode();
 
             string er_list = "";
 
@@ -3547,9 +3557,10 @@ namespace mangaerordini
 
                     if (selClIndex > 0)
                     {
-                        SelOffCreaCl.SelectedIndex = selClIndex;
+                        SelOffCreaCl.SelectedIndex = FindIndexFromValue(SelOffCreaCl, selClIndex);
                     }
-                    SelOffCrea.SelectedIndex = selOfIndex;
+
+                    SelOffCrea.SelectedIndex = FindIndexFromValue(SelOffCrea, selOfIndex);
 
                     MessageBox.Show("Oggetto rimosso.");
                 }
@@ -3673,7 +3684,7 @@ namespace mangaerordini
         private void TimerOffCreaFiltro_Tick(object sender, EventArgs e)
         {
             TimerOffCreaFiltro.Stop();
-            UpdateOfferteCrea(offerteCreaCurPage);
+            UpdateOfferteCrea(offerteCreaCurPage, isFilter: true);
         }
 
         private void OffCreaFiltroCliente_SelectedIndexChanged(object sender, EventArgs e)
@@ -3698,8 +3709,7 @@ namespace mangaerordini
             }
 
             int curItemValue = ComboBoxOrdCliente.SelectedItem.GetHashCode();
-            int index = ComboBoxOrdCliente.SelectedIndex;
-
+            //int index = ComboBoxOrdCliente.SelectedIndex;
 
             if (curItemValue > 0)
             {
@@ -4978,7 +4988,7 @@ namespace mangaerordini
                         }
                     }
 
-                    int currentOrd = ComboSelOrd.SelectedIndex;
+                    int currentOrd = ComboSelOrd.SelectedItem.GetHashCode();
 
                     UpdateFields("OCR", "CE", false);
                     UpdateFields("OCR", "E", false);
@@ -4992,7 +5002,7 @@ namespace mangaerordini
                     UpdateFields("OCR", "CA", false);
                     UpdateFields("OCR", "A", false);
 
-                    ComboSelOrd.SelectedIndex = currentOrd;
+                    ComboSelOrd.SelectedIndex = FindIndexFromValue(ComboSelOrd, currentOrd);
 
                     int i = 0;
                     foreach (ComboBoxList item in ComboSelOrd.Items)
@@ -5041,6 +5051,15 @@ namespace mangaerordini
             UpdateFields("OCR", "A", false);
 
             string idOr = FieldOrdId.Text.Trim();
+
+            //temporary fix - When order selected in create order and save changes to related offert, all buttons actived
+            if (String.IsNullOrEmpty(idOr))
+            {
+                UpdateFields("OCR", "AE", false);
+                BtCreaOrdine.Enabled = true;
+                return;
+            }
+
 
             string er_list = "";
 
@@ -5419,7 +5438,17 @@ namespace mangaerordini
 
         private void BtSaveModOrd_Click(object sender, EventArgs e)
         {
-            int id_ordine = Convert.ToInt32(FieldOrdId.Text.Trim());
+            string idordinestr = FieldOrdId.Text.Trim();
+
+            //temporary fix - When order selected in create order and save changes to related offert, all buttons actived
+            if (String.IsNullOrEmpty(idordinestr))
+            {
+                UpdateFields("OCR", "AE", false);
+                BtCreaOrdine.Enabled = true;
+                return;
+            }
+
+            int id_ordine = Convert.ToInt32(idordinestr);
 
             string n_ordine = FieldOrdNOrdine.Text.Trim();
 
@@ -5885,11 +5914,9 @@ namespace mangaerordini
             int idcl = ComboBoxOrdCliente.SelectedItem.GetHashCode();
             int idcl_index = ComboBoxOrdCliente.SelectedIndex;
             int idcont = ComboBoxOrdContatto.SelectedItem.GetHashCode();
-            //bool origanl_state = CheckBoxOrdOffertaNonPresente.Checked;
 
             if (idcl > 0)
             {
-                //idcl = FindIndexFromValue(ComboBoxOrdCliente, idcl);
 
                 UpdateFields("OCR", "CA", false);
                 UpdateFields("OCR", "E", false);
@@ -5903,12 +5930,11 @@ namespace mangaerordini
 
                 if (idcont > 0)
                 {
-                    idcont = FindIndexFromValue(ComboBoxOrdContatto, idcont);
-                    ComboBoxOrdContatto.SelectedIndex = idcont;
+                    ComboBoxOrdContatto.SelectedIndex = FindIndexFromValue(ComboBoxOrdContatto, idcont);
                 }
             }
-
-            ComboBoxOrdCliente.SelectedIndex = idcl_index;
+            else
+                ComboBoxOrdCliente.SelectedIndex = idcl_index;
 
             if (CheckBoxOrdOffertaNonPresente.Checked)
             {
@@ -5919,7 +5945,6 @@ namespace mangaerordini
 
                 CheckBoxCopiaOffertainOrdine.Enabled = false;
                 CheckBoxCopiaOffertainOrdine.Checked = false;
-
             }
             else
             {
@@ -5929,10 +5954,7 @@ namespace mangaerordini
 
                 CheckBoxCopiaOffertainOrdine.Enabled = true;
                 CheckBoxCopiaOffertainOrdine.Checked = true;
-
             }
-
-
         }
 
         private void FieldOrdOggCheckAddNotOffer_CheckedChanged(object sender, EventArgs e)
@@ -8522,9 +8544,9 @@ namespace mangaerordini
             }
         }
 
-        private void UpdateOfferteCrea(int page = 0, bool EditedList = true)
+        private void UpdateOfferteCrea(int page = 0, bool EditedList = true, bool isFilter = false)
         {
-            if (EditedList == true)
+            if (EditedList && !isFilter)
             {
                 ComboBox[] nomi_ctr = {
                 SelOffCrea,
@@ -8545,8 +8567,14 @@ namespace mangaerordini
 
             ClearDataGridView(dataGridViewOffCreaOggetti);
 
-            ComboBoxOrdCliente_SelectedIndexChanged(this, EventArgs.Empty);
-            SelOffCreaCl_SelectedIndexChanged(this, EventArgs.Empty);
+            if (!isFilter)
+            {
+                int index = SelOffCreaCl.SelectedItem.GetHashCode();
+                ComboBoxOrdCliente_SelectedIndexChanged(this, EventArgs.Empty);
+
+                SelOffCreaCl.SelectedIndex = FindIndexFromValue(SelOffCreaCl, index);
+                SelOffCreaCl_SelectedIndexChanged(this, EventArgs.Empty);
+            }
         }
 
         private void UpdateFixedComboValue()
@@ -8825,10 +8853,10 @@ namespace mangaerordini
                             AddOffCreaSpedizione.Text = "";
                             return;
                         case "CE":
-
+                            return;
+                        default:
                             return;
                     }
-                    return;
                 case "OAO":
                     switch (action)
                     {
@@ -9102,7 +9130,7 @@ namespace mangaerordini
             if (indexfound == true)
                 return i;
             else
-                return -1;
+                return 1;
         }
 
         //DATABASE
