@@ -1,6 +1,6 @@
 	CREATE TABLE IF NOT EXISTS [informazioni] (
 		[Id]        INTEGER	PRIMARY KEY	NOT NULL,
-		[versione]  INT DEFAULT ((4)) NOT NULL
+		[versione]  INT DEFAULT ((5)) NOT NULL
 	);
 	INSERT INTO [informazioni] ([Id] ,[versione]) VALUES (1 ,4); 
 
@@ -97,18 +97,19 @@
 
 	CREATE TABLE IF NOT EXISTS [ordini_elenco] (
 		[Id]        INTEGER	PRIMARY KEY	AUTOINCREMENT NOT NULL,
-		[codice_ordine]       VARCHAR (255)   NOT NULL,
-		[ID_offerta]          INT             NULL,
-		[ID_cliente]          INT             NULL,
-		[ID_riferimento]      INT             NULL,
-		[data_ordine]         DATE            NOT NULL,
-		[data_ETA]            DATE            NULL,
-		[costo_spedizione]    DECIMAL (19, 4) NULL,
-		[totale_ordine]       DECIMAL (19, 4) DEFAULT ((0)) NOT NULL,
-		[sconto]              DECIMAL (19, 4) DEFAULT ((0)) NOT NULL,
-		[prezzo_finale]       DECIMAL (19, 4) DEFAULT ((0)) NOT NULL,
-		[gestione_spedizione] SMALLINT        NULL,
-		[stato]               SMALLINT        DEFAULT ((0)) NOT NULL,
+		[codice_ordine]       VARCHAR (255)   	NOT NULL,
+		[ID_offerta]          INT             	NULL,
+		[ID_cliente]          INT             	NULL,
+		[ID_riferimento]      INT             	NULL,
+		[data_ordine]         DATE            	NOT NULL,
+		[data_ETA]            DATE            	NULL,
+		[costo_spedizione]    DECIMAL (19, 4) 	NULL,
+		[totale_ordine]       DECIMAL (19, 4) 	DEFAULT ((0)) NOT NULL,
+		[sconto]              DECIMAL (19, 4) 	DEFAULT ((0)) NOT NULL,
+		[prezzo_finale]       DECIMAL (19, 4) 	DEFAULT ((0)) NOT NULL,
+		[gestione_spedizione] SMALLINT        	NULL,
+		[stato]               SMALLINT        	DEFAULT ((0)) NOT NULL,
+		[data_calendar_event] DATE 				NULL,
 		
 		UNIQUE ([codice_ordine] ASC),
 		CONSTRAINT [FK_oridini_elenco_To_offerte_elenco] FOREIGN KEY ([ID_offerta]) REFERENCES [offerte_elenco] ([Id]),

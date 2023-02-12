@@ -1,4 +1,4 @@
-﻿
+
 using System.Drawing;
 using System.Windows.Forms;
 
@@ -134,6 +134,8 @@ namespace mangaerordini
             this.MaxPageOrdView = new System.Windows.Forms.Label();
             this.OrdViewNxtPage = new System.Windows.Forms.Button();
             this.tableLayoutPanel1 = new System.Windows.Forms.TableLayoutPanel();
+            this.DuplicatiEventoCalendario = new System.Windows.Forms.Button();
+            this.AggiornaEventoDataCalendario = new System.Windows.Forms.Button();
             this.RimuoviEventoCalendario = new System.Windows.Forms.Button();
             this.VisOrdId = new System.Windows.Forms.Label();
             this.VisOrdSpedGest = new System.Windows.Forms.Label();
@@ -1888,7 +1890,7 @@ namespace mangaerordini
             // 
             this.tableLayoutPanel1.AutoSize = true;
             this.tableLayoutPanel1.AutoSizeMode = System.Windows.Forms.AutoSizeMode.GrowAndShrink;
-            this.tableLayoutPanel1.ColumnCount = 9;
+            this.tableLayoutPanel1.ColumnCount = 10;
             this.tableLayoutPanel1.ColumnStyles.Add(new System.Windows.Forms.ColumnStyle());
             this.tableLayoutPanel1.ColumnStyles.Add(new System.Windows.Forms.ColumnStyle(System.Windows.Forms.SizeType.Percent, 26.32576F));
             this.tableLayoutPanel1.ColumnStyles.Add(new System.Windows.Forms.ColumnStyle());
@@ -1897,8 +1899,11 @@ namespace mangaerordini
             this.tableLayoutPanel1.ColumnStyles.Add(new System.Windows.Forms.ColumnStyle(System.Windows.Forms.SizeType.Percent, 24.62121F));
             this.tableLayoutPanel1.ColumnStyles.Add(new System.Windows.Forms.ColumnStyle());
             this.tableLayoutPanel1.ColumnStyles.Add(new System.Windows.Forms.ColumnStyle(System.Windows.Forms.SizeType.Percent, 21.59092F));
-            this.tableLayoutPanel1.ColumnStyles.Add(new System.Windows.Forms.ColumnStyle(System.Windows.Forms.SizeType.Absolute, 392F));
-            this.tableLayoutPanel1.Controls.Add(this.RimuoviEventoCalendario, 8, 2);
+            this.tableLayoutPanel1.ColumnStyles.Add(new System.Windows.Forms.ColumnStyle(System.Windows.Forms.SizeType.Absolute, 160F));
+            this.tableLayoutPanel1.ColumnStyles.Add(new System.Windows.Forms.ColumnStyle(System.Windows.Forms.SizeType.Absolute, 230F));
+            this.tableLayoutPanel1.Controls.Add(this.DuplicatiEventoCalendario, 8, 2);
+            this.tableLayoutPanel1.Controls.Add(this.AggiornaEventoDataCalendario, 9, 1);
+            this.tableLayoutPanel1.Controls.Add(this.RimuoviEventoCalendario, 9, 2);
             this.tableLayoutPanel1.Controls.Add(this.VisOrdId, 2, 3);
             this.tableLayoutPanel1.Controls.Add(this.VisOrdSpedGest, 7, 1);
             this.tableLayoutPanel1.Controls.Add(this.VisOrdSped, 7, 0);
@@ -1944,23 +1949,52 @@ namespace mangaerordini
             this.tableLayoutPanel1.Size = new System.Drawing.Size(1174, 165);
             this.tableLayoutPanel1.TabIndex = 120;
             // 
+            // DuplicatiEventoCalendario
+            // 
+            this.DuplicatiEventoCalendario.Dock = System.Windows.Forms.DockStyle.Fill;
+            this.DuplicatiEventoCalendario.Enabled = false;
+            this.DuplicatiEventoCalendario.Location = new System.Drawing.Point(785, 84);
+            this.DuplicatiEventoCalendario.Name = "DuplicatiEventoCalendario";
+            this.DuplicatiEventoCalendario.Size = new System.Drawing.Size(154, 36);
+            this.DuplicatiEventoCalendario.TabIndex = 126;
+            this.DuplicatiEventoCalendario.Text = "Cerca Duplicati";
+            this.DuplicatiEventoCalendario.UseVisualStyleBackColor = true;
+            this.DuplicatiEventoCalendario.Click += new System.EventHandler(this.DuplicatiEventoCalendario_Click);
+            // 
+            // AggiornaEventoDataCalendario
+            // 
+            this.AggiornaEventoDataCalendario.Dock = System.Windows.Forms.DockStyle.Fill;
+            this.AggiornaEventoDataCalendario.Enabled = false;
+            this.AggiornaEventoDataCalendario.Location = new System.Drawing.Point(945, 42);
+            this.AggiornaEventoDataCalendario.Name = "AggiornaEventoDataCalendario";
+            this.AggiornaEventoDataCalendario.Size = new System.Drawing.Size(226, 36);
+            this.AggiornaEventoDataCalendario.TabIndex = 125;
+            this.AggiornaEventoDataCalendario.Text = "Modifica Data";
+            this.toolTip1.SetToolTip(this.AggiornaEventoDataCalendario, "Usare questa funzione nel caso in cui i prodotti dell\'ordine siano cambiati e si " +
+        "vuole riflettere questi cambimaenti nell\'evento a calendario");
+            this.AggiornaEventoDataCalendario.UseVisualStyleBackColor = true;
+            this.AggiornaEventoDataCalendario.Click += new System.EventHandler(this.AggiornaEventoDataCalendario_Click);
+            // 
             // RimuoviEventoCalendario
             // 
+            this.RimuoviEventoCalendario.BackColor = System.Drawing.Color.DarkRed;
             this.RimuoviEventoCalendario.Dock = System.Windows.Forms.DockStyle.Fill;
             this.RimuoviEventoCalendario.Enabled = false;
-            this.RimuoviEventoCalendario.Location = new System.Drawing.Point(783, 84);
+            this.RimuoviEventoCalendario.FlatStyle = System.Windows.Forms.FlatStyle.Flat;
+            this.RimuoviEventoCalendario.ForeColor = System.Drawing.SystemColors.ButtonFace;
+            this.RimuoviEventoCalendario.Location = new System.Drawing.Point(945, 84);
             this.RimuoviEventoCalendario.Name = "RimuoviEventoCalendario";
-            this.RimuoviEventoCalendario.Size = new System.Drawing.Size(388, 36);
+            this.RimuoviEventoCalendario.Size = new System.Drawing.Size(226, 36);
             this.RimuoviEventoCalendario.TabIndex = 124;
-            this.RimuoviEventoCalendario.Text = "Rimuovi da Calendario";
-            this.RimuoviEventoCalendario.UseVisualStyleBackColor = true;
+            this.RimuoviEventoCalendario.Text = "Rimuovi Evento";
+            this.RimuoviEventoCalendario.UseVisualStyleBackColor = false;
             this.RimuoviEventoCalendario.Click += new System.EventHandler(this.RimuoviEventoCalendario_Click);
             // 
             // VisOrdId
             // 
             this.VisOrdId.AutoSize = true;
             this.VisOrdId.Font = new System.Drawing.Font("Segoe UI", 6F);
-            this.VisOrdId.Location = new System.Drawing.Point(177, 123);
+            this.VisOrdId.Location = new System.Drawing.Point(178, 123);
             this.VisOrdId.Name = "VisOrdId";
             this.VisOrdId.Size = new System.Drawing.Size(36, 11);
             this.VisOrdId.TabIndex = 113;
@@ -1971,7 +2005,7 @@ namespace mangaerordini
             // 
             this.VisOrdSpedGest.AutoSize = true;
             this.VisOrdSpedGest.Dock = System.Windows.Forms.DockStyle.Fill;
-            this.VisOrdSpedGest.Location = new System.Drawing.Point(706, 39);
+            this.VisOrdSpedGest.Location = new System.Drawing.Point(708, 39);
             this.VisOrdSpedGest.Name = "VisOrdSpedGest";
             this.VisOrdSpedGest.Size = new System.Drawing.Size(71, 42);
             this.VisOrdSpedGest.TabIndex = 123;
@@ -1982,7 +2016,7 @@ namespace mangaerordini
             // 
             this.VisOrdSped.AutoSize = true;
             this.VisOrdSped.Dock = System.Windows.Forms.DockStyle.Fill;
-            this.VisOrdSped.Location = new System.Drawing.Point(706, 0);
+            this.VisOrdSped.Location = new System.Drawing.Point(708, 0);
             this.VisOrdSped.Name = "VisOrdSped";
             this.VisOrdSped.Size = new System.Drawing.Size(71, 39);
             this.VisOrdSped.TabIndex = 122;
@@ -1993,7 +2027,7 @@ namespace mangaerordini
             // 
             this.label122.AutoSize = true;
             this.label122.Dock = System.Windows.Forms.DockStyle.Fill;
-            this.label122.Location = new System.Drawing.Point(560, 39);
+            this.label122.Location = new System.Drawing.Point(562, 39);
             this.label122.Name = "label122";
             this.label122.Size = new System.Drawing.Size(140, 42);
             this.label122.TabIndex = 121;
@@ -2004,7 +2038,7 @@ namespace mangaerordini
             // 
             this.label121.AutoSize = true;
             this.label121.Dock = System.Windows.Forms.DockStyle.Fill;
-            this.label121.Location = new System.Drawing.Point(560, 0);
+            this.label121.Location = new System.Drawing.Point(562, 0);
             this.label121.Name = "label121";
             this.label121.Size = new System.Drawing.Size(140, 39);
             this.label121.TabIndex = 120;
@@ -2026,9 +2060,9 @@ namespace mangaerordini
             // 
             this.AggiornaEventoCalendario.Dock = System.Windows.Forms.DockStyle.Fill;
             this.AggiornaEventoCalendario.Enabled = false;
-            this.AggiornaEventoCalendario.Location = new System.Drawing.Point(783, 42);
+            this.AggiornaEventoCalendario.Location = new System.Drawing.Point(785, 42);
             this.AggiornaEventoCalendario.Name = "AggiornaEventoCalendario";
-            this.AggiornaEventoCalendario.Size = new System.Drawing.Size(388, 36);
+            this.AggiornaEventoCalendario.Size = new System.Drawing.Size(154, 36);
             this.AggiornaEventoCalendario.TabIndex = 119;
             this.AggiornaEventoCalendario.Text = "Aggiorna Evento";
             this.toolTip1.SetToolTip(this.AggiornaEventoCalendario, "Usare questa funzione nel caso in cui i prodotti dell\'ordine siano cambiati e si " +
@@ -2042,7 +2076,7 @@ namespace mangaerordini
             this.VisOrdSoc.Dock = System.Windows.Forms.DockStyle.Fill;
             this.VisOrdSoc.Location = new System.Drawing.Point(83, 0);
             this.VisOrdSoc.Name = "VisOrdSoc";
-            this.VisOrdSoc.Size = new System.Drawing.Size(88, 39);
+            this.VisOrdSoc.Size = new System.Drawing.Size(89, 39);
             this.VisOrdSoc.TabIndex = 91;
             this.VisOrdSoc.Text = "Hold";
             this.VisOrdSoc.TextAlign = System.Drawing.ContentAlignment.MiddleLeft;
@@ -2062,7 +2096,7 @@ namespace mangaerordini
             // 
             this.VisOrdStato.AutoSize = true;
             this.VisOrdStato.Dock = System.Windows.Forms.DockStyle.Fill;
-            this.VisOrdStato.Location = new System.Drawing.Point(472, 39);
+            this.VisOrdStato.Location = new System.Drawing.Point(474, 39);
             this.VisOrdStato.Name = "VisOrdStato";
             this.VisOrdStato.Size = new System.Drawing.Size(82, 42);
             this.VisOrdStato.TabIndex = 117;
@@ -2071,11 +2105,12 @@ namespace mangaerordini
             // 
             // creaEventoCalendario
             // 
+            this.tableLayoutPanel1.SetColumnSpan(this.creaEventoCalendario, 2);
             this.creaEventoCalendario.Dock = System.Windows.Forms.DockStyle.Fill;
             this.creaEventoCalendario.Enabled = false;
-            this.creaEventoCalendario.Location = new System.Drawing.Point(783, 3);
+            this.creaEventoCalendario.Location = new System.Drawing.Point(785, 3);
             this.creaEventoCalendario.Name = "creaEventoCalendario";
-            this.creaEventoCalendario.Size = new System.Drawing.Size(388, 33);
+            this.creaEventoCalendario.Size = new System.Drawing.Size(386, 33);
             this.creaEventoCalendario.TabIndex = 87;
             this.creaEventoCalendario.Text = "Crea Evento Calendario";
             this.creaEventoCalendario.UseVisualStyleBackColor = true;
@@ -2085,7 +2120,7 @@ namespace mangaerordini
             // 
             this.VisOrdTotFi.AutoSize = true;
             this.VisOrdTotFi.Dock = System.Windows.Forms.DockStyle.Fill;
-            this.VisOrdTotFi.Location = new System.Drawing.Point(706, 123);
+            this.VisOrdTotFi.Location = new System.Drawing.Point(708, 123);
             this.VisOrdTotFi.Name = "VisOrdTotFi";
             this.VisOrdTotFi.Size = new System.Drawing.Size(71, 42);
             this.VisOrdTotFi.TabIndex = 112;
@@ -2107,7 +2142,7 @@ namespace mangaerordini
             // 
             this.VisOrdTot.AutoSize = true;
             this.VisOrdTot.Dock = System.Windows.Forms.DockStyle.Fill;
-            this.VisOrdTot.Location = new System.Drawing.Point(706, 81);
+            this.VisOrdTot.Location = new System.Drawing.Point(708, 81);
             this.VisOrdTot.Name = "VisOrdTot";
             this.VisOrdTot.Size = new System.Drawing.Size(71, 42);
             this.VisOrdTot.TabIndex = 110;
@@ -2118,7 +2153,7 @@ namespace mangaerordini
             // 
             this.VisOrdNumero.AutoSize = true;
             this.VisOrdNumero.Dock = System.Windows.Forms.DockStyle.Fill;
-            this.VisOrdNumero.Location = new System.Drawing.Point(472, 0);
+            this.VisOrdNumero.Location = new System.Drawing.Point(474, 0);
             this.VisOrdNumero.Name = "VisOrdNumero";
             this.VisOrdNumero.Size = new System.Drawing.Size(82, 39);
             this.VisOrdNumero.TabIndex = 115;
@@ -2129,7 +2164,7 @@ namespace mangaerordini
             // 
             this.label120.AutoSize = true;
             this.label120.Dock = System.Windows.Forms.DockStyle.Fill;
-            this.label120.Location = new System.Drawing.Point(351, 39);
+            this.label120.Location = new System.Drawing.Point(353, 39);
             this.label120.Name = "label120";
             this.label120.Size = new System.Drawing.Size(115, 42);
             this.label120.TabIndex = 116;
@@ -2153,7 +2188,7 @@ namespace mangaerordini
             this.VisOrdSoStato.Dock = System.Windows.Forms.DockStyle.Fill;
             this.VisOrdSoStato.Location = new System.Drawing.Point(83, 39);
             this.VisOrdSoStato.Name = "VisOrdSoStato";
-            this.VisOrdSoStato.Size = new System.Drawing.Size(88, 42);
+            this.VisOrdSoStato.Size = new System.Drawing.Size(89, 42);
             this.VisOrdSoStato.TabIndex = 96;
             this.VisOrdSoStato.Text = "Hold";
             this.VisOrdSoStato.TextAlign = System.Drawing.ContentAlignment.MiddleLeft;
@@ -2162,7 +2197,7 @@ namespace mangaerordini
             // 
             this.label119.AutoSize = true;
             this.label119.Dock = System.Windows.Forms.DockStyle.Fill;
-            this.label119.Location = new System.Drawing.Point(560, 123);
+            this.label119.Location = new System.Drawing.Point(562, 123);
             this.label119.Name = "label119";
             this.label119.Size = new System.Drawing.Size(140, 42);
             this.label119.TabIndex = 111;
@@ -2173,7 +2208,7 @@ namespace mangaerordini
             // 
             this.label118.AutoSize = true;
             this.label118.Dock = System.Windows.Forms.DockStyle.Fill;
-            this.label118.Location = new System.Drawing.Point(351, 0);
+            this.label118.Location = new System.Drawing.Point(353, 0);
             this.label118.Name = "label118";
             this.label118.Size = new System.Drawing.Size(115, 39);
             this.label118.TabIndex = 114;
@@ -2186,7 +2221,7 @@ namespace mangaerordini
             this.VisOrdSoPro.Dock = System.Windows.Forms.DockStyle.Fill;
             this.VisOrdSoPro.Location = new System.Drawing.Point(83, 81);
             this.VisOrdSoPro.Name = "VisOrdSoPro";
-            this.VisOrdSoPro.Size = new System.Drawing.Size(88, 42);
+            this.VisOrdSoPro.Size = new System.Drawing.Size(89, 42);
             this.VisOrdSoPro.TabIndex = 95;
             this.VisOrdSoPro.Text = "Hold";
             this.VisOrdSoPro.TextAlign = System.Drawing.ContentAlignment.MiddleLeft;
@@ -2195,7 +2230,7 @@ namespace mangaerordini
             // 
             this.label117.AutoSize = true;
             this.label117.Dock = System.Windows.Forms.DockStyle.Fill;
-            this.label117.Location = new System.Drawing.Point(560, 81);
+            this.label117.Location = new System.Drawing.Point(562, 81);
             this.label117.Name = "label117";
             this.label117.Size = new System.Drawing.Size(140, 42);
             this.label117.TabIndex = 109;
@@ -2208,7 +2243,7 @@ namespace mangaerordini
             this.VisOrdSoCitta.Dock = System.Windows.Forms.DockStyle.Fill;
             this.VisOrdSoCitta.Location = new System.Drawing.Point(83, 123);
             this.VisOrdSoCitta.Name = "VisOrdSoCitta";
-            this.VisOrdSoCitta.Size = new System.Drawing.Size(88, 42);
+            this.VisOrdSoCitta.Size = new System.Drawing.Size(89, 42);
             this.VisOrdSoCitta.TabIndex = 97;
             this.VisOrdSoCitta.Text = "Hold";
             this.VisOrdSoCitta.TextAlign = System.Drawing.ContentAlignment.MiddleLeft;
@@ -2217,7 +2252,7 @@ namespace mangaerordini
             // 
             this.label116.AutoSize = true;
             this.label116.Dock = System.Windows.Forms.DockStyle.Fill;
-            this.label116.Location = new System.Drawing.Point(177, 0);
+            this.label116.Location = new System.Drawing.Point(178, 0);
             this.label116.Name = "label116";
             this.label116.Size = new System.Drawing.Size(70, 39);
             this.label116.TabIndex = 98;
@@ -2228,7 +2263,7 @@ namespace mangaerordini
             // 
             this.label114.AutoSize = true;
             this.label114.Dock = System.Windows.Forms.DockStyle.Fill;
-            this.label114.Location = new System.Drawing.Point(177, 39);
+            this.label114.Location = new System.Drawing.Point(178, 39);
             this.label114.Name = "label114";
             this.label114.Size = new System.Drawing.Size(70, 42);
             this.label114.TabIndex = 100;
@@ -2239,7 +2274,7 @@ namespace mangaerordini
             // 
             this.label112.AutoSize = true;
             this.label112.Dock = System.Windows.Forms.DockStyle.Fill;
-            this.label112.Location = new System.Drawing.Point(177, 81);
+            this.label112.Location = new System.Drawing.Point(178, 81);
             this.label112.Name = "label112";
             this.label112.Size = new System.Drawing.Size(70, 42);
             this.label112.TabIndex = 102;
@@ -2250,9 +2285,9 @@ namespace mangaerordini
             // 
             this.VisOrdCont.AutoSize = true;
             this.VisOrdCont.Dock = System.Windows.Forms.DockStyle.Fill;
-            this.VisOrdCont.Location = new System.Drawing.Point(253, 0);
+            this.VisOrdCont.Location = new System.Drawing.Point(254, 0);
             this.VisOrdCont.Name = "VisOrdCont";
-            this.VisOrdCont.Size = new System.Drawing.Size(92, 39);
+            this.VisOrdCont.Size = new System.Drawing.Size(93, 39);
             this.VisOrdCont.TabIndex = 99;
             this.VisOrdCont.Text = "Hold";
             this.VisOrdCont.TextAlign = System.Drawing.ContentAlignment.MiddleLeft;
@@ -2261,7 +2296,7 @@ namespace mangaerordini
             // 
             this.VisOrdETA.AutoSize = true;
             this.VisOrdETA.Dock = System.Windows.Forms.DockStyle.Fill;
-            this.VisOrdETA.Location = new System.Drawing.Point(472, 123);
+            this.VisOrdETA.Location = new System.Drawing.Point(474, 123);
             this.VisOrdETA.Name = "VisOrdETA";
             this.VisOrdETA.Size = new System.Drawing.Size(82, 42);
             this.VisOrdETA.TabIndex = 108;
@@ -2272,9 +2307,9 @@ namespace mangaerordini
             // 
             this.VisOrdContTel.AutoSize = true;
             this.VisOrdContTel.Dock = System.Windows.Forms.DockStyle.Fill;
-            this.VisOrdContTel.Location = new System.Drawing.Point(253, 39);
+            this.VisOrdContTel.Location = new System.Drawing.Point(254, 39);
             this.VisOrdContTel.Name = "VisOrdContTel";
-            this.VisOrdContTel.Size = new System.Drawing.Size(92, 42);
+            this.VisOrdContTel.Size = new System.Drawing.Size(93, 42);
             this.VisOrdContTel.TabIndex = 104;
             this.VisOrdContTel.Text = "Hold";
             this.VisOrdContTel.TextAlign = System.Drawing.ContentAlignment.MiddleLeft;
@@ -2283,7 +2318,7 @@ namespace mangaerordini
             // 
             this.VisOrdData.AutoSize = true;
             this.VisOrdData.Dock = System.Windows.Forms.DockStyle.Fill;
-            this.VisOrdData.Location = new System.Drawing.Point(472, 81);
+            this.VisOrdData.Location = new System.Drawing.Point(474, 81);
             this.VisOrdData.Name = "VisOrdData";
             this.VisOrdData.Size = new System.Drawing.Size(82, 42);
             this.VisOrdData.TabIndex = 106;
@@ -2294,7 +2329,7 @@ namespace mangaerordini
             // 
             this.label113.AutoSize = true;
             this.label113.Dock = System.Windows.Forms.DockStyle.Fill;
-            this.label113.Location = new System.Drawing.Point(351, 123);
+            this.label113.Location = new System.Drawing.Point(353, 123);
             this.label113.Name = "label113";
             this.label113.Size = new System.Drawing.Size(115, 42);
             this.label113.TabIndex = 107;
@@ -2305,9 +2340,9 @@ namespace mangaerordini
             // 
             this.VisOrdContMail.AutoSize = true;
             this.VisOrdContMail.Dock = System.Windows.Forms.DockStyle.Fill;
-            this.VisOrdContMail.Location = new System.Drawing.Point(253, 81);
+            this.VisOrdContMail.Location = new System.Drawing.Point(254, 81);
             this.VisOrdContMail.Name = "VisOrdContMail";
-            this.VisOrdContMail.Size = new System.Drawing.Size(92, 42);
+            this.VisOrdContMail.Size = new System.Drawing.Size(93, 42);
             this.VisOrdContMail.TabIndex = 103;
             this.VisOrdContMail.Text = "Hold";
             this.VisOrdContMail.TextAlign = System.Drawing.ContentAlignment.MiddleLeft;
@@ -2316,7 +2351,7 @@ namespace mangaerordini
             // 
             this.label110.AutoSize = true;
             this.label110.Dock = System.Windows.Forms.DockStyle.Fill;
-            this.label110.Location = new System.Drawing.Point(351, 81);
+            this.label110.Location = new System.Drawing.Point(353, 81);
             this.label110.Name = "label110";
             this.label110.Size = new System.Drawing.Size(115, 42);
             this.label110.TabIndex = 105;
@@ -2325,13 +2360,14 @@ namespace mangaerordini
             // 
             // VisOrdChiudi
             // 
-            this.VisOrdChiudi.Anchor = ((System.Windows.Forms.AnchorStyles)((System.Windows.Forms.AnchorStyles.Left | System.Windows.Forms.AnchorStyles.Right)));
             this.VisOrdChiudi.AutoSize = true;
             this.VisOrdChiudi.AutoSizeMode = System.Windows.Forms.AutoSizeMode.GrowAndShrink;
+            this.tableLayoutPanel1.SetColumnSpan(this.VisOrdChiudi, 2);
+            this.VisOrdChiudi.Dock = System.Windows.Forms.DockStyle.Fill;
             this.VisOrdChiudi.Enabled = false;
-            this.VisOrdChiudi.Location = new System.Drawing.Point(783, 128);
+            this.VisOrdChiudi.Location = new System.Drawing.Point(785, 126);
             this.VisOrdChiudi.Name = "VisOrdChiudi";
-            this.VisOrdChiudi.Size = new System.Drawing.Size(388, 31);
+            this.VisOrdChiudi.Size = new System.Drawing.Size(386, 36);
             this.VisOrdChiudi.TabIndex = 88;
             this.VisOrdChiudi.Text = "Chiudi";
             this.VisOrdChiudi.UseVisualStyleBackColor = true;
@@ -4787,7 +4823,7 @@ namespace mangaerordini
             this.splitContainer6.Panel2.Controls.Add(this.ChangeDatiClientiID);
             this.splitContainer6.Panel2.Controls.Add(label59);
             this.splitContainer6.Size = new System.Drawing.Size(738, 635);
-            this.splitContainer6.SplitterDistance = 313;
+            this.splitContainer6.SplitterDistance = 311;
             this.splitContainer6.TabIndex = 0;
             // 
             // tableLayoutPanel16
@@ -4804,7 +4840,7 @@ namespace mangaerordini
             this.tableLayoutPanel16.Controls.Add(this.DatiClientiPrvPage, 0, 0);
             this.tableLayoutPanel16.Controls.Add(this.MaxPageDataClienti, 3, 0);
             this.tableLayoutPanel16.Controls.Add(this.DatiClientiNxtPage, 4, 0);
-            this.tableLayoutPanel16.Location = new System.Drawing.Point(523, 272);
+            this.tableLayoutPanel16.Location = new System.Drawing.Point(523, 270);
             this.tableLayoutPanel16.Name = "tableLayoutPanel16";
             this.tableLayoutPanel16.RowCount = 1;
             this.tableLayoutPanel16.RowStyles.Add(new System.Windows.Forms.RowStyle(System.Windows.Forms.SizeType.Percent, 50F));
@@ -4885,7 +4921,7 @@ namespace mangaerordini
             this.dataGridViewClienti.ShowCellErrors = false;
             this.dataGridViewClienti.ShowCellToolTips = false;
             this.dataGridViewClienti.ShowRowErrors = false;
-            this.dataGridViewClienti.Size = new System.Drawing.Size(737, 227);
+            this.dataGridViewClienti.Size = new System.Drawing.Size(737, 225);
             this.dataGridViewClienti.TabIndex = 67;
             this.dataGridViewClienti.CellDoubleClick += new System.Windows.Forms.DataGridViewCellEventHandler(this.DataGridViewClienti_CellDoubleClick);
             // 
@@ -4981,7 +5017,7 @@ namespace mangaerordini
             this.BtDelChangesClienti.FlatStyle = System.Windows.Forms.FlatStyle.Flat;
             this.BtDelChangesClienti.Font = new System.Drawing.Font("Segoe UI", 12F, System.Drawing.FontStyle.Bold, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
             this.BtDelChangesClienti.ForeColor = System.Drawing.Color.White;
-            this.BtDelChangesClienti.Location = new System.Drawing.Point(-1, 284);
+            this.BtDelChangesClienti.Location = new System.Drawing.Point(-1, 286);
             this.BtDelChangesClienti.Name = "BtDelChangesClienti";
             this.BtDelChangesClienti.Size = new System.Drawing.Size(112, 35);
             this.BtDelChangesClienti.TabIndex = 70;
@@ -4994,7 +5030,7 @@ namespace mangaerordini
             this.BtCancChangesClienti.Anchor = ((System.Windows.Forms.AnchorStyles)((System.Windows.Forms.AnchorStyles.Bottom | System.Windows.Forms.AnchorStyles.Right)));
             this.BtCancChangesClienti.Enabled = false;
             this.BtCancChangesClienti.Font = new System.Drawing.Font("Segoe UI", 12F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
-            this.BtCancChangesClienti.Location = new System.Drawing.Point(438, 287);
+            this.BtCancChangesClienti.Location = new System.Drawing.Point(438, 289);
             this.BtCancChangesClienti.Name = "BtCancChangesClienti";
             this.BtCancChangesClienti.Size = new System.Drawing.Size(112, 32);
             this.BtCancChangesClienti.TabIndex = 69;
@@ -5010,7 +5046,7 @@ namespace mangaerordini
             this.BtSaveChangesClienti.FlatStyle = System.Windows.Forms.FlatStyle.Flat;
             this.BtSaveChangesClienti.Font = new System.Drawing.Font("Segoe UI", 12F, System.Drawing.FontStyle.Bold, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
             this.BtSaveChangesClienti.ForeColor = System.Drawing.Color.White;
-            this.BtSaveChangesClienti.Location = new System.Drawing.Point(556, 287);
+            this.BtSaveChangesClienti.Location = new System.Drawing.Point(556, 289);
             this.BtSaveChangesClienti.Name = "BtSaveChangesClienti";
             this.BtSaveChangesClienti.Size = new System.Drawing.Size(183, 32);
             this.BtSaveChangesClienti.TabIndex = 68;
@@ -5155,7 +5191,7 @@ namespace mangaerordini
             this.splitContainer8.Panel2.Controls.Add(this.ChangeDatiMacchinaID);
             this.splitContainer8.Panel2.Controls.Add(label60);
             this.splitContainer8.Size = new System.Drawing.Size(744, 641);
-            this.splitContainer8.SplitterDistance = 321;
+            this.splitContainer8.SplitterDistance = 318;
             this.splitContainer8.TabIndex = 0;
             // 
             // tableLayoutPanel17
@@ -5175,7 +5211,7 @@ namespace mangaerordini
             this.tableLayoutPanel17.Controls.Add(this.DatiMacchinaNxtPage, 5, 1);
             this.tableLayoutPanel17.Controls.Add(this.label137, 0, 0);
             this.tableLayoutPanel17.Controls.Add(this.dataGridViewMacchina_Filtro_Cliente, 0, 1);
-            this.tableLayoutPanel17.Location = new System.Drawing.Point(175, 261);
+            this.tableLayoutPanel17.Location = new System.Drawing.Point(175, 258);
             this.tableLayoutPanel17.Name = "tableLayoutPanel17";
             this.tableLayoutPanel17.RowCount = 2;
             this.tableLayoutPanel17.RowStyles.Add(new System.Windows.Forms.RowStyle());
@@ -5282,7 +5318,7 @@ namespace mangaerordini
             this.dataGridViewMacchina.ShowCellErrors = false;
             this.dataGridViewMacchina.ShowCellToolTips = false;
             this.dataGridViewMacchina.ShowRowErrors = false;
-            this.dataGridViewMacchina.Size = new System.Drawing.Size(737, 214);
+            this.dataGridViewMacchina.Size = new System.Drawing.Size(737, 211);
             this.dataGridViewMacchina.TabIndex = 67;
             this.toolTip1.SetToolTip(this.dataGridViewMacchina, "Fare doppio click sulla prima colonna vuota in corrispondenza della riga che si v" +
         "uole modificare");
@@ -5381,7 +5417,7 @@ namespace mangaerordini
             this.BtDelChangesMacchina.FlatStyle = System.Windows.Forms.FlatStyle.Flat;
             this.BtDelChangesMacchina.Font = new System.Drawing.Font("Segoe UI", 12F, System.Drawing.FontStyle.Bold, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
             this.BtDelChangesMacchina.ForeColor = System.Drawing.Color.White;
-            this.BtDelChangesMacchina.Location = new System.Drawing.Point(-1, 266);
+            this.BtDelChangesMacchina.Location = new System.Drawing.Point(-1, 269);
             this.BtDelChangesMacchina.Name = "BtDelChangesMacchina";
             this.BtDelChangesMacchina.Size = new System.Drawing.Size(112, 35);
             this.BtDelChangesMacchina.TabIndex = 76;
@@ -5394,7 +5430,7 @@ namespace mangaerordini
             this.BtCancChangesMacchina.Anchor = ((System.Windows.Forms.AnchorStyles)((System.Windows.Forms.AnchorStyles.Bottom | System.Windows.Forms.AnchorStyles.Right)));
             this.BtCancChangesMacchina.Enabled = false;
             this.BtCancChangesMacchina.Font = new System.Drawing.Font("Segoe UI", 12F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
-            this.BtCancChangesMacchina.Location = new System.Drawing.Point(438, 269);
+            this.BtCancChangesMacchina.Location = new System.Drawing.Point(438, 272);
             this.BtCancChangesMacchina.Name = "BtCancChangesMacchina";
             this.BtCancChangesMacchina.Size = new System.Drawing.Size(112, 32);
             this.BtCancChangesMacchina.TabIndex = 75;
@@ -5410,7 +5446,7 @@ namespace mangaerordini
             this.BtSaveChangesMacchina.FlatStyle = System.Windows.Forms.FlatStyle.Flat;
             this.BtSaveChangesMacchina.Font = new System.Drawing.Font("Segoe UI", 12F, System.Drawing.FontStyle.Bold, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
             this.BtSaveChangesMacchina.ForeColor = System.Drawing.Color.White;
-            this.BtSaveChangesMacchina.Location = new System.Drawing.Point(556, 269);
+            this.BtSaveChangesMacchina.Location = new System.Drawing.Point(556, 272);
             this.BtSaveChangesMacchina.Name = "BtSaveChangesMacchina";
             this.BtSaveChangesMacchina.Size = new System.Drawing.Size(183, 32);
             this.BtSaveChangesMacchina.TabIndex = 74;
@@ -5554,7 +5590,7 @@ namespace mangaerordini
             this.splitContainer9.Panel2.Controls.Add(this.ChangeDatiPRefID);
             this.splitContainer9.Panel2.Controls.Add(label54);
             this.splitContainer9.Size = new System.Drawing.Size(744, 641);
-            this.splitContainer9.SplitterDistance = 310;
+            this.splitContainer9.SplitterDistance = 308;
             this.splitContainer9.TabIndex = 0;
             // 
             // tableLayoutPanel18
@@ -5571,7 +5607,7 @@ namespace mangaerordini
             this.tableLayoutPanel18.Controls.Add(this.DataPRefCurPage, 1, 0);
             this.tableLayoutPanel18.Controls.Add(this.label29, 2, 0);
             this.tableLayoutPanel18.Controls.Add(this.MaxPageDataPRef, 3, 0);
-            this.tableLayoutPanel18.Location = new System.Drawing.Point(525, 269);
+            this.tableLayoutPanel18.Location = new System.Drawing.Point(525, 267);
             this.tableLayoutPanel18.Name = "tableLayoutPanel18";
             this.tableLayoutPanel18.RowCount = 1;
             this.tableLayoutPanel18.RowStyles.Add(new System.Windows.Forms.RowStyle());
@@ -5651,7 +5687,7 @@ namespace mangaerordini
             this.dataGridViewPRef.ShowCellErrors = false;
             this.dataGridViewPRef.ShowCellToolTips = false;
             this.dataGridViewPRef.ShowRowErrors = false;
-            this.dataGridViewPRef.Size = new System.Drawing.Size(737, 227);
+            this.dataGridViewPRef.Size = new System.Drawing.Size(737, 225);
             this.dataGridViewPRef.TabIndex = 67;
             this.toolTip1.SetToolTip(this.dataGridViewPRef, "Fare doppio click sulla prima colonna vuota in corrispondenza della riga che si v" +
         "uole modificare");
@@ -5749,7 +5785,7 @@ namespace mangaerordini
             this.BtDelChangesPRef.FlatStyle = System.Windows.Forms.FlatStyle.Flat;
             this.BtDelChangesPRef.Font = new System.Drawing.Font("Segoe UI", 12F, System.Drawing.FontStyle.Bold, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
             this.BtDelChangesPRef.ForeColor = System.Drawing.Color.White;
-            this.BtDelChangesPRef.Location = new System.Drawing.Point(-1, 290);
+            this.BtDelChangesPRef.Location = new System.Drawing.Point(-1, 292);
             this.BtDelChangesPRef.Name = "BtDelChangesPRef";
             this.BtDelChangesPRef.Size = new System.Drawing.Size(112, 35);
             this.BtDelChangesPRef.TabIndex = 73;
@@ -5762,7 +5798,7 @@ namespace mangaerordini
             this.BtCancChangesPRef.Anchor = ((System.Windows.Forms.AnchorStyles)((System.Windows.Forms.AnchorStyles.Bottom | System.Windows.Forms.AnchorStyles.Right)));
             this.BtCancChangesPRef.Enabled = false;
             this.BtCancChangesPRef.Font = new System.Drawing.Font("Segoe UI", 12F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
-            this.BtCancChangesPRef.Location = new System.Drawing.Point(438, 293);
+            this.BtCancChangesPRef.Location = new System.Drawing.Point(438, 295);
             this.BtCancChangesPRef.Name = "BtCancChangesPRef";
             this.BtCancChangesPRef.Size = new System.Drawing.Size(112, 32);
             this.BtCancChangesPRef.TabIndex = 72;
@@ -5778,7 +5814,7 @@ namespace mangaerordini
             this.BtSaveChangesPRef.FlatStyle = System.Windows.Forms.FlatStyle.Flat;
             this.BtSaveChangesPRef.Font = new System.Drawing.Font("Segoe UI", 12F, System.Drawing.FontStyle.Bold, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
             this.BtSaveChangesPRef.ForeColor = System.Drawing.Color.White;
-            this.BtSaveChangesPRef.Location = new System.Drawing.Point(556, 293);
+            this.BtSaveChangesPRef.Location = new System.Drawing.Point(556, 295);
             this.BtSaveChangesPRef.Name = "BtSaveChangesPRef";
             this.BtSaveChangesPRef.Size = new System.Drawing.Size(183, 32);
             this.BtSaveChangesPRef.TabIndex = 71;
@@ -5882,7 +5918,7 @@ namespace mangaerordini
             this.splitContainer10.Panel2.Controls.Add(this.ChangeDatiFornitoreID);
             this.splitContainer10.Panel2.Controls.Add(label34);
             this.splitContainer10.Size = new System.Drawing.Size(744, 641);
-            this.splitContainer10.SplitterDistance = 308;
+            this.splitContainer10.SplitterDistance = 306;
             this.splitContainer10.TabIndex = 0;
             // 
             // tableLayoutPanel19
@@ -5899,7 +5935,7 @@ namespace mangaerordini
             this.tableLayoutPanel19.Controls.Add(this.DatiFornitoriPrvPage, 0, 0);
             this.tableLayoutPanel19.Controls.Add(this.DatiFornitoriNxtPage, 4, 0);
             this.tableLayoutPanel19.Controls.Add(this.MaxPageDataFornitori, 3, 0);
-            this.tableLayoutPanel19.Location = new System.Drawing.Point(525, 267);
+            this.tableLayoutPanel19.Location = new System.Drawing.Point(525, 265);
             this.tableLayoutPanel19.Name = "tableLayoutPanel19";
             this.tableLayoutPanel19.RowCount = 1;
             this.tableLayoutPanel19.RowStyles.Add(new System.Windows.Forms.RowStyle());
@@ -5980,7 +6016,7 @@ namespace mangaerordini
             this.dataGridViewFornitori.ShowCellErrors = false;
             this.dataGridViewFornitori.ShowCellToolTips = false;
             this.dataGridViewFornitori.ShowRowErrors = false;
-            this.dataGridViewFornitori.Size = new System.Drawing.Size(737, 225);
+            this.dataGridViewFornitori.Size = new System.Drawing.Size(737, 223);
             this.dataGridViewFornitori.TabIndex = 60;
             this.toolTip1.SetToolTip(this.dataGridViewFornitori, "Fare doppio click sulla prima colonna vuota in corrispondenza della riga che si v" +
         "uole modificare");
@@ -6033,7 +6069,7 @@ namespace mangaerordini
             this.BtDelChangesFornitore.FlatStyle = System.Windows.Forms.FlatStyle.Flat;
             this.BtDelChangesFornitore.Font = new System.Drawing.Font("Segoe UI", 12F, System.Drawing.FontStyle.Bold, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
             this.BtDelChangesFornitore.ForeColor = System.Drawing.Color.White;
-            this.BtDelChangesFornitore.Location = new System.Drawing.Point(-1, 292);
+            this.BtDelChangesFornitore.Location = new System.Drawing.Point(-1, 294);
             this.BtDelChangesFornitore.Name = "BtDelChangesFornitore";
             this.BtDelChangesFornitore.Size = new System.Drawing.Size(112, 35);
             this.BtDelChangesFornitore.TabIndex = 69;
@@ -6046,7 +6082,7 @@ namespace mangaerordini
             this.BtCancChangesFornitore.Anchor = ((System.Windows.Forms.AnchorStyles)((System.Windows.Forms.AnchorStyles.Bottom | System.Windows.Forms.AnchorStyles.Right)));
             this.BtCancChangesFornitore.Enabled = false;
             this.BtCancChangesFornitore.Font = new System.Drawing.Font("Segoe UI", 12F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
-            this.BtCancChangesFornitore.Location = new System.Drawing.Point(438, 295);
+            this.BtCancChangesFornitore.Location = new System.Drawing.Point(438, 297);
             this.BtCancChangesFornitore.Name = "BtCancChangesFornitore";
             this.BtCancChangesFornitore.Size = new System.Drawing.Size(112, 32);
             this.BtCancChangesFornitore.TabIndex = 68;
@@ -6062,7 +6098,7 @@ namespace mangaerordini
             this.BtSaveChangesFornitore.FlatStyle = System.Windows.Forms.FlatStyle.Flat;
             this.BtSaveChangesFornitore.Font = new System.Drawing.Font("Segoe UI", 12F, System.Drawing.FontStyle.Bold, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
             this.BtSaveChangesFornitore.ForeColor = System.Drawing.Color.White;
-            this.BtSaveChangesFornitore.Location = new System.Drawing.Point(556, 295);
+            this.BtSaveChangesFornitore.Location = new System.Drawing.Point(556, 297);
             this.BtSaveChangesFornitore.Name = "BtSaveChangesFornitore";
             this.BtSaveChangesFornitore.Size = new System.Drawing.Size(183, 32);
             this.BtSaveChangesFornitore.TabIndex = 67;
@@ -7243,6 +7279,8 @@ namespace mangaerordini
         private Label label145;
         private Label buildVersionValue;
         private Button ButtonCheckUpdate;
+        private Button AggiornaEventoDataCalendario;
+        private Button DuplicatiEventoCalendario;
     }
 
     

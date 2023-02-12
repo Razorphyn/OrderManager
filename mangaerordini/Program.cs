@@ -1,10 +1,10 @@
-﻿//using log4net;
 using AutoUpdaterDotNET;
 using Microsoft.Toolkit.Uwp.Notifications;
 using Microsoft.VisualBasic;
 using Newtonsoft.Json;
 using System;
 using System.Collections.Generic;
+using System.Collections.ObjectModel;
 using System.Data.SQLite;
 using System.Diagnostics;
 using System.IO;
@@ -16,6 +16,7 @@ using System.Text.RegularExpressions;
 using System.Threading;
 using System.Windows.Forms;
 using Windows.Management;
+using static mangaerordini.Form1;
 using Outlook = Microsoft.Office.Interop.Outlook;
 
 namespace mangaerordini
@@ -33,17 +34,24 @@ namespace mangaerordini
         static readonly string db__query_folder = @"\db\updates\";
         static readonly string db_check_file = exeFolderPath + db_path + db_name;
         static readonly string settingFile = exeFolderPath + @"\" + "ManagerOrdiniSettings.txt";
+
+        static readonly Dictionary<string, Dictionary<string, string>> settings = new Dictionary<string, Dictionary<string, string>>();
+
         static readonly string nameTempDbRetsore = "temp_updateDB_then_delete_do_not_use_this_name_pls";
+        static readonly string connectionString = @"Data Source = " + exeFolderPath + db_path + db_name + @";cache=shared; synchronous  = NORMAL ;  journal_mode=WAL; temp_store = memory;  mmap_size = 30000000000; ";
+        static readonly string schemadb = "";
+        static readonly SQLiteConnection connection = new SQLiteConnection(connectionString);
 
         [STAThread]
         private static void Main()
         {
             //Mutex based on GuidAttribute to prevent multiple program execution. Avoid accessing to DB on multiple instances.
-            // NOt all information are collected everytiime from DB
+            //Not all information are collected everytime from DB
+
             string appGuid =
-       ((GuidAttribute)Assembly.GetExecutingAssembly().
-           GetCustomAttributes(typeof(GuidAttribute), false).
-               GetValue(0)).Value.ToString();
+                           ((GuidAttribute)Assembly.GetExecutingAssembly().
+                               GetCustomAttributes(typeof(GuidAttribute), false).
+                                   GetValue(0)).Value.ToString();
 
             string mutexId = string.Format("Global\\{{{0}}}", appGuid);
 
@@ -65,8 +73,33 @@ namespace mangaerordini
             Application.EnableVisualStyles();
             Application.SetCompatibleTextRenderingDefault(false);
 
+            CheckUpdates();
+
+            //Check if DB file exists otherwise create/copy one
+            ValidateDB();
+
+            DbCallResult versione = ReturnVersione();
+            if (versione.Success != true) return;
+
+            CheckPendingdataUpdate();
+
+            CheckDbUpdate(versione);
+
+            CheckSetting();
+
+            Application.Run(new Form1());
+        }
+
+        public class DbCallResult
+        {
+            public bool Success { get; set; } = false;
+            public int? IntValue { get; set; } = 0;
+            public decimal? DecimalValue { get; set; } = 0;
+        }
+
+        private static void CheckUpdates()
+        {
             //Check for updates
-            var currentDirectory = new DirectoryInfo(Application.StartupPath);
             AutoUpdater.InstalledVersion = new Version(Application.ProductVersion);
             AutoUpdater.RunUpdateAsAdmin = false;
             AutoUpdater.ShowRemindLaterButton = false;
@@ -85,16 +118,10 @@ namespace mangaerordini
             {
                 File.Delete(zipextractorlog);
             }
+        }
 
-
-            decimal version = 0;
-
-            string connectionString = @"Data Source = " + exeFolderPath + db_path + db_name + @";cache=shared; synchronous  = NORMAL ;  journal_mode=WAL; temp_store = memory;  mmap_size = 30000000000; ";
-            string schemadb = "";
-            SQLiteConnection connection = new SQLiteConnection(connectionString);
-
-            //Check if DB file exists otherwise create/copy one
-
+        private static void ValidateDB()
+        {
             if (File.Exists(db_check_file) == false)
             {
                 DialogResult dialogResult = MessageBox.Show("Il file del database non è stato trovato. Generare un nuovo file?" + Environment.NewLine + "Premere No per altre opzioni." + Environment.NewLine + Environment.NewLine + "Altriemnti chiudere il programma e copiare e incollare il file '" + db_name + "'  dalla cartella precedente nella cartella 'db' che si trova nel percorso corrente dell'eseguibile e riavviare il software.", "Errore - File Databse non trovato", MessageBoxButtons.YesNo);
@@ -104,12 +131,9 @@ namespace mangaerordini
                 }
                 else if (dialogResult == DialogResult.No)
                 {
-                    dialogResult = MessageBox.Show("Vuoi selezionare un file da copiare nella destinazione? Altriemnti premere No ed uscire dal programma", "Errore - File Databse non trovato", MessageBoxButtons.YesNo);
+                    dialogResult = MessageBox.Show("Vuoi selezionare un file da copiare nella destinazione? Altriemnti premere No per uscire dal programma", "Errore - File Databse non trovato", MessageBoxButtons.YesNo);
                     if (dialogResult == DialogResult.Yes)
                     {
-                        var fileContent = string.Empty;
-                        var filePath = string.Empty;
-
                         using (OpenFileDialog openFileDialog = new OpenFileDialog())
                         {
                             openFileDialog.InitialDirectory = exeFolderPath;
@@ -146,46 +170,105 @@ namespace mangaerordini
                     ExitProgram();
                 }
             }
+        }
+
+        private static DbCallResult ReturnVersione()
+        {
+            DbCallResult answer = new DbCallResult();
 
             //Retrieve database version, if not exist add default
             string commandText = "SELECT versione FROM " + schemadb + @"[informazioni] WHERE Id=1 LIMIT 1;";
-            using (SQLiteConnection conn = new SQLiteConnection(connectionString))
-            using (SQLiteCommand cmd = new SQLiteCommand(commandText, conn))
+            using (SQLiteCommand cmd = new SQLiteCommand(commandText, connection))
             {
                 try
                 {
                     cmd.CommandText = commandText;
 
-                    conn.Open();
-                    version = Convert.ToDecimal(cmd.ExecuteScalar());
-                    if (version == 0)
+                    connection.Open();
+                    answer.Success = true;
+                    answer.DecimalValue = Convert.ToDecimal(cmd.ExecuteScalar());
+                    if (answer.DecimalValue == 0)
                     {
                         commandText = "INSERT INTO " + schemadb + @"[informazioni](Id,versione) VALUES (1,1);";
-                        using (SQLiteCommand cmd2 = new SQLiteCommand(commandText, conn))
+                        using (SQLiteCommand cmd2 = new SQLiteCommand(commandText, connection))
                         {
                             try
                             {
                                 cmd.CommandText = commandText;
                                 cmd.ExecuteNonQuery();
-                                version = 1;
+                                answer.DecimalValue = 1;
                             }
                             catch (SQLiteException ex)
                             {
-                                MessageBox.Show("Errore durante aggiunta versione al database informazioni al database. Codice: " + ex.Message);
+                                answer.Success = false;
+                                MessageBox.Show("Errore durante aggiunta versione al database. Codice: " + ex.Message);
                             }
                         }
                     }
                 }
                 catch (SQLiteException ex)
                 {
-                    MessageBox.Show("Errore durante selezione versione database al database. Codice: " + ex.Message);
+                    answer.Success = false;
+                    MessageBox.Show("Errore durante selezione versione database. Codice: " + ex.Message);
                 }
-                finally
-                {
-                    conn.Close();
-                }
-            }
 
+                return answer;
+            }
+        }
+
+        private static void CheckSetting()
+        {
+            // check if setting file exists, otherwise create it
+            if (!File.Exists(settingFile))
+            {
+                string calendarName = GetCalendarName();
+
+                Dictionary<string, Dictionary<string, string>> settings = new Dictionary<string, Dictionary<string, string>>
+                {
+                    ["calendario"] = new Dictionary<string, string>
+                                        {
+                                            { "nomeCalendario", calendarName },
+                                            { "destinatari", "" }
+                                        }
+                };
+
+                DialogResult dialogResult = MessageBox.Show("Vuoi che il software identifichi se necessario e aggiornare un evento di calendario? Prima di procedere chiede conferma. " + Environment.NewLine + "Se disabilitato, il tutto dovrà essere fatto manualemnte", "Aggiornamento Automatico Eventi Calendario", MessageBoxButtons.YesNo);
+                if (dialogResult == DialogResult.Yes)
+                {
+                    settings["calendario"].Add("aggiornaCalendario", "true");
+                }
+                else
+                {
+                    settings["calendario"].Add("aggiornaCalendario", "false");
+                }
+
+                string json = JsonConvert.SerializeObject(settings);
+                File.WriteAllText(settingFile, json);
+            }
+        }
+
+        private static string GetCalendarName()
+        {
+            string input = null;
+
+            while (input == null)
+                input = Interaction.InputBox("Impostare un nome per il calendario in cui verranno aggiunti i rememnder per gli ordini." + Environment.NewLine + Environment.NewLine + "Se lasciato vuoto, verrà usato il calendario di default di Outlook", "Nome Calendario Eventi", "ManagerOrdini")
+                    .Trim();
+
+            /*if (String.IsNullOrEmpty(input))
+            {
+                Outlook.Application OlApp = new Outlook.Application();
+                Outlook.Folder primaryCalendar = OlApp.Session.GetDefaultFolder(
+                    Outlook.OlDefaultFolders.olFolderCalendar)
+                    as Outlook.Folder;
+                input = primaryCalendar.Name;
+            }*/
+
+            return input;
+        }
+
+        private static void CheckDbUpdate(DbCallResult versione)
+        {
             //Search for files with version lower than retrieved database
             // Add hash check?
             if (Directory.Exists(exeFolderPath + db__query_folder))
@@ -206,9 +289,8 @@ namespace mangaerordini
 
                     if (Decimal.TryParse(fnames_ver[index_str], out decimal dec))
                     {
-                        if (version < Convert.ToDecimal(fnames_ver[index_str]))
+                        if (versione.DecimalValue < dec)
                         {
-
                             if (bkAsked == false)
                             {
                                 DialogResult dialogResult = MessageBox.Show("Aggiornamenti database trovati. Eseguire backup database prima di effettuare l'aggiornamento(consigliato)?", "Backup Database", MessageBoxButtons.YesNo);
@@ -229,6 +311,10 @@ namespace mangaerordini
                                 //delete automatic backup
                                 DelTempFileBkDb();
 
+                                //delete update file
+                                //File.Delete(exeFolderPath + db__query_folder + @"\" + file.Name);
+
+                                UpdateDataManipulation(Convert.ToDecimal(fnames_ver[index_str]));
                             }
                             else
                             {
@@ -248,47 +334,6 @@ namespace mangaerordini
                     }
                 }
             }
-
-            // check if setting file exists, otherwise create it
-            if (!File.Exists(settingFile))
-            {
-                string input = null;
-
-                while (input == null)
-                    input = Interaction.InputBox("Impostare un nome per il calendario in cui verranno aggiunti i rememnder per gli ordini." + Environment.NewLine + Environment.NewLine + "Se lasciato vuoto, verrà usato il calendario di default di Outlook", "Nome Calendario Eventi", "ManagerOrdini");
-
-                if (String.IsNullOrEmpty(input))
-                {
-                    Microsoft.Office.Interop.Outlook.Application OlApp = new Microsoft.Office.Interop.Outlook.Application();
-                    Outlook.Folder primaryCalendar = OlApp.Session.GetDefaultFolder(
-                        Outlook.OlDefaultFolders.olFolderCalendar)
-                        as Outlook.Folder;
-                }
-
-                Dictionary<string, Dictionary<string, string>> settings = new Dictionary<string, Dictionary<string, string>>
-                {
-                    ["calendario"] = new Dictionary<string, string>
-                                        {
-                                            { "nomeCalendario", input },
-                                            { "destinatari", "" }
-                                        }
-                };
-
-                DialogResult dialogResult = MessageBox.Show("Vuoi che il software identifichi se necessario e aggiornare un evento di calendario? Prima di procedere chiede conferma. " + Environment.NewLine + "Se disabilitato, il tutto dovrà essere fatto manualemnte", "Aggiornamento Automatico Eventi Calendario", MessageBoxButtons.YesNo);
-                if (dialogResult == DialogResult.Yes)
-                {
-                    settings["calendario"].Add("aggiornaCalendario", "true");
-                }
-                else
-                {
-                    settings["calendario"].Add("aggiornaCalendario", "false");
-                }
-
-                string json = JsonConvert.SerializeObject(settings);
-                File.WriteAllText(settingFile, json);
-            }
-
-            Application.Run(new Form1());
         }
 
         private static void BkBackup(bool automata = false)
@@ -379,7 +424,6 @@ namespace mangaerordini
             }
         }
 
-        //Run query from file to update DB
         private static bool RunSqlScriptFile(string pathStoreProceduresFile, string connectionString)
         {
             try
@@ -431,6 +475,207 @@ namespace mangaerordini
             {
                 MessageBox.Show(ex.Message, "Warning", MessageBoxButtons.OK, MessageBoxIcon.Warning);
                 return false;
+            }
+        }
+
+        private static void CheckPendingdataUpdate()
+        {
+            DirectoryInfo d = new DirectoryInfo(exeFolderPath + db_path);
+
+            FileInfo[] Files = d.GetFiles("*.pending"); //Getting sql files
+
+            Array.Sort(Files, delegate (FileInfo x, FileInfo y) { return Decimal.Compare(Convert.ToDecimal(Path.GetFileNameWithoutExtension(x.Name)), Convert.ToDecimal(Path.GetFileNameWithoutExtension(y.Name))); });
+
+            foreach (FileInfo file in Files)
+            {
+                if (Decimal.TryParse(Path.GetFileNameWithoutExtension(file.Name), out decimal dec))
+                {
+                    UpdateDataManipulation(dec);
+                }
+            }
+        }
+
+        private static void UpdateDataManipulation(decimal version)
+        {
+            if (version == 5)
+            {
+                string tempfile = exeFolderPath + db_path + version + ".pending";
+                if (!File.Exists(tempfile)) File.Create(tempfile);
+
+                ReadSettingApp();
+                Outlook.Folder cal = FindCalendar(settings["calendario"]["nomeCalendario"]);
+
+                string commandText = @"SELECT  data_ETA FROM " + schemadb + @"[ordini_elenco] ORDER BY data_ETA ASC LIMIT 1;";
+                string parseRes = null;
+
+                using (SQLiteCommand cmd = new SQLiteCommand(commandText, connection))
+                {
+                    try
+                    {
+                        parseRes = Convert.ToString(cmd.ExecuteScalar());
+                    }
+                    catch (SQLiteException ex)
+                    {
+                        MessageBox.Show("Errore durante selezione info dal database. Codice: " + ex.Message);
+                    }
+                }
+
+
+                if (!String.IsNullOrEmpty(parseRes))
+                {
+                    Outlook.Items restrictedItems = CalendarGetItems(cal, Convert.ToDateTime(parseRes));
+
+                    Dictionary<int, DateTime> ordNum = new Dictionary<int, DateTime>();
+
+                    string pattern = @"^.+##ManaOrdini([0-9]+)##$";
+                    string query = "";
+                    int i = 0;
+
+                    foreach (Outlook.AppointmentItem apptItem in restrictedItems)
+                    {
+                        foreach (Match match in Regex.Matches(apptItem.Subject, pattern, RegexOptions.IgnoreCase))
+                        {
+                            query += @"UPDATE OR IGNORE " + schemadb + @"[ordini_elenco]  SET data_calendar_event = @dataVal" + i + " WHERE codice_ordine = @codord" + i + " LIMIT 1;";
+                            ordNum.Add(Convert.ToInt32(match.Groups[1].Value), new DateTime(apptItem.Start.Year, apptItem.Start.Month, apptItem.Start.Day, 0, 0, 0));
+                            i++;
+                        }
+                    }
+
+                    using (SQLiteCommand cmd = new SQLiteCommand(query, connection))
+                    {
+                        try
+                        {
+                            i = 0;
+                            foreach (KeyValuePair<int, DateTime> entry in ordNum)
+                            {
+                                cmd.Parameters.AddWithValue("@dataVal" + i, entry.Value);
+                                cmd.Parameters.AddWithValue("@codord" + i, entry.Key);
+
+                                i++;
+                            }
+                            cmd.ExecuteNonQuery();
+                        }
+                        catch (SQLiteException ex)
+                        {
+                            MessageBox.Show("Errore durante aggiornamento date calendario al database. Codice: " + ex.Message);
+                        }
+                    }
+
+                }
+                File.Delete(tempfile);
+            }
+        }
+
+        private static Outlook.Items CalendarGetItems(Outlook.Folder personalCalendar, DateTime startDate)
+        {
+            string AppCode = "##ManaOrdini";
+            string filterDate = "[Start] >= '" + startDate.ToString("g") + "' AND [End] <= '" + DateTime.MaxValue.ToString("g") + "'";
+            string filterSubject = "@SQL=" + "\"" + "urn:schemas:httpmail:subject" + "\"" + " LIKE '%" + AppCode + "%'";
+
+            Outlook.Items calendarItems = personalCalendar.Items.Restrict(filterDate);
+            calendarItems.IncludeRecurrences = true;
+            calendarItems.Sort("[Start]", Type.Missing);
+
+            Outlook.Items restrictedItems = calendarItems.Restrict(filterSubject);
+
+            return restrictedItems;
+        }
+
+        private static Outlook.Folder FindCalendar(string calendarName)
+        {
+            Outlook.Application OlApp = new Outlook.Application();
+
+            Outlook.Folder AppointmentFolder =
+                OlApp.Session.GetDefaultFolder(
+                Outlook.OlDefaultFolders.olFolderCalendar)
+                as Outlook.Folder;
+
+            Outlook.Folder personalCalendar = AppointmentFolder;
+
+            if (!String.IsNullOrEmpty(calendarName) && AppointmentFolder.Name != calendarName)
+            {
+                foreach (Outlook.Folder personalCalendarLoop in AppointmentFolder.Folders)
+                {
+                    if (personalCalendarLoop.Name == calendarName)
+                    {
+                        return personalCalendarLoop;
+                    }
+                }
+
+                CalendarResult re = CreateCustomCalendar(calendarName);
+
+                if (re.Success && !re.Found)
+                    personalCalendar = re.CalendarFolder;
+                else if (!re.Success)
+                    return null;
+            }
+
+            return personalCalendar;
+        }
+
+        private static CalendarResult CreateCustomCalendar(string calName)
+        {
+            CalendarResult answer = new CalendarResult
+            {
+                Success = true
+            };
+
+            if (String.IsNullOrEmpty(calName))
+            {
+                answer.Found = true;
+            }
+            else
+            {
+                try
+                {
+                    Outlook.Application OlApp = new Outlook.Application();
+                    Outlook.Folder primaryCalendar = OlApp.Session.GetDefaultFolder(Outlook.OlDefaultFolders.olFolderCalendar) as Outlook.Folder;
+
+                    foreach (Outlook.Folder Calendar in primaryCalendar.Folders)
+                    {
+                        if (Calendar.Name == calName)
+                        {
+                            answer.Found = true;
+                            break;
+                        }
+                    }
+
+                    if (!answer.Found)
+                    {
+                        answer.CalendarFolder = primaryCalendar.Folders.Add(calName, Outlook.OlDefaultFolders.olFolderCalendar) as Outlook.Folder;
+                    }
+                }
+                catch
+                {
+                    MessageBox.Show("Errore durante verifica necessità cartella OutLook. Impossibile aggiornare informazioni." + Environment.NewLine + "Incrociare dia per evitare danni ai dati");
+                    answer.Success = false;
+                }
+            }
+
+            return answer;
+        }
+
+        private static void ReadSettingApp()
+        {
+            settings.Add("calendario", new Dictionary<string, string>());
+            settings["calendario"].Add("aggiornaCalendario", "true");
+            settings["calendario"].Add("destinatari", "");
+            settings["calendario"].Add("nomeCalendario", "");
+
+            string json = File.ReadAllText(settingFile);
+            Dictionary<string, Dictionary<string, string>> read_settings = JsonConvert.DeserializeObject<Dictionary<string, Dictionary<string, string>>>(json);
+
+            CopyDict(read_settings);
+        }
+
+        public static void CopyDict(Dictionary<string, Dictionary<string, string>> dict)
+        {
+            foreach (KeyValuePair<string, Dictionary<string, string>> rootKv in dict)
+            {
+                foreach (KeyValuePair<string, string> childKv in rootKv.Value)
+                {
+                    settings[rootKv.Key][childKv.Key] = dict[rootKv.Key][childKv.Key];
+                }
             }
         }
 
