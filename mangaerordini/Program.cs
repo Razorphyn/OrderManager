@@ -501,7 +501,7 @@ namespace mangaerordini
             if (version == 5)
             {
                 string tempfile = exeFolderPath + db_path + version + ".pending";
-                if(!File.Exists(tempfile)) File.Create(tempfile);
+                if (!File.Exists(tempfile)) File.Create(tempfile);
 
                 ReadSettingApp();
                 Outlook.Folder cal = FindCalendar(settings["calendario"]["nomeCalendario"]);

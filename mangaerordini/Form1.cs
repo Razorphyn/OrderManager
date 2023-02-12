@@ -1,30 +1,26 @@
 ﻿using AutoUpdaterDotNET;
 using CsvHelper;
 using CsvHelper.Configuration.Attributes;
-using ManagerOrdini.Properties;
 using Microsoft.VisualBasic;
 using Newtonsoft.Json;
-using PdfSharp.Pdf.Content.Objects;
 using System;
 using System.Collections;
 using System.Collections.Generic;
 using System.ComponentModel.DataAnnotations;
 using System.Data;
-using System.Data.Entity.Infrastructure;
 using System.Data.SQLite;
 using System.Diagnostics;
 using System.Globalization;
 using System.IO;
 using System.Linq;
 using System.Reflection;
-using System.Runtime.Remoting;
 using System.Text;
 using System.Text.RegularExpressions;
 using System.Threading;
+using System.Windows;
 using System.Windows.Forms;
-using Windows.ApplicationModel.Calls;
-using Windows.ApplicationModel.Contacts;
 using Application = System.Windows.Forms.Application;
+using MessageBox = System.Windows.Forms.MessageBox;
 using Outlook = Microsoft.Office.Interop.Outlook;
 
 namespace mangaerordini
@@ -58,6 +54,7 @@ namespace mangaerordini
         readonly CultureInfo culture = CultureInfo.CreateSpecificCulture("it-IT");
         readonly NumberFormatInfo nfi = CultureInfo.GetCultureInfo("it-IT").NumberFormat;
         readonly string dateFormat = "dd/MM/yyyy";
+        readonly string dateFormatTime = "dd/MM/yyyy hh:mm:ss";
 
         readonly SQLiteConnection connection = new SQLiteConnection(@"Data Source = " + exeFolderPath + db_file_path + db_file_name + @";cache=shared; synchronous  = NORMAL ;  foreign_keys  = 1;  journal_mode=WAL; temp_store = memory;  mmap_size = 30000000000; ");
 
@@ -2616,6 +2613,8 @@ namespace mangaerordini
         private void LoadOfferteCreaTable(int page = 1)
         {
             DataGridView[] data_grid = new DataGridView[] { DataGridViewOffCrea };
+            if (OffCreaFiltroCliente.DataSource == null)
+                return;
 
             int idcl = Convert.ToInt32(OffCreaFiltroCliente.SelectedValue.GetHashCode());
             int stato = Convert.ToInt32(OffCreaFiltroStato.SelectedValue.GetHashCode());
@@ -3224,8 +3223,8 @@ namespace mangaerordini
 
                     int temp_SelOffCrea = SelOffCrea.SelectedItem.GetHashCode();
 
-                    int temp_FieldOrdOfferta = ComboBoxOrdOfferta.SelectedIndex;
-                    int temp_FieldOrdCliente = ComboBoxOrdCliente.SelectedIndex;
+                    int temp_FieldOrdCliente = ComboBoxOrdCliente.SelectedItem.GetHashCode();
+                    int temp_FieldOrdOfferta = ComboBoxOrdOfferta.SelectedItem.GetHashCode();
 
                     UpdateOfferteCrea();
                     UpdateOrdini(OrdiniViewCurPage);
@@ -3246,8 +3245,8 @@ namespace mangaerordini
 
                     if (temp_FieldOrdCliente == cliente)
                     {
-                        ComboBoxOrdCliente.SelectedIndex = temp_FieldOrdCliente;
-                        if (temp_FieldOrdOfferta > 0) ComboBoxOrdOfferta.SelectedIndex = temp_FieldOrdOfferta;
+                        ComboBoxOrdCliente.SelectedIndex = FindIndexFromValue(ComboBoxOrdCliente, temp_FieldOrdCliente);
+                        if (temp_FieldOrdOfferta > 0) ComboBoxOrdOfferta.SelectedIndex = FindIndexFromValue(ComboBoxOrdOfferta, temp_FieldOrdOfferta);
                     }
 
                     string temp_info = "";
@@ -3709,6 +3708,9 @@ namespace mangaerordini
 
                 ComboBoxOrdOfferta.Enabled = true;
                 CheckBoxOrdOffertaNonPresente.Enabled = true;
+
+                if (ComboBoxOrdOfferta.Items.Count < 2)
+                    ComboBoxOrdOfferta.Enabled = false;
                 return;
             }
             else
@@ -3767,7 +3769,6 @@ namespace mangaerordini
 									   WHERE Id=@idoff
 									   ORDER BY Id DESC";
 
-
                 using (SQLiteCommand cmd = new SQLiteCommand(commandText, connection))
                 {
                     try
@@ -3797,9 +3798,13 @@ namespace mangaerordini
             {
                 UpdateFields("OCR", "CA", false, false);
                 UpdateFields("OCR", "A", false);
-                Populate_combobox_dummy(ComboBoxOrdOfferta);
-                ComboBoxOrdOfferta.Enabled = false;
+                if (ComboBoxOrdOfferta.Items.Count < 2)
+                {
+                    Populate_combobox_dummy(ComboBoxOrdOfferta);
+                    ComboBoxOrdOfferta.Enabled = false;
+                }
             }
+
             return;
         }
 
@@ -4963,12 +4968,12 @@ namespace mangaerordini
                             }
                         }
 
-                        if (!String.IsNullOrEmpty(ordinecode) && FindAppointment(settings["calendario"]["nomeCalendario"], ordinecode, eta))
+                        if (!String.IsNullOrEmpty(ordinecode) && FindAppointment(settings["calendario"]["nomeCalendario"], ordinecode))
                         {
                             DialogResult dialogResult = MessageBox.Show("Vuoi aggiornare l'evento sul calendario con le nuove informazioni?", "Aggiornare Evento Ordine Calendario", MessageBoxButtons.YesNo);
                             if (dialogResult == DialogResult.Yes)
                             {
-                                UpdateCalendar(ordinecode, ordinecode, idordine, eta, eta, false);
+                                UpdateCalendar(ordinecode, ordinecode, idordine, eta, false);
                             }
                         }
                     }
@@ -5149,12 +5154,12 @@ namespace mangaerordini
                                     }
                                 }
 
-                                if (!String.IsNullOrEmpty(ordinecode) && FindAppointment(settings["calendario"]["nomeCalendario"], ordinecode, eta))
+                                if (!String.IsNullOrEmpty(ordinecode) && FindAppointment(settings["calendario"]["nomeCalendario"], ordinecode))
                                 {
                                     dialogResult = MessageBox.Show("Vuoi eliminare l'evento associato all'ordine?", "Eliminazione Evento Ordine Calendario", MessageBoxButtons.YesNo);
                                     if (dialogResult == DialogResult.Yes)
                                     {
-                                        RemoveAppointment(ordinecode, eta);
+                                        RemoveAppointment(ordinecode);
                                     }
                                 }
                             }
@@ -5362,12 +5367,12 @@ namespace mangaerordini
                             }
                         }
 
-                        if (!String.IsNullOrEmpty(ordinecode) && FindAppointment(settings["calendario"]["nomeCalendario"], ordinecode, eta))
+                        if (!String.IsNullOrEmpty(ordinecode) && FindAppointment(settings["calendario"]["nomeCalendario"], ordinecode))
                         {
                             dialogResult = MessageBox.Show("Vuoi aggiornare l'evento sul calendario con le nuove informazioni?", "Aggiornare Evento Ordine Calendario", MessageBoxButtons.YesNo);
                             if (dialogResult == DialogResult.Yes)
                             {
-                                UpdateCalendar(ordinecode, ordinecode, idordine, eta, eta, false);
+                                UpdateCalendar(ordinecode, ordinecode, idordine, eta, false);
                             }
                         }
                     }
@@ -5592,7 +5597,7 @@ namespace mangaerordini
 
                     if (Boolean.Parse(settings["calendario"]["aggiornaCalendario"]) == true)
                     {
-                        if (FindAppointment(settings["calendario"]["nomeCalendario"], oldRef, oldETA))
+                        if (FindAppointment(settings["calendario"]["nomeCalendario"], oldRef))
                         {
                             bool removed = false;
                             if (oldStato != stato_ordine && stato_ordine == 1)
@@ -5600,7 +5605,7 @@ namespace mangaerordini
                                 res = MessageBox.Show("L'ordine è stato chiuso, vuoi rimuoverlo dal calendario?", "Conferma Rimozione Ordine da Calendario", MessageBoxButtons.OKCancel, MessageBoxIcon.Information);
                                 if (res != DialogResult.OK)
                                 {
-                                    RemoveAppointment(oldRef, oldETA);
+                                    RemoveAppointment(oldRef);
                                     removed = true;
                                 }
                             }
@@ -5611,7 +5616,7 @@ namespace mangaerordini
                                     res = MessageBox.Show("Vuoi aggiornare l'evento del calendario relativo alll'ordine con le nuove informazioni?", "Conferma Aggiornamento Ordine Calendario", MessageBoxButtons.OKCancel, MessageBoxIcon.Information);
                                     if (res != DialogResult.Yes)
                                     {
-                                        UpdateCalendar(oldRef, n_ordine, id_ordine, oldETA, dataETAOrdValue.DateValue, false);
+                                        UpdateCalendar(oldRef, n_ordine, id_ordine, dataETAOrdValue.DateValue, false);
                                     }
                                 }
                                 else if (DateTime.Compare(oldETA, dataETAOrdValue.DateValue) != 0)
@@ -5619,7 +5624,7 @@ namespace mangaerordini
                                     res = MessageBox.Show("Vuoi aggiornare l'evento del calendario relativo alll'ordine con le nuove informazioni?" + Environment.NewLine + "L'evento verrà cancellato per poi essere inserito nuovamente.", "Conferma Aggiornamento Ordine Calendario", MessageBoxButtons.OKCancel, MessageBoxIcon.Information);
                                     if (res != DialogResult.Yes)
                                     {
-                                        UpdateCalendar(oldRef, n_ordine, id_ordine, oldETA, dataETAOrdValue.DateValue);
+                                        UpdateCalendar(oldRef, n_ordine, id_ordine, dataETAOrdValue.DateValue);
                                     }
                                 }
                             }
@@ -5774,12 +5779,12 @@ namespace mangaerordini
                                 }
                             }
 
-                            if (!String.IsNullOrEmpty(ordinecode) && FindAppointment(settings["calendario"]["nomeCalendario"], ordinecode, eta))
+                            if (!String.IsNullOrEmpty(ordinecode) && FindAppointment(settings["calendario"]["nomeCalendario"], ordinecode))
                             {
                                 DialogResult dialogResult = MessageBox.Show("Vuoi aggiornare l'evento sul calendario con le nuove informazioni?", "Aggiornare Evento Ordine Calendario", MessageBoxButtons.YesNo);
                                 if (dialogResult == DialogResult.Yes)
                                 {
-                                    UpdateCalendar(ordinecode, ordinecode, idordine, eta, eta, false);
+                                    UpdateCalendar(ordinecode, ordinecode, idordine, eta, false);
                                 }
                             }
                         }
@@ -6448,7 +6453,7 @@ namespace mangaerordini
 
             public bool Found { get; set; } = false;
 
-            public DateTime AppointmentDate { get; set; } = DateTime.MinValue;
+            public DateTime AppointmentDate { get; set; } = DateTime.Now.AddDays(-7);
 
             public Outlook.Folder CalendarFolder { get; set; } = null;
         }
@@ -6477,7 +6482,7 @@ namespace mangaerordini
                 return;
             }
 
-            if (!FindAppointment(settings["calendario"]["nomeCalendario"], nordine, dataETAOrdValue.DateValue))
+            if (!FindAppointment(settings["calendario"]["nomeCalendario"], nordine))
             {
                 DialogResult dialogResult = MessageBox.Show("Creare l'appuntamento? Una volta creato, sarà necessario salvarlo." + Environment.NewLine + Environment.NewLine
                                                             + "ATTENZIONE: NON rimuovere la stringa finale ##ManaOrdini[numero_ordine]## dal titolo dell'appunatmento. Serve per riconoscere l'evento.", "Creazione Appuntamento Calendario", MessageBoxButtons.YesNo);
@@ -6527,7 +6532,7 @@ namespace mangaerordini
 
                 string body = CreateAppointmentBody(Convert.ToInt32(VisOrdId.Text.Trim()));
 
-                AddAppointment(nordine, body, dateAppoint.DateValue, dataETAOrdValue.DateValue);
+                AddAppointment(nordine, body, dateAppoint.DateValue);
 
             }
             else
@@ -6557,9 +6562,9 @@ namespace mangaerordini
                 dataETAOrdValue.DateValue = dataETAOrdValue.DateValue.AddDays(1);
             }
 
-            if (FindAppointment(settings["calendario"]["nomeCalendario"], nordine, dataETAOrdValue.DateValue))
+            if (FindAppointment(settings["calendario"]["nomeCalendario"], nordine))
             {
-                RemoveAppointment(nordine, dataETAOrdValue.DateValue);
+                RemoveAppointment(nordine);
             }
             else
             {
@@ -6569,27 +6574,124 @@ namespace mangaerordini
 
         private void AggiornaEventoCalendario_Click(object sender, EventArgs e)
         {
+            UpdateFields("VS", "E", false);
             string oldRef = VisOrdNumero.Text;
             string newRef = VisOrdNumero.Text;
             int id_ordine = Convert.ToInt32(VisOrdId.Text);
             DateTime estDate = Convert.ToDateTime(VisOrdETA.Text);
 
-            if (FindAppointment(settings["calendario"]["nomeCalendario"], oldRef, estDate.AddDays(1)))
+            if (FindAppointment(settings["calendario"]["nomeCalendario"], oldRef))
             {
-                UpdateCalendar(oldRef, newRef, id_ordine, estDate, estDate, false);
+                UpdateCalendar(oldRef, newRef, id_ordine, estDate, false);
             }
             else
             {
                 MessageBox.Show("Evento non presente.");
             }
+            UpdateFields("VS", "E", true);
 
         }
 
-        private void UpdateCalendar(string oldRef, string newRef, int id_ordine, DateTime oldEta, DateTime estDate, bool delete = true)
+        private void AggiornaEventoDataCalendario_Click(object sender, EventArgs e)
+        {
+            UpdateFields("VS", "E", false);
+
+            string newRef = VisOrdNumero.Text;
+
+            Outlook.Folder personalCalendar = FindCalendar(settings["calendario"]["nomeCalendario"]);
+
+            Outlook.Items restrictedItems;
+
+            if (!FindAppointment(settings["calendario"]["nomeCalendario"], newRef, personalCalendar))
+            {
+                MessageBox.Show("Non esiste un evento a calendario.");
+                UpdateFields("VS", "E", true);
+                return;
+            }
+
+            CalendarResult caldate = GetDbDateCalendar(new string[] { newRef });
+
+            restrictedItems = CalendarGetItems(personalCalendar, caldate.AppointmentDate.AddDays(-1), caldate.AppointmentDate.AddDays(1), newRef);
+
+            foreach (Outlook.AppointmentItem entry in restrictedItems)
+            {
+                ValidationResult answer = new ValidationResult();
+
+                while (answer.DateValue == DateTime.MinValue || DateTime.Compare(entry.Start, answer.DateValue) != 0)
+                {
+                    string editDate = Interaction.InputBox("Inserire nuova data evento:", "Modifica data evento: " + entry.Subject, Convert.ToString(entry.Start));
+
+                    if (String.IsNullOrEmpty(editDate))
+                    {
+                        UpdateFields("VS", "E", true);
+                        return;
+                    }
+
+                    answer = ValidateDateTime(editDate);
+                    if (answer.Error != null)
+                        MessageBox.Show(answer.Error);
+                }
+
+                if (DateTime.Compare(entry.Start, answer.DateValue) == 0)
+                {
+                    MessageBox.Show("Operazione annullata");
+                }
+                else
+                {
+                    try
+                    {
+                        UpdateDbDateAppointment(answer.DateValue, newRef);
+                        entry.Start = answer.DateValue;
+                        entry.Save();
+                        MessageBox.Show("Data aggiornata.");
+                    }
+                    catch
+                    {
+                        MessageBox.Show("Si è verificato un erorre. Data non aggiornata.");
+                    }
+                }
+            }
+            UpdateFields("VS", "E", true);
+            return;
+        }
+
+        private void DuplicatiEventoCalendario_Click(object sender, EventArgs e)
+        {
+            UpdateFields("VS", "E", false);
+            string newRef = VisOrdNumero.Text;
+
+            Outlook.Folder personalCalendar = FindCalendar(settings["calendario"]["nomeCalendario"]);
+            Outlook.Items restrictedItems = CalendarGetItems(personalCalendar, DateTime.Now.AddDays(-7), DateTime.MaxValue, newRef);
+
+            List<Tuple<string, Outlook.AppointmentItem>> listaApp = new List<Tuple<string, Outlook.AppointmentItem>>();
+
+            int c = 0;
+
+            foreach (Outlook.AppointmentItem apptItem in restrictedItems)
+            {
+                listaApp.Add(new Tuple<string, Outlook.AppointmentItem>(newRef, apptItem));
+                c++;
+            }
+
+            if (c == 1)
+            {
+                MessageBox.Show("Nessun duplicato a partire da una settimana fa.");
+            }
+            else
+            {
+                if (MessageBox.Show("Sono stati trovati " + c + " eventi per lo stesso ordine." + Environment.NewLine + "Procedere con le operazioni di eliminazione? Verrà chiesta conferma per ogni evento." + Environment.NewLine + Environment.NewLine + "Attenzione: eventi multipli sono inconflitto con la gestione eventi del programma.", "Eventi Multipli per Ordine " + newRef, MessageBoxButtons.YesNo) == DialogResult.Yes)
+                {
+                    RemoveAppointment(newRef, listaApp);
+                }
+            }
+            UpdateFields("VS", "E", true);
+        }
+
+        private void UpdateCalendar(string oldRef, string newRef, int id_ordine, DateTime estDate, bool delete = true)
         {
             bool check = false;
             if (delete == true)
-                check = RemoveAppointment(oldRef, oldEta.AddDays(1));
+                check = RemoveAppointment(oldRef);
 
             if (check == true || delete == false)
             {
@@ -6599,6 +6701,8 @@ namespace mangaerordini
                 {
                     DateValue = DateTime.MinValue
                 };
+
+                string body = CreateAppointmentBody(id_ordine);
 
                 if (delete == true)
                 {
@@ -6640,19 +6744,16 @@ namespace mangaerordini
                             }
                         }
                     }
+                    AddAppointment(newRef, body, dateAppoint.DateValue);
                 }
-
-                string body = CreateAppointmentBody(id_ordine);
-
-                if (delete == true)
-                    AddAppointment(newRef, body, dateAppoint.DateValue, estDate);
                 else
-                    UpdateBodyCalendar(newRef, body, estDate);
+                    UpdateBodyCalendar(newRef, body);
+
                 MessageBox.Show("Appuntamento calendario aggiornato");
             }
         }
 
-        private void AddAppointment(string ordRef, string body, DateTime estDate, DateTime orderEstDate)
+        private void AddAppointment(string ordRef, string body, DateTime estDate)
         {
             try
             {
@@ -6664,7 +6765,7 @@ namespace mangaerordini
                     return;
                 }
 
-                if (FindAppointment(settings["calendario"]["nomeCalendario"], ordRef, orderEstDate, personalCalendar))
+                if (FindAppointment(settings["calendario"]["nomeCalendario"], ordRef, personalCalendar))
                 {
                     MessageBox.Show("Evento già presente. Rimuoverlo o aggiornarlo se necessario");
                     return;
@@ -6691,56 +6792,54 @@ namespace mangaerordini
             }
         }
 
-        private bool RemoveAppointment(string ordRef, DateTime ETA)
+        private bool RemoveAppointment(string ordRef, List<Tuple<string, Outlook.AppointmentItem>> listaApp = null)
         {
-            Outlook.Folder personalCalendar = FindCalendar(settings["calendario"]["nomeCalendario"]);
-            if (personalCalendar == null)
-            {
-                MessageBox.Show("Errore nella gestione calendari, non è possibile continuare. Provare a riavvaire Outlook.");
-                return false;
-            }
-
-            if (!FindAppointment(settings["calendario"]["nomeCalendario"], ordRef, ETA, personalCalendar))
-            {
-                MessageBox.Show("Evento non presente." + Environment.NewLine + Environment.NewLine + "NOTA: il proramma ricerca solo gli eventi tra la data di creazione ordine e la data di consegna." + Environment.NewLine + " Se l'evento è stato modfiicato a mano oltre queste date, il porgramma non lo troverà.");
-                return false;
-            }
-
-            DateTime start = DateTime.Now.AddDays(-1);
-
-            Outlook.Items restrictedItems = CalendarGetItems(personalCalendar, start, DateTime.MaxValue, ordRef);
-
             bool found = false;
             int c = 0;
-            /*List<Outlook.AppointmentItem> listaApp = new List<Outlook.AppointmentItem>();
+            Outlook.Folder personalCalendar = FindCalendar(settings["calendario"]["nomeCalendario"]);
 
-            foreach (Outlook.AppointmentItem apptItem in restrictedItems)
+            if (listaApp == null)
             {
-                if (Regex.IsMatch(apptItem.Subject, @"^.*##ManaOrdini\d{1,}##.*$"))
+                listaApp = new List<Tuple<string, Outlook.AppointmentItem>>();
+
+                if (personalCalendar == null)
                 {
-                    listaApp.Add(apptItem);
-                    c++;
+                    MessageBox.Show("Errore nella gestione calendari, non è possibile continuare. Provare a riavvaire Outlook.");
+                    return false;
                 }
-            }*/
 
-            List<Tuple<string, Outlook.AppointmentItem>> listaApp = new List<Tuple<string, Outlook.AppointmentItem>>();
+                if (!FindAppointment(settings["calendario"]["nomeCalendario"], ordRef, personalCalendar))
+                {
+                    MessageBox.Show("Evento non presente." + Environment.NewLine + Environment.NewLine + "NOTA: La data di partenza di ricerca degli eventi è 7 fa." + Environment.NewLine + " Se l'evento è stato modfiicato a mano oltre queste date, il porgramma non lo troverà.");
+                    return false;
+                }
 
-            string pattern = @"^.+##ManaOrdini([0-9]+)##$";
+                DateTime start = DateTime.Now.AddDays(-1);
 
-            foreach (Outlook.AppointmentItem apptItem in restrictedItems)
+                Outlook.Items restrictedItems = CalendarGetItems(personalCalendar, start, DateTime.MaxValue, ordRef);
+
+                string pattern = @"^.+##ManaOrdini([0-9]+)##$";
+
+                foreach (Outlook.AppointmentItem apptItem in restrictedItems)
+                {
+                    foreach (Match match in Regex.Matches(apptItem.Subject, pattern, RegexOptions.IgnoreCase))
+                    {
+                        listaApp.Add(new Tuple<string, Outlook.AppointmentItem>(match.Groups[1].Value.Trim(), apptItem));
+                        c++;
+                    }
+                }
+
+                MessageBox.Show(c + " elemento/i trovato/i con l'identificativo dell'evento. Verrà chiesta conferma prima dell'eliminazione di ciascun evento.");
+            }
+            else
             {
-                foreach (Match match in Regex.Matches(apptItem.Subject, pattern, RegexOptions.IgnoreCase))
-                {
-                    listaApp.Add(new Tuple<string, Outlook.AppointmentItem>(match.Groups[1].Value.Trim(), apptItem));
-                    c++;
-                }
+                c = listaApp.Count;
             }
 
-            MessageBox.Show(c + " elemento/i trovato/i con l'identificativo dell'evento. Verrà chiesta conferma prima dell'eliminazione di ciascun evento.");
-
+            int deleted = 0;
             for (int i = 0; i < c; i++)
             {
-                DialogResult dialogResult = MessageBox.Show("Cancellare l'appuntamento col nome: '" + listaApp[i].Item2.Subject + "' fissato in data: " + (listaApp[i].Item2.Start) + "?", "Eliminazione Evento da Calendario", MessageBoxButtons.YesNo);
+                DialogResult dialogResult = MessageBox.Show("Cancellare l'appuntamento col nome: '" + listaApp[i].Item2.Subject + "' fissato in data: " + (listaApp[i].Item2.Start) + "?", "Eliminazione Evento da Calendario (Evento " + (i + 1) + " di " + c + ") - Ordine Numero: " + ordRef, MessageBoxButtons.YesNo);
                 if (dialogResult == DialogResult.Yes)
                 {
                     try
@@ -6748,6 +6847,8 @@ namespace mangaerordini
                         listaApp[i].Item2.Delete();
                         UpdateDbDateAppointment(null, listaApp[i].Item1);
                         found = true;
+                        deleted++;
+                        MessageBox.Show("Evento calendario rimosso.");
                     }
                     catch
                     {
@@ -6757,10 +6858,25 @@ namespace mangaerordini
                 }
             }
 
+            if (c - deleted > 1)
+            {
+                MessageBox.Show("Attenzione, esistono ancora eventi multipli per lo stesso ordine.");
+            }
+
+            if (deleted != c)
+            {
+                Outlook.Items restrictedItems = CalendarGetItems(personalCalendar, DateTime.Now.AddDays(-7), DateTime.MaxValue, ordRef);
+
+                foreach (Outlook.AppointmentItem apptItem in restrictedItems)
+                {
+                    UpdateDbDateAppointment(apptItem.Start, ordRef);
+                    return true;
+                }
+            }
 
             if (found == true)
             {
-                MessageBox.Show("Evento calendario rimosso.");
+                MessageBox.Show("Operazioni concluse.");
                 return true;
             }
 
@@ -6811,7 +6927,7 @@ namespace mangaerordini
             return error_free;
         }
 
-        private bool UpdateBodyCalendar(string ordRef, string body, DateTime ETA)
+        private bool UpdateBodyCalendar(string ordRef, string body)
         {
 
             Outlook.Folder personalCalendar = FindCalendar(settings["calendario"]["nomeCalendario"]);
@@ -6822,7 +6938,16 @@ namespace mangaerordini
                 return false;
             }
 
-            Outlook.Items restrictedItems = CalendarGetItems(personalCalendar, DateTime.Now.AddDays(-1), DateTime.MaxValue, ordRef);
+            //Outlook.Items restrictedItems = CalendarGetItems(personalCalendar, DateTime.Now.AddDays(-1), DateTime.MaxValue, ordRef);
+
+            Outlook.Items restrictedItems;
+
+            CalendarResult answer = GetDbDateCalendar(new string[] { ordRef });
+
+            if (answer.Found)
+                restrictedItems = CalendarGetItems(personalCalendar, answer.AppointmentDate.AddDays(-1), answer.AppointmentDate.AddDays(1), ordRef);
+            else
+                restrictedItems = CalendarGetItems(personalCalendar, answer.AppointmentDate, DateTime.MaxValue, ordRef);
 
             bool updated = false;
 
@@ -7116,7 +7241,7 @@ namespace mangaerordini
             return restrictedItems;
         }
 
-        private bool FindAppointment(string CalendarName, string ordRef, DateTime ETA, Outlook.Folder personalCalendar = null)
+        private bool FindAppointment(string CalendarName, string ordRef, Outlook.Folder personalCalendar = null)
         {
             try
             {
@@ -7130,19 +7255,19 @@ namespace mangaerordini
                     }
                 }
 
-                CalendarResult answer = GetDbDateCalendar(ordRef);
+                CalendarResult answer = GetDbDateCalendar(new string[] { ordRef });
 
                 if (answer.Success && !answer.Found)
                     return false;
 
-                Outlook.Items restrictedItems = CalendarGetItems(personalCalendar, answer.AppointmentDate.AddDays(-1), answer.AppointmentDate.AddDays(+1), ordRef);
+                Outlook.Items restrictedItems = CalendarGetItems(personalCalendar, answer.AppointmentDate.AddDays(-(answer.Found ? 1 : 0)), answer.AppointmentDate.AddDays(+1), ordRef);
 
                 foreach (Outlook.AppointmentItem apptItem in restrictedItems)
                 {
                     return true;
                 }
 
-                restrictedItems = CalendarGetItems(personalCalendar, DateTime.Now.AddDays(-1), DateTime.MaxValue, ordRef);
+                restrictedItems = CalendarGetItems(personalCalendar, DateTime.Now.AddDays(-7), DateTime.MaxValue, ordRef);
 
                 foreach (Outlook.AppointmentItem apptItem in restrictedItems)
                 {
@@ -7150,7 +7275,7 @@ namespace mangaerordini
                     return true;
                 }
 
-                MessageBox.Show("Nel database è presente un appunatmaneto, ma non esiste corrispondenza in Outlook. Verificare informazioni, rischio conflitto.");
+                MessageBox.Show("Nel database è presente un appuntamento, ma non esiste corrispondenza in Outlook. Verificare informazioni, rischio conflitto." + Environment.NewLine + "Il dato su database è stato resetatto.");
 
                 UpdateDbDateAppointment(null, ordRef);
 
@@ -7200,25 +7325,31 @@ namespace mangaerordini
             }
         }
 
-        private CalendarResult GetDbDateCalendar(string ordRef)
+        private CalendarResult GetDbDateCalendar(string[] ordRef)
         {
             CalendarResult answer = new CalendarResult();
+            List<int> ids = new List<int>();
 
-            ValidationResult codice_ordine = ValidateId(ordRef);
-            if (codice_ordine.Error != null)
+            foreach (string idOrd in ordRef)
             {
-                MessageBox.Show("Codice ordine errato.");
-                return answer;
+                ValidationResult codice_ordine = ValidateId(idOrd);
+                if (codice_ordine.Error != null)
+                {
+                    MessageBox.Show("Codice ordine errato.");
+                    return answer;
+                }
+
+                ids.Add((int)codice_ordine.IntValue);
             }
 
-            string commandText = @"SELECT  data_calendar_event FROM " + schemadb + @"[ordini_elenco] WHERE codice_ordine = @ordCode LIMIT 1;";
+            string commandText = @"SELECT data_calendar_event FROM " + schemadb + @"[ordini_elenco] WHERE codice_ordine IN (@ordCode)  LIMIT 1;";
             using (SQLiteCommand cmd = new SQLiteCommand(commandText, connection))
             {
                 try
                 {
                     answer.Success = true;
 
-                    cmd.Parameters.AddWithValue("@ordCode", codice_ordine.IntValue);
+                    cmd.Parameters.AddWithValue("@ordCode", string.Join(", ", ids));
                     object res = cmd.ExecuteScalar();
 
                     if (res != DBNull.Value)
@@ -7323,7 +7454,7 @@ namespace mangaerordini
                 TextBox pageBox = (TextBox)sender;
                 TextBox txtboxCurPage;
                 Label maxpageLabel;
-                int selCurValue = 1;
+                int selCurValue;
 
                 switch (Convert.ToString(pageBox.Name))
                 {
@@ -8883,6 +9014,9 @@ namespace mangaerordini
                             RimuoviEventoCalendario.Enabled = stat;
                             AggiornaEventoCalendario.Enabled = stat;
 
+                            DuplicatiEventoCalendario.Enabled = stat;
+                            AggiornaEventoDataCalendario.Enabled = stat;
+
                             VisOrdChiudi.Enabled = stat;
 
                             AggiornaEventoCalendario.Enabled = stat;
@@ -9012,7 +9146,6 @@ namespace mangaerordini
             MessageBox.Show(Convert.ToString(e.Column));
             MessageBox.Show("w");
         }
-
 
         //Validate functions
 
@@ -9311,6 +9444,22 @@ namespace mangaerordini
             return answer;
         }
 
+        public ValidationResult ValidateDateTime(string stringDate)
+        {
+            ValidationResult answer = new ValidationResult();
+
+            if (!DateTime.TryParseExact(stringDate, dateFormatTime, provider, DateTimeStyles.None, out DateTime dataOrdValue))
+            {
+                answer.Error += "Valore: " + stringDate + ". Data non valida o vuota" + Environment.NewLine;
+            }
+            else
+            {
+                answer.DateValue = dataOrdValue;
+            }
+
+            return answer;
+        }
+
         public ValidationResult ValidateQta(string qta)
         {
             ValidationResult answer = new ValidationResult();
@@ -9341,6 +9490,7 @@ namespace mangaerordini
 
             return answer;
         }
+
 
         //CREDITI
 
