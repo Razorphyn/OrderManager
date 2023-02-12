@@ -1,4 +1,3 @@
-﻿//using log4net;
 using AutoUpdaterDotNET;
 using Microsoft.Toolkit.Uwp.Notifications;
 using Microsoft.VisualBasic;

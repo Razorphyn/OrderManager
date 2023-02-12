@@ -1,4 +1,4 @@
-﻿using AutoUpdaterDotNET;
+using AutoUpdaterDotNET;
 using CsvHelper;
 using CsvHelper.Configuration.Attributes;
 using Microsoft.Office.Interop.Outlook;
