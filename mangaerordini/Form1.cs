@@ -1,11 +1,8 @@
 using AutoUpdaterDotNET;
 using CsvHelper;
 using CsvHelper.Configuration.Attributes;
-using Microsoft.Office.Interop.Outlook;
 using Microsoft.VisualBasic;
-using Newtonsoft.Json;
 using System;
-using System.Collections;
 using System.Collections.Generic;
 using System.ComponentModel.DataAnnotations;
 using System.Data;
@@ -17,26 +14,17 @@ using System.Linq;
 using System.Reflection;
 using System.Text;
 using System.Text.RegularExpressions;
-using System.Threading;
-using System.Windows;
 using System.Windows.Forms;
-using Windows.UI.Xaml.Controls.Primitives;
 using Application = System.Windows.Forms.Application;
 using MessageBox = System.Windows.Forms.MessageBox;
 using Outlook = Microsoft.Office.Interop.Outlook;
+using Razorphyn;
 
 namespace mangaerordini
 {
     public partial class Form1 : Form
     {
-        static readonly string exeFolderPath = Path.GetDirectoryName(Application.ExecutablePath) + @"\";
-        static readonly string db_file_path = @"db\";
-        static readonly string db_file_name = @"ManagerOrdini.db";
-        static readonly string settingFile = exeFolderPath + @"\" + "ManagerOrdiniSettings.txt";
         static readonly int recordsPerPage = 8;
-        static readonly string schemadb = "";
-
-        Dictionary<string, Dictionary<string, string>> settings = new Dictionary<string, Dictionary<string, string>>();
 
         int datiGridViewFornitoriCurPage = 1;
         int datiGridViewClientiCurPage = 1;
@@ -51,14 +39,10 @@ namespace mangaerordini
         string AddOffCreaOggettoPezzoFiltro_Text = "";
         string FieldOrdOggPezzoFiltro_Text = "";
 
-        readonly CultureInfo provider = CultureInfo.InvariantCulture;
-        readonly NumberStyles style = NumberStyles.AllowDecimalPoint;
-        readonly CultureInfo culture = CultureInfo.CreateSpecificCulture("it-IT");
-        readonly NumberFormatInfo nfi = CultureInfo.GetCultureInfo("it-IT").NumberFormat;
-        readonly string dateFormat = "dd/MM/yyyy";
-        readonly string dateFormatTime = "dd/MM/yyyy hh:mm:ss";
-
-        readonly SQLiteConnection connection = new SQLiteConnection(@"Data Source = " + exeFolderPath + db_file_path + db_file_name + @";cache=shared; synchronous  = NORMAL ;  foreign_keys  = 1;  journal_mode=WAL; temp_store = memory;  mmap_size = 30000000000; ");
+        readonly DataValidation DataValidation = new DataValidation();
+        readonly UserSettings UserSettings = new UserSettings();
+        readonly CalendarManager CalendarManager = new CalendarManager();
+        readonly DbTools DbTools = new DbTools();
 
         public Form1()
         {
@@ -68,8 +52,8 @@ namespace mangaerordini
 
             this.FormClosing += new System.Windows.Forms.FormClosingEventHandler(this.Form1_FormClosing);
 
-            connection.Open();
-            connection.SetExtendedResultCodes(true);
+            ProgramParameters.connection.Open();
+            ProgramParameters.connection.SetExtendedResultCodes(true);
 
             RunSQLiteOptimize(500);
 
@@ -122,8 +106,6 @@ namespace mangaerordini
                 ctrl.DisplayMember = "Name";
                 ctrl.ValueMember = "Value";
             }
-
-            ReadSettingApp();
 
             Populate_combobox_dummy(ComboBoxOrdCliente);
             Populate_combobox_dummy(ComboBoxOrdOfferta);
@@ -183,12 +165,12 @@ namespace mangaerordini
         {
             UpdateFields("DB", "E", false);
 
-            string db_name = (exeFolderPath + db_file_path + db_file_name).ToUpper().ToString();
+            string db_name = (ProgramParameters.exeFolderPath + ProgramParameters.db_file_path + ProgramParameters.db_file_name).ToUpper().ToString();
 
             using (FolderBrowserDialog db_backup_path = new FolderBrowserDialog())
             {
                 db_backup_path.SelectedPath = Environment.GetFolderPath(Environment.SpecialFolder.DesktopDirectory);
-                db_backup_path.SelectedPath = exeFolderPath;
+                db_backup_path.SelectedPath = ProgramParameters.exeFolderPath;
                 string bk_fileName;
 
                 if (db_backup_path.ShowDialog() == DialogResult.OK)
@@ -200,7 +182,7 @@ namespace mangaerordini
 
                     bk_fileName = folderPath + "/db_managerordini_" + iden + ".sqlitebak";
 
-                    using (var source = new SQLiteConnection("Data Source=" + exeFolderPath + db_file_path + db_file_name))
+                    using (var source = new SQLiteConnection("Data Source=" + ProgramParameters.exeFolderPath + ProgramParameters.db_file_path + ProgramParameters.db_file_name))
                     using (var destination = new SQLiteConnection("Data Source=" + bk_fileName))
                     {
                         try
@@ -208,12 +190,12 @@ namespace mangaerordini
                             source.Open();
                             destination.Open();
                             source.BackupDatabase(destination, "main", "main", -1, null, 0);
-                            MessageBox.Show("Backup eseguito");
+                            OnTopMessage.Information("Backup eseguito correttamente", "Backup Eseguito");
                             Process.Start(folderPath);
                         }
                         catch
                         {
-                            MessageBox.Show("Errore");
+                            OnTopMessage.Error("Backup fallito", "Errore Generico");
                         }
                     }
 
@@ -232,7 +214,7 @@ namespace mangaerordini
             {
                 string filePath = null;
 
-                openFileDialog.InitialDirectory = exeFolderPath;
+                openFileDialog.InitialDirectory = ProgramParameters.exeFolderPath;
                 openFileDialog.Filter = "Database (.sqlitebak)|*.sqlitebak";
                 openFileDialog.FilterIndex = 2;
                 openFileDialog.RestoreDirectory = true;
@@ -244,17 +226,17 @@ namespace mangaerordini
                 if (!String.IsNullOrEmpty(filePath))
                 {
 
-                    DialogResult dialogResult = MessageBox.Show("Procedere con il ripristino del database?", "Ripristino Database", MessageBoxButtons.YesNo);
+                    DialogResult dialogResult = OnTopMessage.Question("Procedere con il ripristino del database?", "Ripristino Database");
                     if (dialogResult == DialogResult.Yes)
                     {
 
                         using (var source = new SQLiteConnection("Data Source=" + filePath))
-                        using (var destination = new SQLiteConnection("Data Source=" + exeFolderPath + db_file_path + db_file_name))
+                        using (var destination = new SQLiteConnection("Data Source=" + ProgramParameters.exeFolderPath + ProgramParameters.db_file_path + ProgramParameters.db_file_name))
                         {
                             source.Open();
                             destination.Open();
                             source.BackupDatabase(destination, "main", "main", -1, null, 0);
-                            MessageBox.Show("L'applicazione verrà riavviata.");
+                            OnTopMessage.Information("L'applicazione verrà riavviata.");
 
                             Application.Restart();
                             Environment.Exit(0);
@@ -262,7 +244,7 @@ namespace mangaerordini
                     }
                     else
                     {
-                        MessageBox.Show("Il database non esiste.");
+                        OnTopMessage.Alert("Il database non esiste.");
                     }
                 }
             }
@@ -275,7 +257,7 @@ namespace mangaerordini
 
             using (OpenFileDialog openFileDialog = new OpenFileDialog())
             {
-                openFileDialog.InitialDirectory = exeFolderPath;
+                openFileDialog.InitialDirectory = ProgramParameters.exeFolderPath;
                 openFileDialog.Filter = "SQL (.sql)|*.sql";
                 openFileDialog.FilterIndex = 2;
                 openFileDialog.RestoreDirectory = true;
@@ -297,7 +279,7 @@ namespace mangaerordini
                             {
                                 if (commandString.Trim() != "")
                                 {
-                                    using (var command = new SQLiteCommand(commandString, connection))
+                                    using (var command = new SQLiteCommand(commandString, ProgramParameters.connection))
                                     {
                                         try
                                         {
@@ -306,7 +288,7 @@ namespace mangaerordini
                                         catch (SQLiteException ex)
                                         {
                                             string spError = commandString.Length > 100 ? commandString.Substring(0, 100) + " ...\n..." : commandString;
-                                            MessageBox.Show(string.Format("Please check the SqlServer script.\nFile: {0} \nLine: {1} \nError: {2} \nSQL Command: \n{3}", pathStoreProceduresFile, "", ex.Message, spError), "Warning", MessageBoxButtons.OK, MessageBoxIcon.Warning);
+                                            OnTopMessage.Error(string.Format("Please check the SqlServer script.\nFile: {0} \nLine: {1} \nError: {2} \nSQL Command: \n{3}", pathStoreProceduresFile, "", ex.Message, spError), "Errore");
                                         }
                                     }
                                 }
@@ -314,7 +296,7 @@ namespace mangaerordini
 
 
                         }
-                        MessageBox.Show("Script Eseguito. L'applicazione verrà riavviata.");
+                        OnTopMessage.Information("Script Eseguito. L'applicazione verrà riavviata.");
 
                         Application.Restart();
                         Environment.Exit(0);
@@ -322,7 +304,7 @@ namespace mangaerordini
                     }
                     catch (System.Exception ex)
                     {
-                        MessageBox.Show(ex.Message, "Warning");
+                        OnTopMessage.Error(ex.Message, "Errore");
                     }
                 }
             }
@@ -341,23 +323,19 @@ namespace mangaerordini
             string commandText = "PRAGMA vacuum;PRAGMA optimize;";
 
 
-            using (SQLiteCommand cmd = new SQLiteCommand(commandText, connection))
+            using (SQLiteCommand cmd = new SQLiteCommand(commandText, ProgramParameters.connection))
             {
                 try
                 {
                     cmd.CommandText = commandText;
-
-
                     cmd.ExecuteNonQuery();
 
-
-
-                    MessageBox.Show("Ottimizzzazione Eseguita");
+                    OnTopMessage.Error("Ottimizzzazione Eseguita");
 
                 }
                 catch (SQLiteException ex)
                 {
-                    MessageBox.Show("Errore durante Ottimizzzazione. Errore: " + ReturnErorrCode(ex));
+                    OnTopMessage.Error("Errore durante Ottimizzzazione. Errore: " + DbTools.ReturnErorrCode(ex));
                 }
             }
 
@@ -375,7 +353,7 @@ namespace mangaerordini
             string commandText = "PRAGMA analysis_limit  = " + entry + ";  PRAGMA optimize;";
 
 
-            using (SQLiteCommand cmd = new SQLiteCommand(commandText, connection))
+            using (SQLiteCommand cmd = new SQLiteCommand(commandText, ProgramParameters.connection))
             {
                 try
                 {
@@ -387,7 +365,7 @@ namespace mangaerordini
                 }
                 catch (SQLiteException ex)
                 {
-                    MessageBox.Show("Errore durante Ottimizzzazione. Errore: " + ReturnErorrCode(ex));
+                    OnTopMessage.Error("Errore durante Ottimizzzazione. Errore: " + DbTools.ReturnErorrCode(ex));
                 }
             }
             return;
@@ -414,14 +392,14 @@ namespace mangaerordini
             }
             else
             {
-                MessageBox.Show("Selezione almeno una informazione da esportare");
+                OnTopMessage.Alert("Selezione almeno una informazione da esportare");
                 return;
             }
 
             using (FolderBrowserDialog csv_path = new FolderBrowserDialog())
             {
                 csv_path.SelectedPath = Environment.GetFolderPath(Environment.SpecialFolder.DesktopDirectory);
-                csv_path.SelectedPath = exeFolderPath;
+                csv_path.SelectedPath = ProgramParameters.exeFolderPath;
 
 
                 if (csv_path.ShowDialog() == DialogResult.OK)
@@ -448,21 +426,21 @@ namespace mangaerordini
                                     REPLACE( printf('%.2f',OP.prezzo_unitario_sconto),'.',',')  AS PrezzoOfferta,
                                     CASE OP.aggiunto WHEN 0 THEN 'No'  WHEN 1 THEN 'Sì' END AS PzzAggOfferta
 
-								   FROM " + schemadb + @"[offerte_elenco] AS OE
-								   LEFT JOIN " + schemadb + @"[clienti_elenco] AS CE
+								   FROM " + ProgramParameters.schemadb + @"[offerte_elenco] AS OE
+								   LEFT JOIN " + ProgramParameters.schemadb + @"[clienti_elenco] AS CE
 										ON CE.Id = OE.ID_cliente 
-								   LEFT JOIN " + schemadb + @"[offerte_pezzi] AS OP
+								   LEFT JOIN " + ProgramParameters.schemadb + @"[offerte_pezzi] AS OP
 										ON OP.ID_offerta = OE.ID
-                                    LEFT JOIN " + schemadb + @"[pezzi_ricambi] AS PR
+                                    LEFT JOIN " + ProgramParameters.schemadb + @"[pezzi_ricambi] AS PR
 										ON PR.Id = OP.ID_ricambio
-                                    LEFT JOIN " + schemadb + @"[clienti_macchine] AS CM
+                                    LEFT JOIN " + ProgramParameters.schemadb + @"[clienti_macchine] AS CM
 										ON CM.Id = PR.ID_macchina
 
                                    WHERE OE.data_offerta BETWEEN @startdate AND @enddate
 								   ORDER BY OE.data_offerta ASC";
 
 
-                        using (SQLiteDataAdapter cmd = new SQLiteDataAdapter(commandText, connection))
+                        using (SQLiteDataAdapter cmd = new SQLiteDataAdapter(commandText, ProgramParameters.connection))
                         {
                             try
                             {
@@ -473,7 +451,7 @@ namespace mangaerordini
                                 cmd.Fill(ds);
 
                                 using (var writer = new StreamWriter(folderPath + @"\" + "OFFERTE_" + iden + ".csv", true, Encoding.UTF8))
-                                using (var csv = new CsvWriter(writer, provider))
+                                using (var csv = new CsvWriter(writer, ProgramParameters.provider))
                                 {
                                     csv.WriteHeader<Offerte>();
                                     csv.NextRecord();
@@ -487,12 +465,12 @@ namespace mangaerordini
                                         csv.NextRecord();
                                     }
 
-                                    MessageBox.Show("Offerte Esportate");
+                                    OnTopMessage.Information("Offerte Esportate");
                                 }
                             }
                             catch (SQLiteException ex)
                             {
-                                MessageBox.Show("Errore durante lettura dati Offerte esportazione in csv. Codice: " + ReturnErorrCode(ex));
+                                OnTopMessage.Error("Errore durante lettura dati Offerte esportazione in csv. Codice: " + DbTools.ReturnErorrCode(ex));
 
 
                                 return;
@@ -521,14 +499,14 @@ namespace mangaerordini
 									OP.pezzi AS qta,
 									strftime('%d/%m/%Y', OP.ETA) AS ETA								   
 
-								   FROM " + schemadb + @"[ordini_elenco] AS OE 
-								   LEFT JOIN " + schemadb + @"[offerte_elenco] OFE 
+								   FROM " + ProgramParameters.schemadb + @"[ordini_elenco] AS OE 
+								   LEFT JOIN " + ProgramParameters.schemadb + @"[offerte_elenco] OFE 
 										ON OFE.Id = OE.ID_offerta 
-								   LEFT JOIN " + schemadb + @"[clienti_elenco] AS CE 
+								   LEFT JOIN " + ProgramParameters.schemadb + @"[clienti_elenco] AS CE 
 										ON CE.Id = OFE.ID_cliente 
-								   LEFT JOIN " + schemadb + @"[ordine_pezzi] AS OP
+								   LEFT JOIN " + ProgramParameters.schemadb + @"[ordine_pezzi] AS OP
 									    ON OP.ID_ordine = OE.Id
-                                   LEFT JOIN " + schemadb + @"[pezzi_ricambi] AS PR
+                                   LEFT JOIN " + ProgramParameters.schemadb + @"[pezzi_ricambi] AS PR
 									    ON PR.Id = OP.ID_ricambio
                                     WHERE OE.ID_offerta IS NOT NULL AND OE.data_ordine BETWEEN @startdate AND @enddate 
 
@@ -550,19 +528,19 @@ namespace mangaerordini
 									OP.pezzi AS qta,
 									strftime('%d/%m/%Y', OP.ETA) AS ETA								   
 
-								   FROM " + schemadb + @"[ordini_elenco] AS OE 
-								   LEFT JOIN " + schemadb + @"[clienti_elenco] AS CE 
+								   FROM " + ProgramParameters.schemadb + @"[ordini_elenco] AS OE 
+								   LEFT JOIN " + ProgramParameters.schemadb + @"[clienti_elenco] AS CE 
 										ON CE.Id = OE.ID_cliente 
-								   LEFT JOIN " + schemadb + @"[ordine_pezzi] AS OP
+								   LEFT JOIN " + ProgramParameters.schemadb + @"[ordine_pezzi] AS OP
 									    ON OP.ID_ordine = OE.Id
-                                   LEFT JOIN " + schemadb + @"[pezzi_ricambi] AS PR
+                                   LEFT JOIN " + ProgramParameters.schemadb + @"[pezzi_ricambi] AS PR
 									    ON PR.Id = OP.ID_ricambio
                                     WHERE OE.ID_offerta IS NULL AND OE.data_ordine BETWEEN @startdate AND @enddate
 
 								   ORDER BY datOr ASC";
 
 
-                        using (SQLiteDataAdapter cmd = new SQLiteDataAdapter(commandText, connection))
+                        using (SQLiteDataAdapter cmd = new SQLiteDataAdapter(commandText, ProgramParameters.connection))
                         {
                             try
                             {
@@ -575,7 +553,7 @@ namespace mangaerordini
 
 
                                 using (var writer = new StreamWriter(folderPath + @"\" + "ORDINI_" + iden + ".csv", true, Encoding.UTF8))
-                                using (var csv = new CsvWriter(writer, provider))
+                                using (var csv = new CsvWriter(writer, ProgramParameters.provider))
                                 {
                                     csv.WriteHeader<Ordini>();
                                     csv.NextRecord();
@@ -589,14 +567,12 @@ namespace mangaerordini
                                         csv.NextRecord();
                                     }
 
-                                    MessageBox.Show("Ordini Esportati");
+                                    OnTopMessage.Information("Ordini Esportati");
                                 }
                             }
                             catch (SQLiteException ex)
                             {
-                                MessageBox.Show("Errore durante lettura dati Ordini esportazione in csv. Codice: " + ReturnErorrCode(ex));
-
-
+                                OnTopMessage.Error("Errore durante lettura dati Ordini esportazione in csv. Codice: " + DbTools.ReturnErorrCode(ex));
                                 return;
                             }
                         }
@@ -635,20 +611,20 @@ namespace mangaerordini
 
             string er_list = "";
 
-            er_list += ValidateName(nome, "Componente").Error;
+            er_list += DataValidation.ValidateName(nome, "Componente").Error;
 
-            er_list += ValidateCodiceRicambio(codice);
+            er_list += DataValidation.ValidateCodiceRicambio(codice);
 
-            ValidationResult answerMacchina = ValidateMacchina(macchinaId);
+            DataValidation.ValidationResult answerMacchina = DataValidation.ValidateMacchina(macchinaId);
 
             if (!answerMacchina.Success)
             {
-                MessageBox.Show(answerMacchina.Error);
+                OnTopMessage.Error(answerMacchina.Error);
                 return;
             }
             er_list += answerMacchina.Error;
 
-            ValidationResult answer = ValidatePrezzo(prezzo);
+            DataValidation.ValidationResult answer = DataValidation.ValidatePrezzo(prezzo);
             er_list += answer.Error;
 
             if (fornitoreId < 1)
@@ -658,14 +634,14 @@ namespace mangaerordini
 
             if (er_list != "")
             {
-                MessageBox.Show(er_list);
+                OnTopMessage.Alert(er_list);
                 UpdateFields("R", "A", true);
                 return;
             }
 
-            string commandText = "INSERT INTO " + schemadb + @"[pezzi_ricambi](nome, codice, descrizione, prezzo,ID_fornitore,ID_macchina) VALUES (@nome,@codice,@desc,@prezzo,@idif,@idma);";
+            string commandText = "INSERT INTO " + ProgramParameters.schemadb + @"[pezzi_ricambi](nome, codice, descrizione, prezzo,ID_fornitore,ID_macchina) VALUES (@nome,@codice,@desc,@prezzo,@idif,@idma);";
 
-            using (SQLiteCommand cmd = new SQLiteCommand(commandText, connection))
+            using (SQLiteCommand cmd = new SQLiteCommand(commandText, ProgramParameters.connection))
             {
                 try
                 {
@@ -686,12 +662,12 @@ namespace mangaerordini
                     UpdateFields("R", "A", true);
                     UpdateRicambi();
 
-                    MessageBox.Show("Componente aggiunto al database");
+                    OnTopMessage.Information("Componente aggiunto al database");
 
                 }
                 catch (SQLiteException ex)
                 {
-                    MessageBox.Show("Errore durante aggiunta al database. Errore: " + ReturnErorrCode(ex));
+                    OnTopMessage.Error("Errore durante aggiunta al database. Errore: " + DbTools.ReturnErorrCode(ex));
                     UpdateFields("R", "A", true);
                 }
             }
@@ -715,37 +691,37 @@ namespace mangaerordini
 
             string commandText;
 
-            er_list += ValidateName(nome, "Componente").Error;
+            er_list += DataValidation.ValidateName(nome, "Componente").Error;
 
-            ValidationResult answer = ValidateMacchina(macchinaId);
+            DataValidation.ValidationResult answer = DataValidation.ValidateMacchina(macchinaId);
 
 
             if (!answer.Success)
             {
-                MessageBox.Show(answer.Error);
+                OnTopMessage.Alert(answer.Error);
                 return;
             }
             er_list += answer.Error;
 
-            answer = ValidateFornitore(fornitoreId);
+            answer = DataValidation.ValidateFornitore(fornitoreId);
             if (!answer.Success)
             {
-                MessageBox.Show(answer.Error);
+                OnTopMessage.Alert(answer.Error);
                 return;
             }
             er_list += answer.Error;
 
-            er_list += ValidateCodiceRicambio(codice);
+            er_list += DataValidation.ValidateCodiceRicambio(codice);
 
-            ValidationResult idQ = ValidateId(idF);
+            DataValidation.ValidationResult idQ = DataValidation.ValidateId(idF);
             er_list += idQ.Error;
 
-            ValidationResult prezzod = ValidatePrezzo(prezzo);
+            DataValidation.ValidationResult prezzod = DataValidation.ValidatePrezzo(prezzo);
             er_list += prezzod.Error;
 
             if (er_list != "")
             {
-                MessageBox.Show(er_list);
+                OnTopMessage.Alert(er_list);
 
                 //ABILITA CAMPI & BOTTONI
                 UpdateFields("R", "E", true);
@@ -753,7 +729,7 @@ namespace mangaerordini
                 return;
             }
 
-            DialogResult dialogResult = MessageBox.Show("Vuoi salvare le modifiche?", "Salvare Cambiamenti Ricambio", MessageBoxButtons.YesNo);
+            DialogResult dialogResult = OnTopMessage.Question("Vuoi salvare le modifiche?", "Salvare Cambiamenti Ricambio");
             if (dialogResult == DialogResult.No)
             {
                 //ABILITA CAMPI & BOTTONI
@@ -761,10 +737,10 @@ namespace mangaerordini
                 return;
             }
 
-            commandText = "UPDATE " + schemadb + @"[pezzi_ricambi] SET nome=@nome,codice=@codice,descrizione=@descrizione,prezzo=@prezzod,ID_fornitore=@idif,ID_macchina=@idma WHERE Id=@idq LIMIT 1;";
+            commandText = "UPDATE " + ProgramParameters.schemadb + @"[pezzi_ricambi] SET nome=@nome,codice=@codice,descrizione=@descrizione,prezzo=@prezzod,ID_fornitore=@idif,ID_macchina=@idma WHERE Id=@idq LIMIT 1;";
 
 
-            using (SQLiteCommand cmd = new SQLiteCommand(commandText, connection))
+            using (SQLiteCommand cmd = new SQLiteCommand(commandText, ProgramParameters.connection))
             {
                 try
                 {
@@ -800,11 +776,11 @@ namespace mangaerordini
                     UpdateFields("R", "E", false);
                     UpdateRicambi();
 
-                    MessageBox.Show("Cambiamenti salvati");
+                    OnTopMessage.Information("Cambiamenti salvati");
                 }
                 catch (SQLiteException ex)
                 {
-                    MessageBox.Show("Errore durante aggiornamento del ricambio. Codice: " + ReturnErorrCode(ex));
+                    OnTopMessage.Error("Errore durante aggiornamento del ricambio. Codice: " + DbTools.ReturnErorrCode(ex));
                     //ABILITA CAMPI & BOTTONI
                     UpdateFields("R", "E", true);
                 }
@@ -822,20 +798,20 @@ namespace mangaerordini
 
             string er_list = "";
 
-            er_list += ValidateName(nome, "Componente").Error;
+            er_list += DataValidation.ValidateName(nome, "Componente").Error;
 
-            ValidationResult idQ = ValidateId(idF);
+            DataValidation.ValidationResult idQ = DataValidation.ValidateId(idF);
             er_list += idQ.Error;
 
             if (er_list != "")
             {
-                MessageBox.Show(er_list);
+                OnTopMessage.Alert(er_list);
                 //ABILITA CAMPI & BOTTONI
                 UpdateFields("R", "E", true);
                 return;
             }
 
-            DialogResult dialogResult = MessageBox.Show("Vuoi veramente eliminare il Pezzo di Ricambio?", "Eliminare Pezzo di Ricambio", MessageBoxButtons.YesNo);
+            DialogResult dialogResult = OnTopMessage.Question("Vuoi veramente eliminare il Pezzo di Ricambio?", "Eliminare Pezzo di Ricambio");
             if (dialogResult == DialogResult.No)
             {
                 //ABILITA CAMPI & BOTTONI
@@ -843,10 +819,10 @@ namespace mangaerordini
                 return;
             }
 
-            string commandText = "DELETE FROM " + schemadb + @"[pezzi_ricambi] WHERE Id=@idq LIMIT 1;";
+            string commandText = "DELETE FROM " + ProgramParameters.schemadb + @"[pezzi_ricambi] WHERE Id=@idq LIMIT 1;";
 
 
-            using (SQLiteCommand cmd = new SQLiteCommand(commandText, connection))
+            using (SQLiteCommand cmd = new SQLiteCommand(commandText, ProgramParameters.connection))
             {
                 try
                 {
@@ -860,11 +836,11 @@ namespace mangaerordini
                     UpdateFields("R", "E", false);
                     UpdateRicambi();
 
-                    MessageBox.Show("Pezzo di ricambio (" + nome + ") eliminato.");
+                    OnTopMessage.Information("Pezzo di ricambio (" + nome + ") eliminato.");
                 }
                 catch (SQLiteException ex)
                 {
-                    MessageBox.Show("Errore durante eliminazione pezzo di ricambio. Codice: " + ReturnErorrCode(ex));
+                    OnTopMessage.Error("Errore durante eliminazione pezzo di ricambio. Codice: " + DbTools.ReturnErorrCode(ex));
                     //ABILITA CAMPI & BOTTONI
                     UpdateFields("R", "E", true);
                 }
@@ -903,14 +879,14 @@ namespace mangaerordini
                     ChangeDatiCompSupplier.SelectedIndex = ChangeDatiCompSupplier.FindString(fornitore);
 
                     string commandText = @"SELECT 
-												" + schemadb + @"[pezzi_ricambi].descrizione AS descrizione, 
-												" + schemadb + @"[clienti_macchine].ID_cliente AS Cliente 
-											FROM " + schemadb + @"[pezzi_ricambi] 
-											LEFT JOIN " + schemadb + @"[clienti_macchine] 
-												ON " + schemadb + @"[clienti_macchine].Id = " + schemadb + @"[pezzi_ricambi].ID_macchina 
-											WHERE " + schemadb + @"[pezzi_ricambi].Id=@ID LIMIT 1;";
+												" + ProgramParameters.schemadb + @"[pezzi_ricambi].descrizione AS descrizione, 
+												" + ProgramParameters.schemadb + @"[clienti_macchine].ID_cliente AS Cliente 
+											FROM " + ProgramParameters.schemadb + @"[pezzi_ricambi] 
+											LEFT JOIN " + ProgramParameters.schemadb + @"[clienti_macchine] 
+												ON " + ProgramParameters.schemadb + @"[clienti_macchine].Id = " + ProgramParameters.schemadb + @"[pezzi_ricambi].ID_macchina 
+											WHERE " + ProgramParameters.schemadb + @"[pezzi_ricambi].Id=@ID LIMIT 1;";
 
-                    using (SQLiteCommand cmd = new SQLiteCommand(commandText, connection))
+                    using (SQLiteCommand cmd = new SQLiteCommand(commandText, ProgramParameters.connection))
                     {
 
                         try
@@ -928,9 +904,7 @@ namespace mangaerordini
                         }
                         catch (SQLiteException ex)
                         {
-                            MessageBox.Show("Errore durante popolamento Macchine e Clienti. Codice: " + ReturnErorrCode(ex));
-
-
+                            OnTopMessage.Error("Errore durante popolamento Macchine e Clienti. Codice: " + DbTools.ReturnErorrCode(ex));
                             return;
                         }
                     }
@@ -1033,10 +1007,10 @@ namespace mangaerordini
             if (paramsQuery.Count > 0)
                 addInfo = " WHERE " + String.Join(" AND ", paramsQuery) + " ";
 
-            string commandText = "SELECT COUNT(*) FROM " + schemadb + @"[pezzi_ricambi] " + addInfo;
+            string commandText = "SELECT COUNT(*) FROM " + ProgramParameters.schemadb + @"[pezzi_ricambi] " + addInfo;
 
 
-            using (SQLiteCommand cmdCount = new SQLiteCommand(commandText, connection))
+            using (SQLiteCommand cmdCount = new SQLiteCommand(commandText, ProgramParameters.connection))
             {
 
                 cmdCount.Parameters.AddWithValue("@codiceRicambioFilter", "%" + codiceRicambioFilter + "%");
@@ -1062,29 +1036,29 @@ namespace mangaerordini
 
 
             commandText = @"SELECT 
-									" + schemadb + @"[pezzi_ricambi].Id AS ID,
-									IIF(" + schemadb + @"[clienti_macchine].Id IS NULL, 
+									" + ProgramParameters.schemadb + @"[pezzi_ricambi].Id AS ID,
+									IIF(" + ProgramParameters.schemadb + @"[clienti_macchine].Id IS NULL, 
                                         '',
-										(" + schemadb + @"[clienti_macchine].Id || ' - ' || " + schemadb + @"[clienti_macchine].modello  || ' (' ||  " + schemadb + @"[clienti_macchine].seriale || ')')
+										(" + ProgramParameters.schemadb + @"[clienti_macchine].Id || ' - ' || " + ProgramParameters.schemadb + @"[clienti_macchine].modello  || ' (' ||  " + ProgramParameters.schemadb + @"[clienti_macchine].seriale || ')')
 										) AS Macchina,
-									IIF(" + schemadb + @"[fornitori].Id IS NULL,
+									IIF(" + ProgramParameters.schemadb + @"[fornitori].Id IS NULL,
                                         '',
-										(" + schemadb + @"[fornitori].Id || ' - ' || " + schemadb + @"[fornitori].nome)
+										(" + ProgramParameters.schemadb + @"[fornitori].Id || ' - ' || " + ProgramParameters.schemadb + @"[fornitori].nome)
 										) AS Fornitore,
-									" + schemadb + @"[pezzi_ricambi].nome AS Nome,
-									" + schemadb + @"[pezzi_ricambi].codice AS Codice,
-									REPLACE(printf('%.2f'," + schemadb + @"[pezzi_ricambi].prezzo),'.',',')  AS Prezzo
-								   FROM " + schemadb + @"[pezzi_ricambi]
-								   LEFT JOIN " + schemadb + @"[clienti_macchine]
-									ON " + schemadb + @"[clienti_macchine].Id = " + schemadb + @"[pezzi_ricambi].ID_macchina
-								   LEFT JOIN " + schemadb + @"[fornitori]
-									ON " + schemadb + @"[fornitori].Id = " + schemadb + @"[pezzi_ricambi].ID_fornitore " + addInfo +
-                                   @" ORDER BY " + schemadb + @"[pezzi_ricambi].Id ASC LIMIT @recordperpage OFFSET @startingrecord;";
+									" + ProgramParameters.schemadb + @"[pezzi_ricambi].nome AS Nome,
+									" + ProgramParameters.schemadb + @"[pezzi_ricambi].codice AS Codice,
+									REPLACE(printf('%.2f'," + ProgramParameters.schemadb + @"[pezzi_ricambi].prezzo),'.',',')  AS Prezzo
+								   FROM " + ProgramParameters.schemadb + @"[pezzi_ricambi]
+								   LEFT JOIN " + ProgramParameters.schemadb + @"[clienti_macchine]
+									ON " + ProgramParameters.schemadb + @"[clienti_macchine].Id = " + ProgramParameters.schemadb + @"[pezzi_ricambi].ID_macchina
+								   LEFT JOIN " + ProgramParameters.schemadb + @"[fornitori]
+									ON " + ProgramParameters.schemadb + @"[fornitori].Id = " + ProgramParameters.schemadb + @"[pezzi_ricambi].ID_fornitore " + addInfo +
+                                   @" ORDER BY " + ProgramParameters.schemadb + @"[pezzi_ricambi].Id ASC LIMIT @recordperpage OFFSET @startingrecord;";
 
             page--;
 
 
-            using (SQLiteDataAdapter cmd = new SQLiteDataAdapter(commandText, connection))
+            using (SQLiteDataAdapter cmd = new SQLiteDataAdapter(commandText, ProgramParameters.connection))
             {
                 try
                 {
@@ -1121,9 +1095,7 @@ namespace mangaerordini
                 }
                 catch (SQLiteException ex)
                 {
-                    MessageBox.Show("Errore durante popolamento tabella Componenti. Codice: " + ReturnErorrCode(ex));
-
-
+                    OnTopMessage.Error("Errore durante popolamento tabella Componenti. Codice: " + DbTools.ReturnErorrCode(ex));
                     return;
                 }
             }
@@ -1155,7 +1127,7 @@ namespace mangaerordini
 
             string er_list = "";
 
-            er_list += ValidateName(nome, "Cliente").Error;
+            er_list += DataValidation.ValidateName(nome, "Cliente").Error;
 
             if (string.IsNullOrEmpty(stato))
             {
@@ -1174,16 +1146,16 @@ namespace mangaerordini
 
             if (er_list != "")
             {
-                MessageBox.Show(er_list);
+                OnTopMessage.Alert(er_list);
                 //ABILITA CAMPI & BOTTONI
                 UpdateFields("C", "A", true);
                 return;
             }
 
-            string commandText = "INSERT INTO " + schemadb + @"[clienti_elenco](nome, stato, citta, provincia) VALUES (@nome,@stato,@citta,@prov);";
+            string commandText = "INSERT INTO " + ProgramParameters.schemadb + @"[clienti_elenco](nome, stato, citta, provincia) VALUES (@nome,@stato,@citta,@prov);";
 
 
-            using (SQLiteCommand cmd = new SQLiteCommand(commandText, connection))
+            using (SQLiteCommand cmd = new SQLiteCommand(commandText, ProgramParameters.connection))
             {
                 try
                 {
@@ -1200,12 +1172,12 @@ namespace mangaerordini
                     UpdateFields("C", "A", true);
                     UpdateClienti();
 
-                    MessageBox.Show("Cliente aggiunto al database");
+                    OnTopMessage.Information("Cliente aggiunto al database");
                 }
                 catch (SQLiteException ex)
                 {
                     UpdateFields("C", "A", true);
-                    MessageBox.Show("Errore durante aggiunta al database. Codice: " + ReturnErorrCode(ex));
+                    OnTopMessage.Error("Errore durante aggiunta al database. Codice: " + DbTools.ReturnErorrCode(ex));
                 }
             }
             return;
@@ -1224,7 +1196,7 @@ namespace mangaerordini
 
             string er_list = "";
 
-            er_list += ValidateName(nome, "Cliente").Error;
+            er_list += DataValidation.ValidateName(nome, "Cliente").Error;
 
             if (string.IsNullOrEmpty(stato))
             {
@@ -1241,12 +1213,12 @@ namespace mangaerordini
                 er_list += "Città non valida o vuota" + Environment.NewLine;
             }
 
-            ValidationResult idQ = ValidateId(idF);
+            DataValidation.ValidationResult idQ = DataValidation.ValidateId(idF);
             er_list += idQ.Error;
 
             if (er_list != "")
             {
-                MessageBox.Show(er_list);
+                OnTopMessage.Alert(er_list);
 
                 //ABILITA CAMPI & BOTTONI
                 UpdateFields("C", "E", true);
@@ -1254,7 +1226,7 @@ namespace mangaerordini
                 return;
             }
 
-            DialogResult dialogResult = MessageBox.Show("Vuoi salvare le modifiche?", "Salvare Cambiamenti Cliente", MessageBoxButtons.YesNo);
+            DialogResult dialogResult = OnTopMessage.Question("Vuoi salvare le modifiche?", "Salvare Cambiamenti Cliente");
             if (dialogResult == DialogResult.No)
             {
                 //ABILITA CAMPI & BOTTONI
@@ -1262,10 +1234,10 @@ namespace mangaerordini
                 return;
             }
 
-            string commandText = "UPDATE " + schemadb + @"[clienti_elenco] SET nome=@nome,stato=@stato,citta=@citta,provincia=@provincia WHERE Id=@idq LIMIT 1;";
+            string commandText = "UPDATE " + ProgramParameters.schemadb + @"[clienti_elenco] SET nome=@nome,stato=@stato,citta=@citta,provincia=@provincia WHERE Id=@idq LIMIT 1;";
 
 
-            using (SQLiteCommand cmd = new SQLiteCommand(commandText, connection))
+            using (SQLiteCommand cmd = new SQLiteCommand(commandText, ProgramParameters.connection))
             {
                 try
                 {
@@ -1296,11 +1268,11 @@ namespace mangaerordini
                     //DISABILITA CAMPI & BOTTONI
                     UpdateFields("C", "E", false);
 
-                    MessageBox.Show("Cambiamenti salvati");
+                    OnTopMessage.Information("Cambiamenti salvati");
                 }
                 catch (SQLiteException ex)
                 {
-                    MessageBox.Show("Errore durante aggiornamento del cliente. Codice: " + ReturnErorrCode(ex));
+                    OnTopMessage.Error("Errore durante aggiornamento del cliente. Codice: " + DbTools.ReturnErorrCode(ex));
                     //ABILITA CAMPI & BOTTONI
                     UpdateFields("C", "E", true);
                 }
@@ -1318,20 +1290,20 @@ namespace mangaerordini
 
             string er_list = "";
 
-            er_list += ValidateName(nome, "Cliente").Error;
+            er_list += DataValidation.ValidateName(nome, "Cliente").Error;
 
-            ValidationResult idQ = ValidateId(idF);
+            DataValidation.ValidationResult idQ = DataValidation.ValidateId(idF);
             er_list += idQ.Error;
 
             if (er_list != "")
             {
-                MessageBox.Show(er_list);
+                OnTopMessage.Alert(er_list);
                 //ABILITA CAMPI & BOTTONI
                 UpdateFields("C", "E", true);
                 return;
             }
 
-            DialogResult dialogResult = MessageBox.Show("Vuoi veramente eliminare il cliente?", "Eliminare Cliente", MessageBoxButtons.YesNo);
+            DialogResult dialogResult = OnTopMessage.Question("Vuoi veramente eliminare il cliente?", "Eliminare Cliente");
             if (dialogResult == DialogResult.No)
             {
                 //ABILITA CAMPI & BOTTONI
@@ -1339,10 +1311,10 @@ namespace mangaerordini
                 return;
             }
 
-            string commandText = "DELETE FROM " + schemadb + @"[clienti_elenco] WHERE Id=@idq LIMIT 1;";
+            string commandText = "DELETE FROM " + ProgramParameters.schemadb + @"[clienti_elenco] WHERE Id=@idq LIMIT 1;";
 
 
-            using (SQLiteCommand cmd = new SQLiteCommand(commandText, connection))
+            using (SQLiteCommand cmd = new SQLiteCommand(commandText, ProgramParameters.connection))
             {
                 try
                 {
@@ -1357,11 +1329,11 @@ namespace mangaerordini
                     UpdateFields("C", "CE", false);
                     UpdateFields("C", "E", false);
 
-                    MessageBox.Show("Cliente (" + nome + ") eliminato.");
+                    OnTopMessage.Information("Cliente (" + nome + ") eliminato.");
                 }
                 catch (SQLiteException ex)
                 {
-                    MessageBox.Show("Errore durante eliminazione del cliente. Codice: " + ReturnErorrCode(ex));
+                    OnTopMessage.Error("Errore durante eliminazione del cliente. Codice: " + DbTools.ReturnErorrCode(ex));
                     //ABILITA CAMPI & BOTTONI
                     UpdateFields("C", "E", true);
                 }
@@ -1408,12 +1380,12 @@ namespace mangaerordini
         {
             DataGridView data_grid = dataGridViewClienti;
 
-            string commandText = "SELECT COUNT(*) FROM " + schemadb + @"[clienti_elenco]";
+            string commandText = "SELECT COUNT(*) FROM " + ProgramParameters.schemadb + @"[clienti_elenco]";
             int count = 1;
 
 
 
-            using (SQLiteCommand cmdCount = new SQLiteCommand(commandText, connection))
+            using (SQLiteCommand cmdCount = new SQLiteCommand(commandText, ProgramParameters.connection))
             {
 
                 count = Convert.ToInt32(cmdCount.ExecuteScalar());
@@ -1436,11 +1408,11 @@ namespace mangaerordini
                 DataClientiCurPage.Text = "" + page;
             }
 
-            commandText = @"SELECT Id,nome,stato,provincia,citta FROM " + schemadb + @"[clienti_elenco] ORDER BY Id ASC LIMIT @recordperpage OFFSET @startingrecord;";
+            commandText = @"SELECT Id,nome,stato,provincia,citta FROM " + ProgramParameters.schemadb + @"[clienti_elenco] ORDER BY Id ASC LIMIT @recordperpage OFFSET @startingrecord;";
             page--;
 
 
-            using (SQLiteDataAdapter cmd = new SQLiteDataAdapter(commandText, connection))
+            using (SQLiteDataAdapter cmd = new SQLiteDataAdapter(commandText, ProgramParameters.connection))
             {
                 try
                 {
@@ -1479,7 +1451,7 @@ namespace mangaerordini
                 }
                 catch (SQLiteException ex)
                 {
-                    MessageBox.Show("Errore durante popolamento tabella Clienti. Codice: " + ReturnErorrCode(ex));
+                    OnTopMessage.Error("Errore durante popolamento tabella Clienti. Codice: " + DbTools.ReturnErorrCode(ex));
                 }
             }
             return;
@@ -1499,14 +1471,14 @@ namespace mangaerordini
 
             string er_list = "";
 
-            er_list += ValidateName(nome, "Cliente").Error;
+            er_list += DataValidation.ValidateName(nome, "Cliente").Error;
 
             //add check if ID exist databse
 
-            string commandText = "SELECT COUNT(*) FROM " + schemadb + @"[clienti_elenco] WHERE Id = @user LIMIT 1;";
+            string commandText = "SELECT COUNT(*) FROM " + ProgramParameters.schemadb + @"[clienti_elenco] WHERE Id = @user LIMIT 1;";
             int UserExist = 0;
 
-            using (SQLiteCommand cmd = new SQLiteCommand(commandText, connection))
+            using (SQLiteCommand cmd = new SQLiteCommand(commandText, ProgramParameters.connection))
             {
                 try
                 {
@@ -1517,7 +1489,7 @@ namespace mangaerordini
                 }
                 catch (SQLiteException ex)
                 {
-                    MessageBox.Show("Errore durante verifica ID Cliente. Codice: " + ReturnErorrCode(ex));
+                    OnTopMessage.Error("Errore durante verifica ID Cliente. Codice: " + DbTools.ReturnErorrCode(ex));
                     return;
                 }
             }
@@ -1529,14 +1501,14 @@ namespace mangaerordini
 
             if (er_list != "")
             {
-                MessageBox.Show(er_list);
+                OnTopMessage.Alert(er_list);
                 UpdateFields("P", "A", true);
                 return;
             }
 
-            commandText = "INSERT INTO " + schemadb + @"[clienti_riferimenti](nome,ID_clienti, mail, telefono) VALUES (@nome,@idcl,@mail,@tel);";
+            commandText = "INSERT INTO " + ProgramParameters.schemadb + @"[clienti_riferimenti](nome,ID_clienti, mail, telefono) VALUES (@nome,@idcl,@mail,@tel);";
 
-            using (SQLiteCommand cmd = new SQLiteCommand(commandText, connection))
+            using (SQLiteCommand cmd = new SQLiteCommand(commandText, ProgramParameters.connection))
             {
                 try
                 {
@@ -1548,7 +1520,7 @@ namespace mangaerordini
 
 
                     cmd.ExecuteNonQuery();
-                    MessageBox.Show("Persona di riferimento aggiunta al database");
+                    OnTopMessage.Information("Persona di riferimento aggiunta al database");
 
                     UpdateFields("P", "CA", true);
                     UpdateFields("P", "A", true);
@@ -1558,7 +1530,7 @@ namespace mangaerordini
                 }
                 catch (SQLiteException ex)
                 {
-                    MessageBox.Show("Errore durante aggiunta al database. Codice: " + ReturnErorrCode(ex));
+                    OnTopMessage.Error("Errore durante aggiunta al database. Codice: " + DbTools.ReturnErorrCode(ex));
                     UpdateFields("P", "A", true);
                 }
             }
@@ -1576,26 +1548,26 @@ namespace mangaerordini
             string mail = ChangeDatiPRefMail.Text.Trim();
             string idF = ChangeDatiPRefID.Text;
 
-            ValidationResult answer;
+            DataValidation.ValidationResult answer;
 
             string er_list = "";
 
-            er_list += ValidateName(nome, "Persona di Riferimento").Error;
+            er_list += DataValidation.ValidateName(nome, "Persona di Riferimento").Error;
 
-            answer = ValidateCliente(cliente);
+            answer = DataValidation.ValidateCliente(cliente);
             if (!answer.Success)
             {
-                MessageBox.Show(answer.Error);
+                OnTopMessage.Alert(answer.Error);
                 return;
             }
             er_list += answer.Error;
 
-            ValidationResult idQ = ValidateId(idF);
+            DataValidation.ValidationResult idQ = DataValidation.ValidateId(idF);
             er_list += idQ.Error;
 
             if (er_list != "")
             {
-                MessageBox.Show(er_list);
+                OnTopMessage.Alert(er_list);
 
                 //ABILITA CAMPI & BOTTONI
                 UpdateFields("P", "E", true);
@@ -1603,7 +1575,7 @@ namespace mangaerordini
                 return;
             }
 
-            DialogResult dialogResult = MessageBox.Show("Vuoi salvare le modifiche?", "Salvare Cambiamenti Persona di Riferimento", MessageBoxButtons.YesNo);
+            DialogResult dialogResult = OnTopMessage.Question("Vuoi salvare le modifiche?", "Salvare Cambiamenti Persona di Riferimento");
             if (dialogResult == DialogResult.No)
             {
                 //ABILITA CAMPI & BOTTONI
@@ -1611,9 +1583,9 @@ namespace mangaerordini
                 return;
             }
 
-            string commandText = "UPDATE " + schemadb + @"[clienti_riferimenti] SET nome=@nome,ID_clienti=@cliente,mail=@mail,telefono=@telefono WHERE Id=@idq LIMIT 1;";
+            string commandText = "UPDATE " + ProgramParameters.schemadb + @"[clienti_riferimenti] SET nome=@nome,ID_clienti=@cliente,mail=@mail,telefono=@telefono WHERE Id=@idq LIMIT 1;";
 
-            using (SQLiteCommand cmd = new SQLiteCommand(commandText, connection))
+            using (SQLiteCommand cmd = new SQLiteCommand(commandText, ProgramParameters.connection))
             {
                 try
                 {
@@ -1633,11 +1605,11 @@ namespace mangaerordini
                     UpdateFields("P", "CE", false);
                     UpdateFields("P", "E", false);
 
-                    MessageBox.Show("Cambiamenti salvati");
+                    OnTopMessage.Information("Cambiamenti salvati");
                 }
                 catch (SQLiteException ex)
                 {
-                    MessageBox.Show("Errore durante aggiornamento del cliente. Codice: " + ReturnErorrCode(ex));
+                    OnTopMessage.Error("Errore durante aggiornamento del cliente. Codice: " + DbTools.ReturnErorrCode(ex));
                     //ABILITA CAMPI & BOTTONI
                     UpdateFields("P", "E", true);
                 }
@@ -1655,20 +1627,20 @@ namespace mangaerordini
 
             string er_list = "";
 
-            er_list += ValidateName(nome, "Persona di Riferimento").Error;
+            er_list += DataValidation.ValidateName(nome, "Persona di Riferimento").Error;
 
-            ValidationResult idQ = ValidateId(idF);
+            DataValidation.ValidationResult idQ = DataValidation.ValidateId(idF);
             er_list += idQ.Error;
 
             if (er_list != "")
             {
-                MessageBox.Show(er_list);
+                OnTopMessage.Alert(er_list);
                 //ABILITA CAMPI & BOTTONI
                 UpdateFields("P", "E", true);
                 return;
             }
 
-            DialogResult dialogResult = MessageBox.Show("Vuoi veramente eliminare la Persona di Riferimento?", "Eliminare Persona di Riferimento", MessageBoxButtons.YesNo);
+            DialogResult dialogResult = OnTopMessage.Question("Vuoi veramente eliminare la Persona di Riferimento?", "Eliminare Persona di Riferimento");
             if (dialogResult == DialogResult.No)
             {
                 //ABILITA CAMPI & BOTTONI
@@ -1677,10 +1649,10 @@ namespace mangaerordini
             }
 
 
-            string commandText = "DELETE FROM " + schemadb + @"[clienti_riferimenti] WHERE Id=@idq LIMIT 1;";
+            string commandText = "DELETE FROM " + ProgramParameters.schemadb + @"[clienti_riferimenti] WHERE Id=@idq LIMIT 1;";
 
 
-            using (SQLiteCommand cmd = new SQLiteCommand(commandText, connection))
+            using (SQLiteCommand cmd = new SQLiteCommand(commandText, ProgramParameters.connection))
             {
                 try
                 {
@@ -1695,11 +1667,11 @@ namespace mangaerordini
                     UpdateFields("P", "CE", false);
                     UpdateFields("P", "E", false);
 
-                    MessageBox.Show("Persona di Riferimento (" + nome + ") eliminata.");
+                    OnTopMessage.Information("Persona di Riferimento (" + nome + ") eliminata.");
                 }
                 catch (SQLiteException ex)
                 {
-                    MessageBox.Show("Errore durante eliminazione Persona di Riferimento. Codice: " + ReturnErorrCode(ex));
+                    OnTopMessage.Error("Errore durante eliminazione Persona di Riferimento. Codice: " + DbTools.ReturnErorrCode(ex));
                     //ABILITA CAMPI & BOTTONI
                     UpdateFields("P", "E", true);
                 }
@@ -1749,10 +1721,10 @@ namespace mangaerordini
         {
             DataGridView data_grid = dataGridViewPRef;
 
-            string commandText = "SELECT COUNT(*) FROM " + schemadb + @"[clienti_riferimenti]";
+            string commandText = "SELECT COUNT(*) FROM " + ProgramParameters.schemadb + @"[clienti_riferimenti]";
             int count = 1;
 
-            using (SQLiteCommand cmdCount = new SQLiteCommand(commandText, connection))
+            using (SQLiteCommand cmdCount = new SQLiteCommand(commandText, ProgramParameters.connection))
             {
 
                 count = Convert.ToInt32(cmdCount.ExecuteScalar());
@@ -1781,14 +1753,14 @@ namespace mangaerordini
 									CR.nome AS Nome,
 									CR.mail AS Mail,
 									CR.telefono AS Telefono
-								   FROM " + schemadb + @"[clienti_riferimenti] AS CR
-								   LEFT JOIN " + schemadb + @"[clienti_elenco] AS CE
+								   FROM " + ProgramParameters.schemadb + @"[clienti_riferimenti] AS CR
+								   LEFT JOIN " + ProgramParameters.schemadb + @"[clienti_elenco] AS CE
 									ON CE.Id = CR.ID_clienti 
 								    ORDER BY CR.Id ASC LIMIT @recordperpage OFFSET @startingrecord;";
 
             page--;
 
-            using (SQLiteDataAdapter cmd = new SQLiteDataAdapter(commandText, connection))
+            using (SQLiteDataAdapter cmd = new SQLiteDataAdapter(commandText, ProgramParameters.connection))
             {
                 try
                 {
@@ -1826,7 +1798,7 @@ namespace mangaerordini
                 }
                 catch (SQLiteException ex)
                 {
-                    MessageBox.Show("Errore durante popolamento Riferimenti. Codice: " + ReturnErorrCode(ex));
+                    OnTopMessage.Error("Errore durante popolamento Riferimenti. Codice: " + DbTools.ReturnErorrCode(ex));
                 }
             }
             return;
@@ -1842,11 +1814,11 @@ namespace mangaerordini
 
             string er_list = "";
 
-            er_list += ValidateName(nome, "Fornitore").Error;
+            er_list += DataValidation.ValidateName(nome, "Fornitore").Error;
 
             if (er_list != "")
             {
-                MessageBox.Show(er_list);
+                OnTopMessage.Alert(er_list);
 
                 //ABILITA CAMPI & BOTTONI
                 UpdateFields("F", "A", true);
@@ -1855,10 +1827,10 @@ namespace mangaerordini
             }
 
 
-            string commandText = "INSERT INTO " + schemadb + @"[fornitori](nome) VALUES (@nome);";
+            string commandText = "INSERT INTO " + ProgramParameters.schemadb + @"[fornitori](nome) VALUES (@nome);";
 
 
-            using (SQLiteCommand cmd = new SQLiteCommand(commandText, connection))
+            using (SQLiteCommand cmd = new SQLiteCommand(commandText, ProgramParameters.connection))
             {
                 try
                 {
@@ -1872,11 +1844,11 @@ namespace mangaerordini
                     UpdateFields("F", "A", true);
                     UpdateFornitori();
 
-                    MessageBox.Show("Fornitore aggiunto al database");
+                    OnTopMessage.Information("Fornitore aggiunto al database");
                 }
                 catch (SQLiteException ex)
                 {
-                    MessageBox.Show("Errore durante aggiunta al database. Codice: " + ReturnErorrCode(ex));
+                    OnTopMessage.Error("Errore durante aggiunta al database. Codice: " + DbTools.ReturnErorrCode(ex));
                     //ABILITA CAMPI & BOTTONI
                     UpdateFields("F", "A", true);
                 }
@@ -1894,14 +1866,14 @@ namespace mangaerordini
 
             string er_list = "";
 
-            er_list += ValidateName(nome, "Fornitore").Error;
+            er_list += DataValidation.ValidateName(nome, "Fornitore").Error;
 
-            ValidationResult idQ = ValidateId(idF);
+            DataValidation.ValidationResult idQ = DataValidation.ValidateId(idF);
             er_list += idQ.Error;
 
             if (er_list != "")
             {
-                MessageBox.Show(er_list);
+                OnTopMessage.Alert(er_list);
 
                 //ABILITA CAMPI & BOTTONI
                 UpdateFields("F", "E", true);
@@ -1909,7 +1881,7 @@ namespace mangaerordini
                 return;
             }
 
-            DialogResult dialogResult = MessageBox.Show("Vuoi salvare le modifiche?", "Salvare Cambiamenti Fornitore", MessageBoxButtons.YesNo);
+            DialogResult dialogResult = OnTopMessage.Question("Vuoi salvare le modifiche?", "Salvare Cambiamenti Fornitore");
             if (dialogResult == DialogResult.No)
             {
                 //ABILITA CAMPI & BOTTONI
@@ -1917,9 +1889,9 @@ namespace mangaerordini
                 return;
             }
 
-            string commandText = "UPDATE " + schemadb + @"[fornitori] SET nome=@nome WHERE Id=@idq LIMIT 1;";
+            string commandText = "UPDATE " + ProgramParameters.schemadb + @"[fornitori] SET nome=@nome WHERE Id=@idq LIMIT 1;";
 
-            using (SQLiteCommand cmd = new SQLiteCommand(commandText, connection))
+            using (SQLiteCommand cmd = new SQLiteCommand(commandText, ProgramParameters.connection))
             {
                 try
                 {
@@ -1938,11 +1910,11 @@ namespace mangaerordini
                     UpdateFields("F", "CE", false);
                     UpdateFields("F", "E", false);
 
-                    MessageBox.Show("Cambiamenti salvati");
+                    OnTopMessage.Information("Cambiamenti salvati");
                 }
                 catch (SQLiteException ex)
                 {
-                    MessageBox.Show("Errore durante aggiornamento del fornitore. Codice: " + ReturnErorrCode(ex));
+                    OnTopMessage.Error("Errore durante aggiornamento del fornitore. Codice: " + DbTools.ReturnErorrCode(ex));
                     //ABILITA CAMPI & BOTTONI
                     UpdateFields("F", "E", true);
                 }
@@ -1960,21 +1932,21 @@ namespace mangaerordini
 
             string er_list = "";
 
-            er_list += ValidateName(nome, "Fornitore").Error;
+            er_list += DataValidation.ValidateName(nome, "Fornitore").Error;
 
-            ValidationResult idQ = ValidateId(idF);
+            DataValidation.ValidationResult idQ = DataValidation.ValidateId(idF);
             er_list += idQ.Error;
 
 
             if (er_list != "")
             {
-                MessageBox.Show(er_list);
+                OnTopMessage.Alert(er_list);
                 //ABILITA CAMPI & BOTTONI
                 UpdateFields("F", "E", true);
                 return;
             }
 
-            DialogResult dialogResult = MessageBox.Show("Vuoi veramente eliminare il fornitore(" + nome + "))?", "Eliminare Fornitore", MessageBoxButtons.YesNo);
+            DialogResult dialogResult = OnTopMessage.Question("Vuoi veramente eliminare il fornitore(" + nome + "))?", "Eliminare Fornitore");
             if (dialogResult == DialogResult.No)
             {
                 //ABILITA CAMPI & BOTTONI
@@ -1982,9 +1954,9 @@ namespace mangaerordini
                 return;
             }
 
-            string commandText = "DELETE FROM " + schemadb + @"[fornitori] WHERE Id=@idq LIMIT 1;";
+            string commandText = "DELETE FROM " + ProgramParameters.schemadb + @"[fornitori] WHERE Id=@idq LIMIT 1;";
 
-            using (SQLiteCommand cmd = new SQLiteCommand(commandText, connection))
+            using (SQLiteCommand cmd = new SQLiteCommand(commandText, ProgramParameters.connection))
             {
                 try
                 {
@@ -1999,11 +1971,11 @@ namespace mangaerordini
                     UpdateFields("F", "CE", false);
                     UpdateFields("F", "E", false);
 
-                    MessageBox.Show("Fornitore " + nome + " eliminato.");
+                    OnTopMessage.Information("Fornitore " + nome + " eliminato.");
                 }
                 catch (SQLiteException ex)
                 {
-                    MessageBox.Show("Errore durante eliminazione del fornitore. Codice: " + ReturnErorrCode(ex));
+                    OnTopMessage.Error("Errore durante eliminazione del fornitore. Codice: " + DbTools.ReturnErorrCode(ex));
                     //ABILITA CAMPI & BOTTONI
                     UpdateFields("F", "E", true);
                 }
@@ -2043,10 +2015,10 @@ namespace mangaerordini
         {
             DataGridView data_grid = dataGridViewFornitori;
 
-            string commandText = "SELECT COUNT(*) FROM " + schemadb + @"[fornitori]";
+            string commandText = "SELECT COUNT(*) FROM " + ProgramParameters.schemadb + @"[fornitori]";
             int count = 1;
 
-            using (SQLiteCommand cmdCount = new SQLiteCommand(commandText, connection))
+            using (SQLiteCommand cmdCount = new SQLiteCommand(commandText, ProgramParameters.connection))
             {
 
                 count = Convert.ToInt32(cmdCount.ExecuteScalar());
@@ -2069,10 +2041,10 @@ namespace mangaerordini
                 DataFornitoriCurPage.Text = Convert.ToString(page);
             }
 
-            commandText = @"SELECT Id,nome FROM " + schemadb + @"[fornitori] ORDER BY Id ASC LIMIT " + recordsPerPage;
+            commandText = @"SELECT Id,nome FROM " + ProgramParameters.schemadb + @"[fornitori] ORDER BY Id ASC LIMIT " + recordsPerPage;
             page--;
 
-            using (SQLiteDataAdapter cmd = new SQLiteDataAdapter(commandText, connection))
+            using (SQLiteDataAdapter cmd = new SQLiteDataAdapter(commandText, ProgramParameters.connection))
             {
                 try
                 {
@@ -2103,7 +2075,7 @@ namespace mangaerordini
                 }
                 catch (SQLiteException ex)
                 {
-                    MessageBox.Show("Errore durante popolamento tabella Fornitori. Codice: " + ReturnErorrCode(ex));
+                    OnTopMessage.Error("Errore durante popolamento tabella Fornitori. Codice: " + DbTools.ReturnErorrCode(ex));
                 }
             }
             return;
@@ -2124,26 +2096,26 @@ namespace mangaerordini
 
             string er_list = "";
 
-            er_list += ValidateName(nome, "Fornitore").Error;
+            er_list += DataValidation.ValidateName(nome, "Fornitore").Error;
 
-            ValidationResult answer = ValidateCliente(idcl);
+            DataValidation.ValidationResult answer = DataValidation.ValidateCliente(idcl);
             if (!answer.Success)
             {
-                MessageBox.Show(answer.Error);
+                OnTopMessage.Alert(answer.Error);
                 return;
             }
             er_list += answer.Error;
 
             if (er_list != "")
             {
-                MessageBox.Show(er_list);
+                OnTopMessage.Alert(er_list);
                 UpdateFields("M", "A", true);
                 return;
             }
 
-            string commandText = "INSERT INTO " + schemadb + @"[clienti_macchine](modello, ID_cliente, seriale, codice) VALUES (@modello, @idcl, @seriale, @code);";
+            string commandText = "INSERT INTO " + ProgramParameters.schemadb + @"[clienti_macchine](modello, ID_cliente, seriale, codice) VALUES (@modello, @idcl, @seriale, @code);";
 
-            using (SQLiteCommand cmd = new SQLiteCommand(commandText, connection))
+            using (SQLiteCommand cmd = new SQLiteCommand(commandText, ProgramParameters.connection))
             {
                 try
                 {
@@ -2160,11 +2132,11 @@ namespace mangaerordini
 
                     UpdateMacchine();
 
-                    MessageBox.Show("Macchina aggiunta al database");
+                    OnTopMessage.Information("Macchina aggiunta al database");
                 }
                 catch (SQLiteException ex)
                 {
-                    MessageBox.Show("Errore durante aggiunta al database. Codice: " + ReturnErorrCode(ex));
+                    OnTopMessage.Error("Errore durante aggiunta al database. Codice: " + DbTools.ReturnErorrCode(ex));
                     UpdateFields("M", "A", true);
                 }
             }
@@ -2182,33 +2154,33 @@ namespace mangaerordini
             string codice = ChangeDatiMacchinaCodice.Text.Trim();
             string idF = ChangeDatiMacchinaID.Text;
 
-            ValidationResult answer;
+            DataValidation.ValidationResult answer;
             string commandText;
 
             string er_list = "";
 
-            er_list += ValidateName(nome, "Macchina").Error;
+            er_list += DataValidation.ValidateName(nome, "Macchina").Error;
 
-            answer = ValidateCliente(cliente);
+            answer = DataValidation.ValidateCliente(cliente);
             if (!answer.Success)
             {
-                MessageBox.Show(answer.Error);
+                OnTopMessage.Alert(answer.Error);
                 return;
             }
             er_list += answer.Error;
 
-            ValidationResult idQ = ValidateId(idF);
+            DataValidation.ValidationResult idQ = DataValidation.ValidateId(idF);
             er_list += idQ.Error;
 
             if (er_list != "")
             {
-                MessageBox.Show(er_list);
+                OnTopMessage.Alert(er_list);
                 UpdateFields("M", "E", true);
 
                 return;
             }
 
-            DialogResult dialogResult = MessageBox.Show("Vuoi salvare le modifiche?", "Salvare Cambiamenti Macchina", MessageBoxButtons.YesNo);
+            DialogResult dialogResult = OnTopMessage.Question("Vuoi salvare le modifiche?", "Salvare Cambiamenti Macchina");
             if (dialogResult == DialogResult.No)
             {
                 //ABILITA CAMPI & BOTTONI
@@ -2216,9 +2188,9 @@ namespace mangaerordini
                 return;
             }
 
-            commandText = "UPDATE " + schemadb + @"[clienti_macchine] SET modello=@nome,ID_cliente=@cliente,seriale=@seriale, codice=@code WHERE Id=@idq LIMIT 1;";
+            commandText = "UPDATE " + ProgramParameters.schemadb + @"[clienti_macchine] SET modello=@nome,ID_cliente=@cliente,seriale=@seriale, codice=@code WHERE Id=@idq LIMIT 1;";
 
-            using (SQLiteCommand cmd = new SQLiteCommand(commandText, connection))
+            using (SQLiteCommand cmd = new SQLiteCommand(commandText, ProgramParameters.connection))
             {
                 try
                 {
@@ -2238,11 +2210,11 @@ namespace mangaerordini
                     UpdateFields("M", "CE", false);
                     UpdateFields("M", "E", false);
 
-                    MessageBox.Show("Cambiamenti salvati");
+                    OnTopMessage.Information("Cambiamenti salvati");
                 }
                 catch (SQLiteException ex)
                 {
-                    MessageBox.Show("Errore durante aggiornamento della macchina. Codice: " + ReturnErorrCode(ex));
+                    OnTopMessage.Error("Errore durante aggiornamento della macchina. Codice: " + DbTools.ReturnErorrCode(ex));
                     //ABILITA CAMPI & BOTTONI
                     UpdateFields("M", "E", true);
                 }
@@ -2260,19 +2232,19 @@ namespace mangaerordini
 
             string er_list = "";
 
-            er_list += ValidateName(nome, "Macchina").Error;
+            er_list += DataValidation.ValidateName(nome, "Macchina").Error;
 
-            ValidationResult idQ = ValidateId(idF);
+            DataValidation.ValidationResult idQ = DataValidation.ValidateId(idF);
             er_list += idQ.Error;
 
             if (er_list != "")
             {
-                MessageBox.Show(er_list);
+                OnTopMessage.Alert(er_list);
                 UpdateFields("M", "E", true);
                 return;
             }
 
-            DialogResult dialogResult = MessageBox.Show("Vuoi veramente eliminare la macchina?", "Eliminare Macchina", MessageBoxButtons.YesNo);
+            DialogResult dialogResult = OnTopMessage.Question("Vuoi veramente eliminare la macchina?", "Eliminare Macchina");
             if (dialogResult == DialogResult.No)
             {
                 //ABILITA CAMPI & BOTTONI
@@ -2281,10 +2253,10 @@ namespace mangaerordini
             }
 
 
-            string commandText = "DELETE FROM " + schemadb + @"[clienti_macchine] WHERE Id=@idq LIMIT 1;";
+            string commandText = "DELETE FROM " + ProgramParameters.schemadb + @"[clienti_macchine] WHERE Id=@idq LIMIT 1;";
 
 
-            using (SQLiteCommand cmd = new SQLiteCommand(commandText, connection))
+            using (SQLiteCommand cmd = new SQLiteCommand(commandText, ProgramParameters.connection))
             {
                 try
                 {
@@ -2299,11 +2271,11 @@ namespace mangaerordini
                     UpdateFields("M", "CE", false);
                     UpdateFields("M", "E", false);
 
-                    MessageBox.Show("Macchina (" + nome + ") eliminata.");
+                    OnTopMessage.Information("Macchina (" + nome + ") eliminata.");
                 }
                 catch (SQLiteException ex)
                 {
-                    MessageBox.Show("Errore durante eliminazione macchina. Codice: " + ReturnErorrCode(ex));
+                    OnTopMessage.Error("Errore durante eliminazione macchina. Codice: " + DbTools.ReturnErorrCode(ex));
                     //ABILITA CAMPI & BOTTONI
                     UpdateFields("M", "E", true);
                 }
@@ -2368,10 +2340,10 @@ namespace mangaerordini
             if (paramsQuery.Count > 0)
                 addInfo = " WHERE " + String.Join(" AND ", paramsQuery);
 
-            string commandText = "SELECT COUNT(*) FROM " + schemadb + @"[clienti_macchine] AS CM " + addInfo + ";";
+            string commandText = "SELECT COUNT(*) FROM " + ProgramParameters.schemadb + @"[clienti_macchine] AS CM " + addInfo + ";";
             int count = 1;
 
-            using (SQLiteCommand cmdCount = new SQLiteCommand(commandText, connection))
+            using (SQLiteCommand cmdCount = new SQLiteCommand(commandText, ProgramParameters.connection))
             {
                 try
                 {
@@ -2398,7 +2370,7 @@ namespace mangaerordini
                 }
                 catch (SQLiteException ex)
                 {
-                    MessageBox.Show("Errore durante verifica ID Cliente. Codice: " + ReturnErorrCode(ex));
+                    OnTopMessage.Error("Errore durante verifica ID Cliente. Codice: " + DbTools.ReturnErorrCode(ex));
                     return;
                 }
             }
@@ -2409,14 +2381,14 @@ namespace mangaerordini
 									CM.modello        AS Modello,
 									CM.seriale AS Seriale,
 									CM.codice AS code 
-								   FROM " + schemadb + @"[clienti_macchine] AS CM
-								   LEFT JOIN " + schemadb + @"[clienti_elenco] AS CE
+								   FROM " + ProgramParameters.schemadb + @"[clienti_macchine] AS CM
+								   LEFT JOIN " + ProgramParameters.schemadb + @"[clienti_elenco] AS CE
 									ON CE.Id = CM.ID_cliente " + addInfo +
                                    @"ORDER BY CM.Id ASC LIMIT @recordperpage OFFSET @startingrecord ";
 
             page--;
 
-            using (SQLiteDataAdapter cmd = new SQLiteDataAdapter(commandText, connection))
+            using (SQLiteDataAdapter cmd = new SQLiteDataAdapter(commandText, ProgramParameters.connection))
             {
                 try
                 {
@@ -2452,7 +2424,7 @@ namespace mangaerordini
                 }
                 catch (SQLiteException ex)
                 {
-                    MessageBox.Show("Errore durante popolamento Macchine. Codice: " + ReturnErorrCode(ex));
+                    OnTopMessage.Error("Errore durante popolamento Macchine. Codice: " + DbTools.ReturnErorrCode(ex));
                 }
             }
             return;
@@ -2502,7 +2474,7 @@ namespace mangaerordini
 
             stato = (stato < 0) ? 0 : stato;
 
-            ValidationResult prezzoSpedizione = new ValidationResult();
+            DataValidation.ValidationResult prezzoSpedizione = new DataValidation.ValidationResult();
 
             string er_list = "";
             if (string.IsNullOrEmpty(numeroOff) || !Regex.IsMatch(numeroOff, @"^\d+$"))
@@ -2510,23 +2482,23 @@ namespace mangaerordini
                 er_list += "Numero Offerta non valido o vuoto" + Environment.NewLine;
             }
 
-            ValidationResult dataoffValue = ValidateDate(dataoffString);
+            DataValidation.ValidationResult dataoffValue = DataValidation.ValidateDate(dataoffString);
             er_list += dataoffValue.Error;
 
-            ValidationResult answer = ValidateCliente(idcl);
+            DataValidation.ValidationResult answer = DataValidation.ValidateCliente(idcl);
             if (!answer.Success)
             {
-                MessageBox.Show(answer.Error);
+                OnTopMessage.Alert(answer.Error);
                 return;
             }
             er_list += answer.Error;
 
             if (idpref > 0)
             {
-                answer = ValidatePRef(idpref);
+                answer = DataValidation.ValidatePRef(idpref);
                 if (!answer.Success)
                 {
-                    MessageBox.Show(answer.Error);
+                    OnTopMessage.Alert(answer.Error);
                     return;
                 }
                 er_list += answer.Error;
@@ -2534,24 +2506,24 @@ namespace mangaerordini
 
             if (!string.IsNullOrEmpty(spedizioni))
             {
-                prezzoSpedizione = ValidateSpedizione(spedizioni, gestSP);
+                prezzoSpedizione = DataValidation.ValidateSpedizione(spedizioni, gestSP);
                 er_list += prezzoSpedizione.Error;
             }
 
             if (er_list != "")
             {
-                MessageBox.Show(er_list);
+                OnTopMessage.Alert(er_list);
                 UpdateFields("OC", "A", true);
                 return;
             }
 
-            string commandText = @"INSERT INTO " + schemadb + @"[offerte_elenco]
+            string commandText = @"INSERT INTO " + ProgramParameters.schemadb + @"[offerte_elenco]
                                 (data_offerta, codice_offerta, ID_cliente, ID_riferimento,stato, costo_spedizione, gestione_spedizione) 
                             VALUES 
                                 (@data,@code,@idcl,@idref,@stato, @cossp, @gestsp);";
 
 
-            using (SQLiteCommand cmd = new SQLiteCommand(commandText, connection))
+            using (SQLiteCommand cmd = new SQLiteCommand(commandText, ProgramParameters.connection))
             {
                 try
                 {
@@ -2597,11 +2569,11 @@ namespace mangaerordini
                         if (temp_FieldOrdOfferta > 0) ComboBoxOrdOfferta.SelectedIndex = FindIndexFromValue(ComboBoxOrdOfferta, temp_FieldOrdOfferta);
                     }
 
-                    MessageBox.Show("Offerta Creata." + temp_info);
+                    OnTopMessage.Information("Offerta Creata." + temp_info);
                 }
                 catch (SQLiteException ex)
                 {
-                    MessageBox.Show("Errore durante aggiunta al database. Codice: " + ReturnErorrCode(ex));
+                    OnTopMessage.Error("Errore durante aggiunta al database. Codice: " + DbTools.ReturnErorrCode(ex));
                     UpdateFields("OC", "A", true);
                 }
                 finally
@@ -2632,11 +2604,11 @@ namespace mangaerordini
             if (paramsQuery.Count > 0)
                 addInfo = " WHERE " + String.Join(" AND ", paramsQuery);
 
-            string commandText = "SELECT COUNT(*) FROM " + schemadb + @"[offerte_elenco] AS OE " + addInfo;
+            string commandText = "SELECT COUNT(*) FROM " + ProgramParameters.schemadb + @"[offerte_elenco] AS OE " + addInfo;
             int count = 1;
 
 
-            using (SQLiteCommand cmdCount = new SQLiteCommand(commandText, connection))
+            using (SQLiteCommand cmdCount = new SQLiteCommand(commandText, ProgramParameters.connection))
             {
                 try
                 {
@@ -2663,7 +2635,7 @@ namespace mangaerordini
                 }
                 catch (SQLiteException ex)
                 {
-                    MessageBox.Show("Errore durante verifica records in elenco offerte. Codice: " + ReturnErorrCode(ex));
+                    OnTopMessage.Error("Errore durante verifica records in elenco offerte. Codice: " + DbTools.ReturnErorrCode(ex));
                     return;
                 }
             }
@@ -2681,17 +2653,17 @@ namespace mangaerordini
 
 									CASE OE.stato WHEN 0 THEN 'APERTA'  WHEN 1 THEN 'ORDINATA' WHEN 2 THEN 'ANNULLATA' END AS Stato,
 									CASE OE.trasformato_ordine WHEN 0 THEN 'No'  WHEN 1 THEN 'Sì' END AS conv
-								   FROM " + schemadb + @"[offerte_elenco] AS OE
-								   LEFT JOIN " + schemadb + @"[clienti_elenco] AS CE
+								   FROM " + ProgramParameters.schemadb + @"[offerte_elenco] AS OE
+								   LEFT JOIN " + ProgramParameters.schemadb + @"[clienti_elenco] AS CE
 										ON CE.Id = OE.ID_cliente 
-								   LEFT JOIN " + schemadb + @"[clienti_riferimenti] AS CR
+								   LEFT JOIN " + ProgramParameters.schemadb + @"[clienti_riferimenti] AS CR
 										ON CR.Id = OE.ID_riferimento " + addInfo +
 
                                    @" ORDER BY OE.Id DESC LIMIT @recordperpage OFFSET @startingrecord;";
 
             page--;
 
-            using (SQLiteDataAdapter cmd = new SQLiteDataAdapter(commandText, connection))
+            using (SQLiteDataAdapter cmd = new SQLiteDataAdapter(commandText, ProgramParameters.connection))
             {
                 try
                 {
@@ -2735,7 +2707,7 @@ namespace mangaerordini
                 }
                 catch (SQLiteException ex)
                 {
-                    MessageBox.Show("Errore durante popolamento tabella crea offerta. Codice: " + ReturnErorrCode(ex));
+                    OnTopMessage.Error("Errore durante popolamento tabella crea offerta. Codice: " + DbTools.ReturnErorrCode(ex));
 
                     return;
                 }
@@ -2757,14 +2729,14 @@ namespace mangaerordini
 										REPLACE( printf('%.2f',OP.prezzo_unitario_sconto),'.',',')  AS pscont,
 										OP.pezzi AS numpezzi,
                                         REPLACE( printf('%.2f',OP.prezzo_unitario_sconto * OP.pezzi),'.',',')  AS totparz
-									   FROM " + schemadb + @"[offerte_pezzi] AS OP
-									   LEFT JOIN " + schemadb + @"[pezzi_ricambi] AS PR
+									   FROM " + ProgramParameters.schemadb + @"[offerte_pezzi] AS OP
+									   LEFT JOIN " + ProgramParameters.schemadb + @"[pezzi_ricambi] AS PR
 											ON PR.Id = OP.ID_ricambio
 									   WHERE OP.ID_offerta=@idofferta
 									   ORDER BY OP.Id ASC;";
 
 
-                using (SQLiteDataAdapter cmd = new SQLiteDataAdapter(commandText, connection))
+                using (SQLiteDataAdapter cmd = new SQLiteDataAdapter(commandText, ProgramParameters.connection))
                 {
                     try
                     {
@@ -2799,7 +2771,7 @@ namespace mangaerordini
                     }
                     catch (SQLiteException ex)
                     {
-                        MessageBox.Show("Errore durante popolamento tabella pezzi dell'offerta. Codice: " + ReturnErorrCode(ex));
+                        OnTopMessage.Error("Errore durante popolamento tabella pezzi dell'offerta. Codice: " + DbTools.ReturnErorrCode(ex));
 
 
                         return;
@@ -2834,9 +2806,9 @@ namespace mangaerordini
 
                 LoadOfferteOggettiCreaTable(curItemValue);
 
-                string commandText = @"SELECT  ID_cliente as Cliente FROM " + schemadb + @"[offerte_elenco] WHERE id=@idofferta LIMIT " + recordsPerPage;
+                string commandText = @"SELECT  ID_cliente as Cliente FROM " + ProgramParameters.schemadb + @"[offerte_elenco] WHERE id=@idofferta LIMIT " + recordsPerPage;
 
-                using (SQLiteCommand cmd = new SQLiteCommand(commandText, connection))
+                using (SQLiteCommand cmd = new SQLiteCommand(commandText, ProgramParameters.connection))
                 {
                     try
                     {
@@ -2859,7 +2831,7 @@ namespace mangaerordini
                     }
                     catch (SQLiteException ex)
                     {
-                        MessageBox.Show("Errore durante selezione cliente. Codice: " + ReturnErorrCode(ex));
+                        OnTopMessage.Error("Errore durante selezione cliente. Codice: " + DbTools.ReturnErorrCode(ex));
                         return;
                     }
                 }
@@ -2934,11 +2906,11 @@ namespace mangaerordini
                 string commandText = @"SELECT 
 										REPLACE(printf('%.2f',prezzo) ,'.',',') AS prezzo,
 										descrizione
-									   FROM " + schemadb + @"[pezzi_ricambi]
+									   FROM " + ProgramParameters.schemadb + @"[pezzi_ricambi]
 									   WHERE Id=@idpezzo
 									   ORDER BY Id ASC LIMIT 1;";
 
-                using (SQLiteCommand cmd = new SQLiteCommand(commandText, connection))
+                using (SQLiteCommand cmd = new SQLiteCommand(commandText, ProgramParameters.connection))
                 {
                     try
                     {
@@ -2959,7 +2931,7 @@ namespace mangaerordini
                     }
                     catch (SQLiteException ex)
                     {
-                        MessageBox.Show("Errore durante selezione cliente. Codice: " + ReturnErorrCode(ex));
+                        OnTopMessage.Error("Errore durante selezione cliente. Codice: " + DbTools.ReturnErorrCode(ex));
                         return;
                     }
                 }
@@ -2990,18 +2962,18 @@ namespace mangaerordini
 
             string er_list = "";
 
-            ValidationResult prezzoOrV = ValidatePrezzo(prezzoOr);
+            DataValidation.ValidationResult prezzoOrV = DataValidation.ValidatePrezzo(prezzoOr);
             er_list += prezzoOrV.Error;
 
-            ValidationResult prezzoScV = ValidatePrezzo(prezzoSc);
+            DataValidation.ValidationResult prezzoScV = DataValidation.ValidatePrezzo(prezzoSc);
             er_list += prezzoScV.Error;
 
-            ValidationResult qtaV = ValidateQta(qta);
+            DataValidation.ValidationResult qtaV = DataValidation.ValidateQta(qta);
             er_list += qtaV.Error;
 
             if (er_list != "")
             {
-                MessageBox.Show(er_list);
+                OnTopMessage.Alert(er_list);
 
                 UpdateFields("OAO", "A", true);
                 return;
@@ -3009,15 +2981,15 @@ namespace mangaerordini
 
 
             string commandText = @" BEGIN TRANSACTION;
-                                    INSERT OR ROLLBACK INTO " + schemadb + @"[offerte_pezzi]
+                                    INSERT OR ROLLBACK INTO " + ProgramParameters.schemadb + @"[offerte_pezzi]
                                         (ID_offerta, ID_ricambio, prezzo_unitario_originale, prezzo_unitario_sconto,pezzi) 
                                         VALUES (@idof,@idri,@por,@pos,@pezzi);
-                                    UPDATE OR ROLLBACK " + schemadb + @"[offerte_elenco]
-									    SET tot_offerta = ifnull( (SELECT SUM(OP.pezzi * OP.prezzo_unitario_sconto) FROM " + schemadb + @"[offerte_pezzi] AS OP WHERE OP.ID_offerta=@idof) , 0) 
+                                    UPDATE OR ROLLBACK " + ProgramParameters.schemadb + @"[offerte_elenco]
+									    SET tot_offerta = ifnull( (SELECT SUM(OP.pezzi * OP.prezzo_unitario_sconto) FROM " + ProgramParameters.schemadb + @"[offerte_pezzi] AS OP WHERE OP.ID_offerta=@idof) , 0) 
 									    WHERE Id=@idof LIMIT 1;
                                     COMMIT;";
 
-            using (SQLiteCommand cmd = new SQLiteCommand(commandText, connection))
+            using (SQLiteCommand cmd = new SQLiteCommand(commandText, ProgramParameters.connection))
             {
                 try
                 {
@@ -3040,11 +3012,11 @@ namespace mangaerordini
 
                     AddOffCreaOggettoRica.Enabled = true;
 
-                    MessageBox.Show("Oggetto aggiunta all'offerta");
+                    OnTopMessage.Information("Oggetto aggiunta all'offerta");
                 }
                 catch (SQLiteException ex)
                 {
-                    MessageBox.Show("Errore durante aggiunta al database. Codice: " + ReturnErorrCode(ex));
+                    OnTopMessage.Error("Errore durante aggiunta al database. Codice: " + DbTools.ReturnErorrCode(ex));
                     UpdateFields("OAO", "A", true);
                 }
             }
@@ -3125,9 +3097,9 @@ namespace mangaerordini
             int pref = Convert.ToInt32(AddOffCreaPRef.SelectedItem.GetHashCode());
             int stato = Convert.ToInt32(AddOffCreaStato.SelectedItem.GetHashCode());
 
-            ValidationResult answer;
-            ValidationResult prezzoSpedizione = new ValidationResult();
-            ValidationResult dataoffValue;
+            DataValidation.ValidationResult answer;
+            DataValidation.ValidationResult prezzoSpedizione = new DataValidation.ValidationResult();
+            DataValidation.ValidationResult dataoffValue;
 
             string commandText;
 
@@ -3138,23 +3110,23 @@ namespace mangaerordini
                 er_list += "Numero Offerta non valido o vuoto" + Environment.NewLine;
             }
 
-            dataoffValue = ValidateDate(dataoffString);
+            dataoffValue = DataValidation.ValidateDate(dataoffString);
             er_list += dataoffValue.Error;
 
-            answer = ValidateCliente(cliente);
+            answer = DataValidation.ValidateCliente(cliente);
             if (!answer.Success)
             {
-                MessageBox.Show(answer.Error);
+                OnTopMessage.Alert(answer.Error);
                 return;
             }
             er_list += answer.Error;
 
             if (pref > 0)
             {
-                answer = ValidatePRef(pref);
+                answer = DataValidation.ValidatePRef(pref);
                 if (!answer.Success)
                 {
-                    MessageBox.Show(answer.Error);
+                    OnTopMessage.Alert(answer.Error);
                     return;
                 }
                 er_list += answer.Error;
@@ -3164,14 +3136,14 @@ namespace mangaerordini
             {
                 if (!string.IsNullOrEmpty(spedizioni))
                 {
-                    prezzoSpedizione = ValidateSpedizione(spedizioni, gestSP);
+                    prezzoSpedizione = DataValidation.ValidateSpedizione(spedizioni, gestSP);
                     er_list += prezzoSpedizione.Error;
                 }
             }
 
             if (er_list != "")
             {
-                MessageBox.Show(er_list);
+                OnTopMessage.Alert(er_list);
 
                 UpdateFields("OC", "A", true);
                 UpdateFields("OC", "E", true);
@@ -3179,7 +3151,7 @@ namespace mangaerordini
                 return;
             }
 
-            DialogResult dialogResult = MessageBox.Show("Vuoi salvare le modifiche?", "Salvare Cambiamenti Offerta", MessageBoxButtons.YesNo);
+            DialogResult dialogResult = OnTopMessage.Question("Vuoi salvare le modifiche?", "Salvare Cambiamenti Offerta");
             if (dialogResult == DialogResult.No)
             {
                 //ABILITA CAMPI & BOTTONI
@@ -3188,12 +3160,12 @@ namespace mangaerordini
                 return;
             }
 
-            commandText = @"UPDATE " + schemadb + @"[offerte_elenco] 
+            commandText = @"UPDATE " + ProgramParameters.schemadb + @"[offerte_elenco] 
                             SET data_offerta=@date, codice_offerta=@noff, ID_cliente=@idcl, ID_riferimento=@idref,stato=@stato, costo_spedizione=@cossp , gestione_spedizione=@gestsp 
                             WHERE Id=@idof LIMIT 1;";
 
 
-            using (SQLiteCommand cmd = new SQLiteCommand(commandText, connection))
+            using (SQLiteCommand cmd = new SQLiteCommand(commandText, ProgramParameters.connection))
             {
                 try
                 {
@@ -3228,7 +3200,7 @@ namespace mangaerordini
                     int temp_FieldOrdCliente = ComboBoxOrdCliente.SelectedItem.GetHashCode();
                     int temp_FieldOrdOfferta = ComboBoxOrdOfferta.SelectedItem.GetHashCode();
 
-                    UpdateOfferteCrea(isFilter: (temp_FieldOrdCliente == cliente) ? true : false);
+                    UpdateOfferteCrea(isFilter: (temp_FieldOrdCliente == cliente));
 
                     UpdateOrdini(OrdiniViewCurPage);
 
@@ -3249,12 +3221,9 @@ namespace mangaerordini
                     string temp = FieldOrdId.Text.Trim();
                     if (temp_FieldOrdCliente == cliente && String.IsNullOrEmpty(temp))
                     {
-                        //MessageBox.Show("" + temp);
-
                         ComboBoxOrdCliente.SelectedIndex = FindIndexFromValue(ComboBoxOrdCliente, temp_FieldOrdCliente);
                         ComboBoxOrdCliente_SelectedIndexChanged(this, EventArgs.Empty);
 
-                        //ComboBoxOrdOfferta.SelectedIndex = FindIndexFromValue(ComboBoxOrdOfferta, temp_FieldOrdOfferta);
                         ComboBoxOrdOfferta.SelectedIndex = 0;
                         ComboBoxOrdOfferta_SelectedIndexChanged(this, EventArgs.Empty);
                     }
@@ -3263,11 +3232,11 @@ namespace mangaerordini
                     if (stato == 1)
                         temp_info = Environment.NewLine + "Nel caso, è necessario creare l'ordine associato all'oferta.";
 
-                    MessageBox.Show("Cambiamenti salvati." + temp_info);
+                    OnTopMessage.Information("Cambiamenti salvati." + temp_info);
                 }
                 catch (SQLiteException ex)
                 {
-                    MessageBox.Show("Errore durante aggiornamento dell'OFFERTA. Codice: " + ReturnErorrCode(ex));
+                    OnTopMessage.Error("Errore durante aggiornamento dell'OFFERTA. Codice: " + DbTools.ReturnErorrCode(ex));
                     //ABILITA CAMPI & BOTTONI
                     UpdateFields("OC", "A", true);
                     UpdateFields("OC", "E", true);
@@ -3287,12 +3256,12 @@ namespace mangaerordini
 
             string er_list = "";
 
-            ValidationResult idQ = ValidateId(idOf);
+            DataValidation.ValidationResult idQ = DataValidation.ValidateId(idOf);
             er_list += idQ.Error;
 
             if (er_list != "")
             {
-                MessageBox.Show(er_list);
+                OnTopMessage.Alert(er_list);
                 //ABILITA CAMPI & BOTTONI
                 UpdateFields("OC", "A", true);
                 UpdateFields("OC", "E", true);
@@ -3300,7 +3269,7 @@ namespace mangaerordini
                 return;
             }
 
-            DialogResult dialogResult = MessageBox.Show("Vuoi veramente eliminare l'offerta? Tutti i dati relativi all'offerta verrano eliminati", "Eliminare Offerta", MessageBoxButtons.YesNo);
+            DialogResult dialogResult = OnTopMessage.Question("Vuoi veramente eliminare l'offerta? Tutti i dati relativi all'offerta verrano eliminati", "Eliminare Offerta");
             if (dialogResult == DialogResult.No)
             {
                 //ABILITA CAMPI & BOTTONI
@@ -3309,11 +3278,11 @@ namespace mangaerordini
                 return;
             }
 
-            string commandText = @" DELETE FROM " + schemadb + @"[offerte_pezzi] WHERE ID_offerta=@idq; 
-                                    DELETE FROM " + schemadb + @"[offerte_elenco] WHERE Id=@idq LIMIT 1;";
+            string commandText = @" DELETE FROM " + ProgramParameters.schemadb + @"[offerte_pezzi] WHERE ID_offerta=@idq; 
+                                    DELETE FROM " + ProgramParameters.schemadb + @"[offerte_elenco] WHERE Id=@idq LIMIT 1;";
 
-            using (var transaction = connection.BeginTransaction())
-            using (SQLiteCommand cmd = new SQLiteCommand(commandText, connection, transaction))
+            using (var transaction = ProgramParameters.connection.BeginTransaction())
+            using (SQLiteCommand cmd = new SQLiteCommand(commandText, ProgramParameters.connection, transaction))
             {
                 try
                 {
@@ -3336,12 +3305,12 @@ namespace mangaerordini
                     if (temp > 0)
                         SelOffCrea.SelectedIndex = FindIndexFromValue(SelOffCrea, temp);
 
-                    MessageBox.Show("Offerta eliminata.");
+                    OnTopMessage.Information("Offerta eliminata.");
                 }
                 catch (SQLiteException ex)
                 {
                     transaction.Rollback();
-                    MessageBox.Show("Errore durante eliminazione dell'offferta. Codice: " + ReturnErorrCode(ex));
+                    OnTopMessage.Error("Errore durante eliminazione dell'offferta. Codice: " + DbTools.ReturnErorrCode(ex));
                     //ABILITA CAMPI & BOTTONI
                     UpdateFields("OC", "A", true);
                     UpdateFields("OC", "E", true);
@@ -3384,13 +3353,13 @@ namespace mangaerordini
 												IIF(PR.ID_macchina IS NOT NULL, CM.ID_cliente, 0) AS id_cliente,
 												REPLACE( printf('%.2f',PR.prezzo), '.', ',')  AS prezzo,
 												PR.descrizione AS descrizione
-											FROM " + schemadb + @"[pezzi_ricambi] AS PR
-											LEFT JOIN " + schemadb + @"[clienti_macchine] AS CM
+											FROM " + ProgramParameters.schemadb + @"[pezzi_ricambi] AS PR
+											LEFT JOIN " + ProgramParameters.schemadb + @"[clienti_macchine] AS CM
 												ON CM.Id = PR.ID_macchina
 											WHERE PR.Id=@idogg LIMIT " + recordsPerPage;
 
 
-                    using (SQLiteCommand cmd = new SQLiteCommand(commandText, connection))
+                    using (SQLiteCommand cmd = new SQLiteCommand(commandText, ProgramParameters.connection))
                     {
                         try
                         {
@@ -3409,7 +3378,7 @@ namespace mangaerordini
                         }
                         catch (SQLiteException ex)
                         {
-                            MessageBox.Show("Errore durante recupero infooggetti offerte. Codice: " + ReturnErorrCode(ex));
+                            OnTopMessage.Error("Errore durante recupero infooggetti offerte. Codice: " + DbTools.ReturnErorrCode(ex));
                             //ABILITA CAMPI & BOTTONI
                             UpdateFields("OAO", "A", true);
                             UpdateFields("OAO", "E", true);
@@ -3435,13 +3404,13 @@ namespace mangaerordini
 										PR.Id,
 										PR.nome,
 										PR.codice
-									FROM " + schemadb + @"[offerte_pezzi] AS OP
-									JOIN " + schemadb + @"[pezzi_ricambi] AS PR
+									FROM " + ProgramParameters.schemadb + @"[offerte_pezzi] AS OP
+									JOIN " + ProgramParameters.schemadb + @"[pezzi_ricambi] AS PR
 										ON PR.Id=OP.ID_ricambio
 									WHERE OP.id=@idoff LIMIT " + recordsPerPage;
 
 
-                    using (SQLiteCommand cmd = new SQLiteCommand(commandText, connection))
+                    using (SQLiteCommand cmd = new SQLiteCommand(commandText, ProgramParameters.connection))
                     {
                         try
                         {
@@ -3456,7 +3425,7 @@ namespace mangaerordini
                         }
                         catch (SQLiteException ex)
                         {
-                            MessageBox.Show("Errore durante recupero infooggetti offerte. Codice: " + ReturnErorrCode(ex));
+                            OnTopMessage.Error("Errore durante recupero infooggetti offerte. Codice: " + DbTools.ReturnErorrCode(ex));
                             //ABILITA CAMPI & BOTTONI
                             UpdateFields("OAO", "A", true);
                             UpdateFields("OAO", "E", true);
@@ -3500,12 +3469,12 @@ namespace mangaerordini
 
             string er_list = "";
 
-            ValidationResult idQ = ValidateId(IdOgOfOff);
+            DataValidation.ValidationResult idQ = DataValidation.ValidateId(IdOgOfOff);
             er_list += idQ.Error;
 
             if (er_list != "")
             {
-                MessageBox.Show(er_list);
+                OnTopMessage.Alert(er_list);
                 //ABILITA CAMPI & BOTTONI
                 UpdateFields("OAO", "A", true);
                 UpdateFields("OAO", "E", true);
@@ -3513,7 +3482,7 @@ namespace mangaerordini
                 return;
             }
 
-            DialogResult dialogResult = MessageBox.Show("Vuoi veramente eliminare questo oggetto dall'offerta?", "Eliminare Oggetto dall'offerta", MessageBoxButtons.YesNo);
+            DialogResult dialogResult = OnTopMessage.Question("Vuoi veramente eliminare questo oggetto dall'offerta?", "Eliminare Oggetto dall'offerta");
             if (dialogResult == DialogResult.No)
             {
                 //ABILITA CAMPI & BOTTONI
@@ -3523,14 +3492,14 @@ namespace mangaerordini
             }
 
 
-            string commandText = @"DELETE FROM " + schemadb + @"[offerte_pezzi] WHERE Id=@idq LIMIT 1;
-                                   UPDATE " + schemadb + @"[offerte_elenco]
-                                        SET tot_offerta = ifnull((SELECT SUM(OP.pezzi * OP.prezzo_unitario_sconto) FROM " + schemadb + @"[offerte_pezzi] AS OP WHERE OP.ID_offerta=@idof),0)
+            string commandText = @"DELETE FROM " + ProgramParameters.schemadb + @"[offerte_pezzi] WHERE Id=@idq LIMIT 1;
+                                   UPDATE " + ProgramParameters.schemadb + @"[offerte_elenco]
+                                        SET tot_offerta = ifnull((SELECT SUM(OP.pezzi * OP.prezzo_unitario_sconto) FROM " + ProgramParameters.schemadb + @"[offerte_pezzi] AS OP WHERE OP.ID_offerta=@idof),0)
                                         WHERE Id=@idof LIMIT 1;";
 
 
-            using (var transaction = connection.BeginTransaction())
-            using (SQLiteCommand cmd = new SQLiteCommand(commandText, connection, transaction))
+            using (var transaction = ProgramParameters.connection.BeginTransaction())
+            using (SQLiteCommand cmd = new SQLiteCommand(commandText, ProgramParameters.connection, transaction))
             {
                 try
                 {
@@ -3562,12 +3531,12 @@ namespace mangaerordini
 
                     SelOffCrea.SelectedIndex = FindIndexFromValue(SelOffCrea, selOfIndex);
 
-                    MessageBox.Show("Oggetto rimosso.");
+                    OnTopMessage.Information("Oggetto rimosso.");
                 }
                 catch (SQLiteException ex)
                 {
                     transaction.Rollback();
-                    MessageBox.Show("Errore durante eliminazione dell'ogetto. Codice: " + ReturnErorrCode(ex));
+                    OnTopMessage.Error("Errore durante eliminazione dell'ogetto. Codice: " + DbTools.ReturnErorrCode(ex));
                     //ABILITA CAMPI & BOTTONI
                     UpdateFields("OAO", "A", true);
                     UpdateFields("OAO", "E", true);
@@ -3589,21 +3558,21 @@ namespace mangaerordini
 
             string er_list = "";
 
-            ValidationResult prezzoOrV;
-            ValidationResult prezzoScV;
+            DataValidation.ValidationResult prezzoOrV;
+            DataValidation.ValidationResult prezzoScV;
 
-            prezzoOrV = ValidatePrezzo(prezzoOr);
+            prezzoOrV = DataValidation.ValidatePrezzo(prezzoOr);
             er_list += prezzoOrV.Error;
 
-            prezzoScV = ValidatePrezzo(prezzoSc);
+            prezzoScV = DataValidation.ValidatePrezzo(prezzoSc);
             er_list += prezzoScV.Error;
 
-            ValidationResult qtaV = ValidateQta(qta);
+            DataValidation.ValidationResult qtaV = DataValidation.ValidateQta(qta);
             er_list += qtaV.Error;
 
             if (er_list != "")
             {
-                MessageBox.Show(er_list);
+                OnTopMessage.Alert(er_list);
 
                 UpdateFields("OAO", "A", true);
                 BtAddRicToOff.Enabled = false;
@@ -3612,15 +3581,15 @@ namespace mangaerordini
 
 
             string commandText = @" BEGIN TRANSACTION;
-                                    UPDATE OR ROLLBACK " + schemadb + @"[offerte_pezzi] 
+                                    UPDATE OR ROLLBACK " + ProgramParameters.schemadb + @"[offerte_pezzi] 
                                         SET prezzo_unitario_originale=@por, prezzo_unitario_sconto=@pos,pezzi=@pezzi 
                                         WHERE Id=@idOggToOff LIMIT 1;
-                                    UPDATE OR ROLLBACK " + schemadb + @"[offerte_elenco] 
-									    SET tot_offerta = IFNULL((SELECT SUM(OP.pezzi * OP.prezzo_unitario_sconto) FROM " + schemadb + @"[offerte_pezzi] AS OP WHERE OP.ID_offerta=@idof),0)
+                                    UPDATE OR ROLLBACK " + ProgramParameters.schemadb + @"[offerte_elenco] 
+									    SET tot_offerta = IFNULL((SELECT SUM(OP.pezzi * OP.prezzo_unitario_sconto) FROM " + ProgramParameters.schemadb + @"[offerte_pezzi] AS OP WHERE OP.ID_offerta=@idof),0)
 									    WHERE Id = @idof LIMIT 1;
                                     COMMIT;";
 
-            using (SQLiteCommand cmd = new SQLiteCommand(commandText, connection))
+            using (SQLiteCommand cmd = new SQLiteCommand(commandText, ProgramParameters.connection))
             {
                 try
                 {
@@ -3644,11 +3613,11 @@ namespace mangaerordini
 
                     AddOffCreaOggettoRica.Enabled = true;
 
-                    MessageBox.Show("Modfiche salvate");
+                    OnTopMessage.Information("Modfiche salvate");
                 }
                 catch (SQLiteException ex)
                 {
-                    MessageBox.Show("Errore durante aggiunta al database. Codice: " + ReturnErorrCode(ex));
+                    OnTopMessage.Error("Errore durante aggiunta al database. Codice: " + DbTools.ReturnErorrCode(ex));
                     UpdateFields("OAO", "A", true);
                     AddOffCreaOggettoRica.Enabled = false;
                 }
@@ -3775,11 +3744,11 @@ namespace mangaerordini
 										REPLACE( printf('%.2f',tot_offerta), '.', ',') AS tot_offerta,
 										IIF(gestione_spedizione IS NULL, '', REPLACE( printf('%.2f',costo_spedizione), '.', ',')) AS costosp,
 										IIF(gestione_spedizione IS NULL, -1, gestione_spedizione) AS gestsp
-									   FROM " + schemadb + @"[offerte_elenco]
+									   FROM " + ProgramParameters.schemadb + @"[offerte_elenco]
 									   WHERE Id=@idoff
 									   ORDER BY Id DESC";
 
-                using (SQLiteCommand cmd = new SQLiteCommand(commandText, connection))
+                using (SQLiteCommand cmd = new SQLiteCommand(commandText, ProgramParameters.connection))
                 {
                     try
                     {
@@ -3799,7 +3768,7 @@ namespace mangaerordini
                     }
                     catch (SQLiteException ex)
                     {
-                        MessageBox.Show("Errore durante selezione Offerta. Codice: " + ReturnErorrCode(ex));
+                        OnTopMessage.Error("Errore durante selezione Offerta. Codice: " + DbTools.ReturnErorrCode(ex));
                         return;
                     }
                 }
@@ -3823,7 +3792,7 @@ namespace mangaerordini
             string sconto = FieldOrdSconto.Text.Trim();
             string prezzoIS = FieldOrdTot.Text.Trim();
             decimal prezzoI;
-            ValidationResult scontoV;
+            DataValidation.ValidationResult scontoV;
 
             if (!string.IsNullOrEmpty(prezzoIS))
                 prezzoI = Convert.ToDecimal(prezzoIS);
@@ -3837,15 +3806,15 @@ namespace mangaerordini
                 return;
             }
 
-            scontoV = ValidateSconto(sconto);
+            scontoV = DataValidation.ValidateSconto(sconto);
             er_list += scontoV.Error;
 
             if (er_list != "")
             {
-                MessageBox.Show(er_list);
+                OnTopMessage.Alert(er_list);
                 return;
             }
-            FieldOrdPrezF.Text = (prezzoI * (1 - scontoV.DecimalValue / 100)).Value.ToString("N2", nfi).Replace(".", "");
+            FieldOrdPrezF.Text = (prezzoI * (1 - scontoV.DecimalValue / 100)).Value.ToString("N2", ProgramParameters.nfi).Replace(".", "");
         }
 
         private void ApplySconto(object sender, KeyEventArgs e)
@@ -3868,21 +3837,21 @@ namespace mangaerordini
                 return;
             }
 
-            ValidationResult prezzoFV;
+            DataValidation.ValidationResult prezzoFV;
 
-            prezzoFV = ValidatePrezzo(prezzoF);
+            prezzoFV = DataValidation.ValidatePrezzo(prezzoF);
             er_list += prezzoFV.Error;
 
 
             if (er_list != "")
             {
-                MessageBox.Show(er_list);
+                OnTopMessage.Alert(er_list);
                 UpdateFields("OCR", "A", true);
                 return;
             }
 
             if (prezzoI != 0)
-                FieldOrdSconto.Text = (-((decimal)prezzoFV.DecimalValue - prezzoI) / prezzoI * 100).ToString("N2", nfi);
+                FieldOrdSconto.Text = (-((decimal)prezzoFV.DecimalValue - prezzoI) / prezzoI * 100).ToString("N2", ProgramParameters.nfi);
             return;
         }
 
@@ -3924,16 +3893,16 @@ namespace mangaerordini
                 addInfo = " WHERE " + String.Join(" AND ", paramsQuery);
 
             string commandText = @"SELECT COUNT(OE.Id) 
-                                    FROM " + schemadb + @"[ordini_elenco] AS OE
-                                    LEFT JOIN " + schemadb + @"[offerte_elenco] OFE 
+                                    FROM " + ProgramParameters.schemadb + @"[ordini_elenco] AS OE
+                                    LEFT JOIN " + ProgramParameters.schemadb + @"[offerte_elenco] OFE 
                                         ON OFE.Id = OE.ID_offerta
-                                    LEFT JOIN " + schemadb + @"[clienti_elenco] AS CE 
+                                    LEFT JOIN " + ProgramParameters.schemadb + @"[clienti_elenco] AS CE 
                                         ON CE.Id = OFE.ID_cliente "
                                     + addInfo;
             int count = 1;
 
 
-            using (SQLiteCommand cmdCount = new SQLiteCommand(commandText, connection))
+            using (SQLiteCommand cmdCount = new SQLiteCommand(commandText, ProgramParameters.connection))
             {
                 try
                 {
@@ -3962,7 +3931,7 @@ namespace mangaerordini
                 }
                 catch (SQLiteException ex)
                 {
-                    MessageBox.Show("Errore durante verifica records in elenco ordini. Codice: " + ReturnErorrCode(ex));
+                    OnTopMessage.Error("Errore durante verifica records in elenco ordini. Codice: " + DbTools.ReturnErorrCode(ex));
                     return;
                 }
             }
@@ -3983,19 +3952,19 @@ namespace mangaerordini
 									
 									CASE OE.stato WHEN 0 THEN 'APERTO'  WHEN 1 THEN 'CHIUSO' END AS Stato
 
-								   FROM " + schemadb + @"[ordini_elenco] AS OE 
-								   LEFT JOIN " + schemadb + @"[offerte_elenco] OFE 
+								   FROM " + ProgramParameters.schemadb + @"[ordini_elenco] AS OE 
+								   LEFT JOIN " + ProgramParameters.schemadb + @"[offerte_elenco] OFE 
 										ON OFE.Id = IIF(OE.ID_offerta IS NOT NULL ,OE.ID_offerta,0)
-								   LEFT JOIN " + schemadb + @"[clienti_elenco] AS CE 
+								   LEFT JOIN " + ProgramParameters.schemadb + @"[clienti_elenco] AS CE 
 										ON CE.Id = IIF(OE.ID_offerta IS NOT NULL , OFE.ID_cliente, OE.ID_cliente)  
-								   LEFT JOIN " + schemadb + @"[clienti_riferimenti] AS CR 
+								   LEFT JOIN " + ProgramParameters.schemadb + @"[clienti_riferimenti] AS CR 
 										ON CR.Id = IIF(OE.ID_offerta IS NOT NULL , OFE.ID_riferimento,  OE.ID_riferimento)  "
                                     + addInfo + @" 
 								   ORDER BY OE.Id DESC LIMIT @recordperpage OFFSET @startingrecord;";
 
             page--;
 
-            using (SQLiteDataAdapter cmd = new SQLiteDataAdapter(commandText, connection))
+            using (SQLiteDataAdapter cmd = new SQLiteDataAdapter(commandText, ProgramParameters.connection))
             {
                 try
                 {
@@ -4043,7 +4012,7 @@ namespace mangaerordini
                 }
                 catch (SQLiteException ex)
                 {
-                    MessageBox.Show("Errore durante popolamento tabella Ordini. Codice: " + ReturnErorrCode(ex));
+                    OnTopMessage.Error("Errore durante popolamento tabella Ordini. Codice: " + DbTools.ReturnErorrCode(ex));
                     return;
                 }
             }
@@ -4102,22 +4071,22 @@ namespace mangaerordini
             int stato_ordine = FieldOrdStato.SelectedItem.GetHashCode();
             stato_ordine = (stato_ordine < 0) ? 0 : stato_ordine;
 
-            ValidationResult answer;
-            ValidationResult prezzoSpedizione = new ValidationResult();
-            ValidationResult dataOrdValue;
-            ValidationResult dataETAOrdValue;
-            ValidationResult tot_ordineV = new ValidationResult();
-            ValidationResult prezzo_finaleV = new ValidationResult();
-            ValidationResult scontoV;
+            DataValidation.ValidationResult answer;
+            DataValidation.ValidationResult prezzoSpedizione = new DataValidation.ValidationResult();
+            DataValidation.ValidationResult dataOrdValue;
+            DataValidation.ValidationResult dataETAOrdValue;
+            DataValidation.ValidationResult tot_ordineV = new DataValidation.ValidationResult();
+            DataValidation.ValidationResult prezzo_finaleV = new DataValidation.ValidationResult();
+            DataValidation.ValidationResult scontoV;
 
             string er_list = "";
 
             if (CheckBoxOrdOffertaNonPresente.Checked)
             {
-                answer = ValidateCliente((int)id_cl);
+                answer = DataValidation.ValidateCliente((int)id_cl);
                 if (!answer.Success)
                 {
-                    MessageBox.Show(answer.Error);
+                    OnTopMessage.Alert(answer.Error);
                     return;
                 }
                 er_list += answer.Error;
@@ -4128,10 +4097,10 @@ namespace mangaerordini
                 er_list += "Numero Ordine non valido o vuoto" + Environment.NewLine;
             }
 
-            dataOrdValue = ValidateDate(dataOrdString);
+            dataOrdValue = DataValidation.ValidateDate(dataOrdString);
             er_list += dataOrdValue.Error;
 
-            dataETAOrdValue = ValidateDate(dataETAString);
+            dataETAOrdValue = DataValidation.ValidateDate(dataETAString);
             er_list += dataETAOrdValue.Error;
 
             if (DateTime.Compare(dataOrdValue.DateValue, dataETAOrdValue.DateValue) > 0)
@@ -4143,7 +4112,7 @@ namespace mangaerordini
             {
                 if (!string.IsNullOrEmpty(spedizioni))
                 {
-                    prezzoSpedizione = ValidateSpedizione(spedizioni, gestSP);
+                    prezzoSpedizione = DataValidation.ValidateSpedizione(spedizioni, gestSP);
                     er_list += prezzoSpedizione.Error;
                 }
             }
@@ -4155,26 +4124,26 @@ namespace mangaerordini
             }
             else
             {
-                tot_ordineV = ValidatePrezzo(tot_ordine);
+                tot_ordineV = DataValidation.ValidatePrezzo(tot_ordine);
                 er_list += tot_ordineV.Error;
 
-                prezzo_finaleV = ValidatePrezzo(prezzo_finale);
+                prezzo_finaleV = DataValidation.ValidatePrezzo(prezzo_finale);
                 er_list += prezzo_finaleV.Error;
 
-                prezzo_finaleV = ValidatePrezzo(prezzo_finale);
+                prezzo_finaleV = DataValidation.ValidatePrezzo(prezzo_finale);
                 er_list += prezzo_finaleV.Error;
             }
 
-            scontoV = ValidateSconto(sconto);
+            scontoV = DataValidation.ValidateSconto(sconto);
             er_list += scontoV.Error;
 
 
             if (CheckBoxOrdOffertaNonPresente.Checked == false)
             {
-                commandText = "SELECT COUNT(*) FROM " + schemadb + @"[offerte_elenco] WHERE ([Id] = @id_offerta) LIMIT 1;";
+                commandText = "SELECT COUNT(*) FROM " + ProgramParameters.schemadb + @"[offerte_elenco] WHERE ([Id] = @id_offerta) LIMIT 1;";
                 int UserExist = 0;
 
-                using (SQLiteCommand cmd = new SQLiteCommand(commandText, connection))
+                using (SQLiteCommand cmd = new SQLiteCommand(commandText, ProgramParameters.connection))
                 {
                     try
                     {
@@ -4189,7 +4158,7 @@ namespace mangaerordini
                     }
                     catch (SQLiteException ex)
                     {
-                        MessageBox.Show("Errore durante verifica ID Offerta. Codice: " + ReturnErorrCode(ex));
+                        OnTopMessage.Error("Errore durante verifica ID Offerta. Codice: " + DbTools.ReturnErorrCode(ex));
                         return;
                     }
                 }
@@ -4197,19 +4166,19 @@ namespace mangaerordini
 
             if (er_list != "")
             {
-                MessageBox.Show(er_list);
+                OnTopMessage.Alert(er_list);
                 UpdateFields("OCR", "A", true);
                 return;
             }
 
-            commandText = @"INSERT INTO " + schemadb + @"[ordini_elenco]
+            commandText = @"INSERT INTO " + ProgramParameters.schemadb + @"[ordini_elenco]
                             (codice_ordine, ID_offerta, ID_cliente, ID_riferimento, data_ordine, data_ETA, totale_ordine,sconto,prezzo_finale,stato,costo_spedizione,gestione_spedizione)
 						   VALUES (@codo, @idoof, @idlc, @idcont, @dataord, @dataeta, @totord, @sconto, @prezzoF, @stato, @cossp, @gestsp);
 						   SELECT last_insert_rowid();";
 
             int lastinsertedid = 0;
 
-            using (SQLiteCommand cmd = new SQLiteCommand(commandText, connection))
+            using (SQLiteCommand cmd = new SQLiteCommand(commandText, ProgramParameters.connection))
             {
                 try
                 {
@@ -4239,8 +4208,8 @@ namespace mangaerordini
 
                     if (CheckBoxOrdOffertaNonPresente.Checked == false)
                     {
-                        commandText = "UPDATE " + schemadb + @"[offerte_elenco] SET trasformato_ordine=1 WHERE Id=@idoff LIMIT 1;";
-                        using (SQLiteCommand cmd2 = new SQLiteCommand(commandText, connection))
+                        commandText = "UPDATE " + ProgramParameters.schemadb + @"[offerte_elenco] SET trasformato_ordine=1 WHERE Id=@idoff LIMIT 1;";
+                        using (SQLiteCommand cmd2 = new SQLiteCommand(commandText, ProgramParameters.connection))
                         {
                             try
                             {
@@ -4250,7 +4219,7 @@ namespace mangaerordini
                             }
                             catch (SQLiteException ex)
                             {
-                                MessageBox.Show("Errore durante aggiornamento offerta(convertito ordine update). Codice: " + ReturnErorrCode(ex));
+                                OnTopMessage.Error("Errore durante aggiornamento offerta(convertito ordine update). Codice: " + DbTools.ReturnErorrCode(ex));
                             }
                         }
 
@@ -4259,8 +4228,8 @@ namespace mangaerordini
                             if (lastinsertedid > 0)
                             {
 
-                                commandText = @"SELECT * FROM " + schemadb + @"[offerte_pezzi] WHERE ID_offerta=@idof;";
-                                using (SQLiteCommand cmd2 = new SQLiteCommand(commandText, connection))
+                                commandText = @"SELECT * FROM " + ProgramParameters.schemadb + @"[offerte_pezzi] WHERE ID_offerta=@idof;";
+                                using (SQLiteCommand cmd2 = new SQLiteCommand(commandText, ProgramParameters.connection))
 
                                 {
                                     try
@@ -4275,13 +4244,13 @@ namespace mangaerordini
                                         while (reader.Read())
                                         {
                                             query = @" BEGIN TRANSACTION;
-                                                    INSERT OR ROLLBACK INTO " + schemadb + @"[ordine_pezzi](ID_ordine,ID_ricambio,prezzo_unitario_originale,prezzo_unitario_sconto,pezzi,ETA) 
+                                                    INSERT OR ROLLBACK INTO " + ProgramParameters.schemadb + @"[ordine_pezzi](ID_ordine,ID_ricambio,prezzo_unitario_originale,prezzo_unitario_sconto,pezzi,ETA) 
 													    VALUES (@idord,@idogg,@prezor,@prezsco,@qta,@dataeta);
-                                                    UPDATE OR ROLLBACK " + schemadb + @"[offerte_pezzi] SET aggiunto=1 WHERE Id=@idoffogg LIMIT 1;
+                                                    UPDATE OR ROLLBACK " + ProgramParameters.schemadb + @"[offerte_pezzi] SET aggiunto=1 WHERE Id=@idoffogg LIMIT 1;
                                                     COMMIT;
                                                     ";
 
-                                            using (SQLiteCommand cmd3 = new SQLiteCommand(query, connection))
+                                            using (SQLiteCommand cmd3 = new SQLiteCommand(query, ProgramParameters.connection))
                                             {
                                                 try
                                                 {
@@ -4298,7 +4267,7 @@ namespace mangaerordini
                                                 }
                                                 catch (SQLiteException ex)
                                                 {
-                                                    MessageBox.Show("Errore durante copia pezzi offerta in ordine(pt2). COntrollare manualmente l'ordine. Codice: " + ReturnErorrCode(ex));
+                                                    OnTopMessage.Error("Errore durante copia pezzi offerta in ordine(pt2). COntrollare manualmente l'ordine. Codice: " + DbTools.ReturnErorrCode(ex));
                                                     error_copi = true;
                                                 }
                                             }
@@ -4306,12 +4275,12 @@ namespace mangaerordini
                                         reader.Close();
                                         if (error_copi == false)
                                         {
-                                            MessageBox.Show("Oggetti copiati nell'ordine");
+                                            OnTopMessage.Information("Oggetti copiati nell'ordine");
                                         }
                                     }
                                     catch (SQLiteException ex)
                                     {
-                                        MessageBox.Show("Errore durante copia pezzi offerta in ordine(pt1). Codice: " + ReturnErorrCode(ex));
+                                        OnTopMessage.Error("Errore durante copia pezzi offerta in ordine(pt1). Codice: " + DbTools.ReturnErorrCode(ex));
                                     }
                                 }
                             }
@@ -4332,7 +4301,7 @@ namespace mangaerordini
 
                     ComboSelOrdCl_SelectedIndexChanged(this, EventArgs.Empty);
 
-                    MessageBox.Show("Ordine Creato.");
+                    OnTopMessage.Information("Ordine Creato.");
 
                     DateTime today = DateTime.Today;
                     FieldOrdData.Text = today.ToString("dd/MM/yyyy");
@@ -4340,7 +4309,7 @@ namespace mangaerordini
                 }
                 catch (SQLiteException ex)
                 {
-                    MessageBox.Show("Errore durante aggiunta al database. Codice: " + ReturnErorrCode(ex));
+                    OnTopMessage.Error("Errore durante aggiunta al database. Codice: " + DbTools.ReturnErorrCode(ex));
                     UpdateFields("OCR", "A", true);
                 }
             }
@@ -4410,18 +4379,18 @@ namespace mangaerordini
 										OFE.pezzi AS qta,
 										PR.descrizione AS descrizione 
 									   
-										FROM " + schemadb + @"[ordini_elenco] AS OE 
+										FROM " + ProgramParameters.schemadb + @"[ordini_elenco] AS OE 
 
-										LEFT JOIN " + schemadb + @"[offerte_pezzi] AS OFE 
+										LEFT JOIN " + ProgramParameters.schemadb + @"[offerte_pezzi] AS OFE 
 											ON OFE.ID_offerta=OE.ID_offerta 
 
-										LEFT JOIN " + schemadb + @"[pezzi_ricambi] AS PR 
+										LEFT JOIN " + ProgramParameters.schemadb + @"[pezzi_ricambi] AS PR 
 											ON PR.Id=OFE.ID_ricambio 
 
 									   WHERE OE.id=@idofferta AND OFE.aggiunto=0;";
 
 
-            using (SQLiteDataAdapter cmd = new SQLiteDataAdapter(commandText, connection))
+            using (SQLiteDataAdapter cmd = new SQLiteDataAdapter(commandText, ProgramParameters.connection))
             {
                 try
                 {
@@ -4458,7 +4427,7 @@ namespace mangaerordini
                 }
                 catch (SQLiteException ex)
                 {
-                    MessageBox.Show("Errore durante riempimento oggetti offerte. Codice: " + ReturnErorrCode(ex));
+                    OnTopMessage.Error("Errore durante riempimento oggetti offerte. Codice: " + DbTools.ReturnErorrCode(ex));
 
 
                     return;
@@ -4480,13 +4449,13 @@ namespace mangaerordini
 										OP.pezzi AS qta,
 										PR.descrizione AS descrizione,
 										op.ETA as ETA
-									   FROM " + schemadb + @"[ordine_pezzi] AS OP
-										LEFT JOIN " + schemadb + @"[pezzi_ricambi] AS PR
+									   FROM " + ProgramParameters.schemadb + @"[ordine_pezzi] AS OP
+										LEFT JOIN " + ProgramParameters.schemadb + @"[pezzi_ricambi] AS PR
 											ON PR.Id=OP.ID_ricambio
 									   WHERE OP.ID_ordine=@idofferta;";
 
 
-            using (SQLiteDataAdapter cmd = new SQLiteDataAdapter(commandText, connection))
+            using (SQLiteDataAdapter cmd = new SQLiteDataAdapter(commandText, ProgramParameters.connection))
             {
                 try
                 {
@@ -4524,7 +4493,7 @@ namespace mangaerordini
                 }
                 catch (SQLiteException ex)
                 {
-                    MessageBox.Show("Errore durante oggetti ordini. Codice: " + ReturnErorrCode(ex));
+                    OnTopMessage.Error("Errore durante oggetti ordini. Codice: " + DbTools.ReturnErorrCode(ex));
 
 
                     return;
@@ -4666,17 +4635,17 @@ namespace mangaerordini
                                             PR.Id as pezzo,
 											PR.Id AS ID_ricambio
 
-									   FROM " + schemadb + @"[ordini_elenco] AS OP, " + schemadb + @"[offerte_pezzi] AS OFP
+									   FROM " + ProgramParameters.schemadb + @"[ordini_elenco] AS OP, " + ProgramParameters.schemadb + @"[offerte_pezzi] AS OFP
 
-									   LEFT JOIN " + schemadb + @"[pezzi_ricambi] AS PR
+									   LEFT JOIN " + ProgramParameters.schemadb + @"[pezzi_ricambi] AS PR
 										ON PR.Id = OFP.ID_ricambio
-									   LEFT JOIN " + schemadb + @"[clienti_macchine] AS CM
+									   LEFT JOIN " + ProgramParameters.schemadb + @"[clienti_macchine] AS CM
 										ON CM.Id=PR.ID_macchina
 
 									   WHERE OP.id=@idOrdine AND OFP.Id=@idpez LIMIT " + recordsPerPage;
 
 
-                    using (SQLiteCommand cmd = new SQLiteCommand(commandText, connection))
+                    using (SQLiteCommand cmd = new SQLiteCommand(commandText, ProgramParameters.connection))
                     {
                         try
                         {
@@ -4694,7 +4663,7 @@ namespace mangaerordini
                         }
                         catch (SQLiteException ex)
                         {
-                            MessageBox.Show("Errore durante oggetti ordini. Codice: " + ReturnErorrCode(ex));
+                            OnTopMessage.Error("Errore durante oggetti ordini. Codice: " + DbTools.ReturnErorrCode(ex));
 
 
                             return;
@@ -4761,17 +4730,17 @@ namespace mangaerordini
                                             ORP.ID_ricambio as pezzo,
                                             ORP.Outside_Offer as isnotoffer
 
-									   FROM " + schemadb + @"[ordini_elenco] AS OP, " + schemadb + @"[ordine_pezzi] AS ORP
+									   FROM " + ProgramParameters.schemadb + @"[ordini_elenco] AS OP, " + ProgramParameters.schemadb + @"[ordine_pezzi] AS ORP
 
-									   LEFT JOIN " + schemadb + @"[pezzi_ricambi] AS PR
+									   LEFT JOIN " + ProgramParameters.schemadb + @"[pezzi_ricambi] AS PR
 										ON PR.Id=ORP.ID_ricambio
-									   LEFT JOIN " + schemadb + @"[clienti_macchine] AS CM
+									   LEFT JOIN " + ProgramParameters.schemadb + @"[clienti_macchine] AS CM
 										ON CM.Id=PR.ID_macchina
 
 									   WHERE OP.id=@idOrdine AND ORP.Id=@idpez LIMIT 1;";
 
 
-                    using (SQLiteCommand cmd = new SQLiteCommand(commandText, connection))
+                    using (SQLiteCommand cmd = new SQLiteCommand(commandText, ProgramParameters.connection))
                     {
                         try
                         {
@@ -4788,7 +4757,7 @@ namespace mangaerordini
                         }
                         catch (SQLiteException ex)
                         {
-                            MessageBox.Show("Errore durante oggetti ordini. Codice: " + ReturnErorrCode(ex));
+                            OnTopMessage.Error("Errore durante oggetti ordini. Codice: " + DbTools.ReturnErorrCode(ex));
 
 
                             return;
@@ -4845,9 +4814,9 @@ namespace mangaerordini
             string pezzi = FieldOrdOggQta.Text.Trim();
             int idiri = 0;
 
-            ValidationResult dataETAOrdValue;
-            ValidationResult prezzo_originaleV;
-            ValidationResult prezzo_scontatoV;
+            DataValidation.ValidationResult dataETAOrdValue;
+            DataValidation.ValidationResult prezzo_originaleV;
+            DataValidation.ValidationResult prezzo_scontatoV;
 
             string er_list = "";
 
@@ -4865,21 +4834,21 @@ namespace mangaerordini
                 er_list += "Selezionare un ricambio dal menù a tendina." + Environment.NewLine;
             }
 
-            dataETAOrdValue = ValidateDate(dataETAString);
+            dataETAOrdValue = DataValidation.ValidateDate(dataETAString);
             er_list += dataETAOrdValue.Error;
 
-            prezzo_originaleV = ValidatePrezzo(prezzo_originale);
+            prezzo_originaleV = DataValidation.ValidatePrezzo(prezzo_originale);
             er_list += prezzo_originaleV.Error;
 
-            prezzo_scontatoV = ValidatePrezzo(prezzo_scontato);
+            prezzo_scontatoV = DataValidation.ValidatePrezzo(prezzo_scontato);
             er_list += prezzo_originaleV.Error;
 
-            ValidationResult qtaP = ValidateQta(pezzi);
+            DataValidation.ValidationResult qtaP = DataValidation.ValidateQta(pezzi);
             er_list += qtaP.Error;
 
             if (er_list != "")
             {
-                MessageBox.Show(er_list);
+                OnTopMessage.Alert(er_list);
                 bool ischk = CheckBoxOrdOggCheckAddNotOffer.Checked;
 
                 FieldOrdOggPOr.Enabled = true;
@@ -4902,34 +4871,34 @@ namespace mangaerordini
             }
 
             string commandText = @" BEGIN TRANSACTION;
-                                        INSERT OR ROLLBACK INTO " + schemadb + @"[ordine_pezzi]
+                                        INSERT OR ROLLBACK INTO " + ProgramParameters.schemadb + @"[ordine_pezzi]
 										(ID_ordine, ID_ricambio, prezzo_unitario_originale, prezzo_unitario_sconto,pezzi, ETA, Outside_Offer) 
 										VALUES (@idord,@idri,@por,@pos,@pezzi,@eta,@Outside_Offer); 
 
-									UPDATE OR ROLLBACK " + schemadb + @"[ordini_elenco]
-										SET totale_ordine = IFNULL((SELECT SUM(OP.pezzi * OP.prezzo_unitario_sconto) FROM " + schemadb + @"[ordine_pezzi] AS OP WHERE OP.ID_ordine=@idord),0)
+									UPDATE OR ROLLBACK " + ProgramParameters.schemadb + @"[ordini_elenco]
+										SET totale_ordine = IFNULL((SELECT SUM(OP.pezzi * OP.prezzo_unitario_sconto) FROM " + ProgramParameters.schemadb + @"[ordine_pezzi] AS OP WHERE OP.ID_ordine=@idord),0)
 										WHERE Id=@idord LIMIT 1;
 										
-									UPDATE OR ROLLBACK " + schemadb + @"[ordini_elenco] 
-										SET totale_ordine = IFNULL((SELECT SUM(OP.pezzi * OP.prezzo_unitario_sconto) FROM " + schemadb + @"[ordine_pezzi] AS OP WHERE OP.ID_ordine = @idord),0)
+									UPDATE OR ROLLBACK " + ProgramParameters.schemadb + @"[ordini_elenco] 
+										SET totale_ordine = IFNULL((SELECT SUM(OP.pezzi * OP.prezzo_unitario_sconto) FROM " + ProgramParameters.schemadb + @"[ordine_pezzi] AS OP WHERE OP.ID_ordine = @idord),0)
 										WHERE Id = @idord LIMIT 1;
 							";
 
             if (!CheckBoxOrdOggCheckAddNotOffer.Checked)
             {
-                commandText += @" UPDATE OR ROLLBACK " + schemadb + @"[offerte_pezzi] SET aggiunto=1 WHERE Id=@idoggoff LIMIT 1;";
+                commandText += @" UPDATE OR ROLLBACK " + ProgramParameters.schemadb + @"[offerte_pezzi] SET aggiunto=1 WHERE Id=@idoggoff LIMIT 1;";
             }
 
             if (CheckBoxOrdOggSconto.Checked)
             {
-                commandText += @" UPDATE OR ROLLBACK " + schemadb + @"[ordini_elenco] 
+                commandText += @" UPDATE OR ROLLBACK " + ProgramParameters.schemadb + @"[ordini_elenco] 
 									SET prezzo_finale = IFNULL(totale_ordine*(1-sconto/100),0) 
 									WHERE Id=@idord LIMIT 1;";
             }
             commandText += "COMMIT;";
 
 
-            using (SQLiteCommand cmd = new SQLiteCommand(commandText, connection))
+            using (SQLiteCommand cmd = new SQLiteCommand(commandText, ProgramParameters.connection))
             {
                 try
                 {
@@ -4946,7 +4915,7 @@ namespace mangaerordini
 
                     cmd.ExecuteNonQuery();
 
-                    if (Boolean.Parse(settings["calendario"]["aggiornaCalendario"]) == true)
+                    if (Boolean.Parse(UserSettings.settings["calendario"]["aggiornaCalendario"]) == true)
                     {
                         string ordinecode = "";
                         DateTime eta = DateTime.MinValue;
@@ -4954,10 +4923,10 @@ namespace mangaerordini
                         commandText = @"SELECT 
                                             codice_ordine,
                                             data_ETA
-                                        FROM " + schemadb + @"[ordini_elenco] 
+                                        FROM " + ProgramParameters.schemadb + @"[ordini_elenco] 
                                         WHERE Id=@idord LIMIT 1;";
 
-                        using (SQLiteCommand cmd2 = new SQLiteCommand(commandText, connection))
+                        using (SQLiteCommand cmd2 = new SQLiteCommand(commandText, ProgramParameters.connection))
                         {
                             try
                             {
@@ -4974,16 +4943,16 @@ namespace mangaerordini
                             }
                             catch (SQLiteException ex)
                             {
-                                MessageBox.Show("Errore durante lettura dati ordine(dati calendario). Codice: " + ReturnErorrCode(ex));
+                                OnTopMessage.Error("Errore durante lettura dati ordine(dati calendario). Codice: " + DbTools.ReturnErorrCode(ex));
                             }
                         }
 
-                        if (!String.IsNullOrEmpty(ordinecode) && FindAppointment(settings["calendario"]["nomeCalendario"], ordinecode))
+                        if (!String.IsNullOrEmpty(ordinecode) && CalendarManager.FindAppointment(UserSettings.settings["calendario"]["nomeCalendario"], ordinecode))
                         {
-                            DialogResult dialogResult = MessageBox.Show("Vuoi aggiornare l'evento sul calendario con le nuove informazioni?", "Aggiornare Evento Ordine Calendario", MessageBoxButtons.YesNo);
+                            DialogResult dialogResult = OnTopMessage.Question("Vuoi aggiornare l'evento sul calendario con le nuove informazioni?", "Aggiornare Evento Ordine Calendario");
                             if (dialogResult == DialogResult.Yes)
                             {
-                                UpdateCalendar(ordinecode, ordinecode, idordine, eta, false);
+                                CalendarManager.UpdateCalendar(ordinecode, ordinecode, idordine, eta, false);
                             }
                         }
                     }
@@ -5014,11 +4983,11 @@ namespace mangaerordini
                         i++;
                     }
 
-                    MessageBox.Show("Oggetto aggiunto all'ordine");
+                    OnTopMessage.Information("Oggetto aggiunto all'ordine");
                 }
                 catch (SQLiteException ex)
                 {
-                    MessageBox.Show("Errore durante aggiunta al database. Codice: " + ReturnErorrCode(ex));
+                    OnTopMessage.Error("Errore durante aggiunta al database. Codice: " + DbTools.ReturnErorrCode(ex));
                     //ABILITA CAMPI & BOTTONI
                     bool ischk = CheckBoxOrdOggCheckAddNotOffer.Checked;
 
@@ -5063,12 +5032,12 @@ namespace mangaerordini
 
             string er_list = "";
 
-            ValidationResult idQ = ValidateId(idOr);
+            DataValidation.ValidationResult idQ = DataValidation.ValidateId(idOr);
             er_list += idQ.Error;
 
             if (er_list != "")
             {
-                MessageBox.Show(er_list);
+                OnTopMessage.Alert(er_list);
                 //ABILITA CAMPI & BOTTONI
                 UpdateFields("OCR", "A", true);
                 UpdateFields("OCR", "E", true);
@@ -5082,7 +5051,7 @@ namespace mangaerordini
                 return;
             }
 
-            DialogResult dialogResult = MessageBox.Show("Vuoi veramente eliminare l'ordine? Tutti i dati relativi all'ordine verrano eliminati", "Eliminare Ordine", MessageBoxButtons.YesNo);
+            DialogResult dialogResult = OnTopMessage.Question("Vuoi veramente eliminare l'ordine? Tutti i dati relativi all'ordine verrano eliminati", "Eliminare Ordine");
             if (dialogResult == DialogResult.No)
             {
                 //ABILITA CAMPI & BOTTONI
@@ -5099,10 +5068,10 @@ namespace mangaerordini
             }
 
 
-            string commandText = "SELECT  ID_offerta FROM " + schemadb + @"[ordini_elenco] WHERE Id=@idord LIMIT 1;";
+            string commandText = "SELECT  ID_offerta FROM " + ProgramParameters.schemadb + @"[ordini_elenco] WHERE Id=@idord LIMIT 1;";
 
 
-            using (SQLiteCommand cmd2 = new SQLiteCommand(commandText, connection))
+            using (SQLiteCommand cmd2 = new SQLiteCommand(commandText, ProgramParameters.connection))
             {
                 try
                 {
@@ -5117,20 +5086,20 @@ namespace mangaerordini
 
                     if (id_offerta > 0)
                     {
-                        commandText = @"UPDATE " + schemadb + @"[offerte_pezzi]
+                        commandText = @"UPDATE " + ProgramParameters.schemadb + @"[offerte_pezzi]
 									        SET
 										        aggiunto = 0 
 									        WHERE 
 										        ID_offerta=@idoff;
-                                        UPDATE " + schemadb + @"[offerte_elenco] SET trasformato_ordine=0 WHERE Id=@idoff LIMIT 1;
+                                        UPDATE " + ProgramParameters.schemadb + @"[offerte_elenco] SET trasformato_ordine=0 WHERE Id=@idoff LIMIT 1;
                                     ";
                     }
 
-                    commandText += @"   DELETE FROM " + schemadb + @"[ordine_pezzi] WHERE ID_ordine=@idq;
-                                        DELETE FROM " + schemadb + @"[ordini_elenco] WHERE Id=@idq LIMIT 1;";
+                    commandText += @"   DELETE FROM " + ProgramParameters.schemadb + @"[ordine_pezzi] WHERE ID_ordine=@idq;
+                                        DELETE FROM " + ProgramParameters.schemadb + @"[ordini_elenco] WHERE Id=@idq LIMIT 1;";
 
-                    using (var transaction = connection.BeginTransaction())
-                    using (SQLiteCommand cmd_up = new SQLiteCommand(commandText, connection, transaction))
+                    using (var transaction = ProgramParameters.connection.BeginTransaction())
+                    using (SQLiteCommand cmd_up = new SQLiteCommand(commandText, ProgramParameters.connection, transaction))
                     {
                         try
                         {
@@ -5141,7 +5110,7 @@ namespace mangaerordini
                             cmd_up.ExecuteNonQuery();
                             transaction.Commit();
 
-                            if (Boolean.Parse(settings["calendario"]["aggiornaCalendario"]) == true)
+                            if (Boolean.Parse(UserSettings.settings["calendario"]["aggiornaCalendario"]) == true)
                             {
                                 string ordinecode = "";
                                 DateTime eta = DateTime.MinValue;
@@ -5149,10 +5118,10 @@ namespace mangaerordini
                                 commandText = @"SELECT 
                                                 codice_ordine,
                                                 data_ETA
-                                            FROM " + schemadb + @"[ordini_elenco] 
+                                            FROM " + ProgramParameters.schemadb + @"[ordini_elenco] 
                                             WHERE Id=@idord LIMIT 1;";
 
-                                using (SQLiteCommand cmd3 = new SQLiteCommand(commandText, connection))
+                                using (SQLiteCommand cmd3 = new SQLiteCommand(commandText, ProgramParameters.connection))
                                 {
                                     try
                                     {
@@ -5169,16 +5138,16 @@ namespace mangaerordini
                                     }
                                     catch (SQLiteException ex)
                                     {
-                                        MessageBox.Show("Errore durante lettura dati ordine(dati calendario). Codice: " + ReturnErorrCode(ex));
+                                        OnTopMessage.Error("Errore durante lettura dati ordine(dati calendario). Codice: " + DbTools.ReturnErorrCode(ex));
                                     }
                                 }
 
-                                if (!String.IsNullOrEmpty(ordinecode) && FindAppointment(settings["calendario"]["nomeCalendario"], ordinecode))
+                                if (!String.IsNullOrEmpty(ordinecode) && CalendarManager.FindAppointment(UserSettings.settings["calendario"]["nomeCalendario"], ordinecode))
                                 {
-                                    dialogResult = MessageBox.Show("Vuoi eliminare l'evento associato all'ordine?", "Eliminazione Evento Ordine Calendario", MessageBoxButtons.YesNo);
+                                    dialogResult = OnTopMessage.Question("Vuoi eliminare l'evento associato all'ordine?", "Eliminazione Evento Ordine Calendario");
                                     if (dialogResult == DialogResult.Yes)
                                     {
-                                        RemoveAppointment(ordinecode);
+                                        CalendarManager.RemoveAppointment(ordinecode);
                                     }
                                 }
                             }
@@ -5207,7 +5176,7 @@ namespace mangaerordini
                             if (temp > 0 && idQ.IntValue != temp)
                                 ComboSelOrd.SelectedIndex = FindIndexFromValue(ComboSelOrd, temp);
 
-                            MessageBox.Show("Ordine eliminato.");
+                            OnTopMessage.Information("Ordine eliminato.");
 
                         }
                         catch (SQLiteException ex)
@@ -5215,7 +5184,7 @@ namespace mangaerordini
 
                             transaction.Rollback();
 
-                            MessageBox.Show("Errore durante eliminazione ordine. Codice: " + ReturnErorrCode(ex));
+                            OnTopMessage.Error("Errore durante eliminazione ordine. Codice: " + DbTools.ReturnErorrCode(ex));
 
                             //ABILITA CAMPI & BOTTONI
                             UpdateFields("OCR", "A", true);
@@ -5235,7 +5204,7 @@ namespace mangaerordini
                 }
                 catch (SQLiteException ex)
                 {
-                    MessageBox.Show("Errore durante aggiornamento offerta(select offerta). Codice: " + ReturnErorrCode(ex));
+                    OnTopMessage.Error("Errore durante aggiornamento offerta(select offerta). Codice: " + DbTools.ReturnErorrCode(ex));
                     //ABILITA CAMPI & BOTTONI
                     UpdateFields("OCR", "A", true);
                     UpdateFields("OCR", "E", true);
@@ -5267,13 +5236,13 @@ namespace mangaerordini
 
             string er_list = "";
 
-            ValidationResult idQ = ValidateId(idOf);
+            DataValidation.ValidationResult idQ = DataValidation.ValidateId(idOf);
             er_list += idQ.Error;
 
 
             if (er_list != "")
             {
-                MessageBox.Show(er_list);
+                OnTopMessage.Alert(er_list);
                 //ABILITA CAMPI & BOTTONI
                 UpdateFields("OCR", "FE", true);
                 UpdateFields("OCR", "E", true);
@@ -5281,7 +5250,7 @@ namespace mangaerordini
                 return;
             }
 
-            DialogResult dialogResult = MessageBox.Show("Vuoi rimuovere il pezzo dall'ordine?", "Eliminare Pezzo da Ordine", MessageBoxButtons.YesNo);
+            DialogResult dialogResult = OnTopMessage.Question("Vuoi rimuovere il pezzo dall'ordine?", "Eliminare Pezzo da Ordine");
             if (dialogResult == DialogResult.No)
             {
                 //ABILITA CAMPI & BOTTONI
@@ -5293,11 +5262,11 @@ namespace mangaerordini
             bool updateFprice = false;
             bool updateFpriceSconto = false;
 
-            dialogResult = MessageBox.Show("Vuoi aggiornare il prezzo finale?", "Eliminare Pezzo da Ordine", MessageBoxButtons.YesNo);
+            dialogResult = OnTopMessage.Question("Vuoi aggiornare il prezzo finale?", "Eliminare Pezzo da Ordine");
             if (dialogResult == DialogResult.Yes)
             {
                 updateFprice = true;
-                dialogResult = MessageBox.Show("Applicare lo sconto al prezzo finale?", "Eliminare Pezzo da Ordine", MessageBoxButtons.YesNo);
+                dialogResult = OnTopMessage.Question("Applicare lo sconto al prezzo finale?", "Eliminare Pezzo da Ordine");
                 if (dialogResult == DialogResult.Yes)
                 {
                     updateFpriceSconto = true;
@@ -5308,16 +5277,16 @@ namespace mangaerordini
 
 
             string commandText = @"
-									UPDATE " + schemadb + @"[offerte_pezzi]
+									UPDATE " + ProgramParameters.schemadb + @"[offerte_pezzi]
                                         SET aggiunto = 0 
                                         WHERE 
 	                                        Id IN (
 						                            SELECT 
                                                         OFP.Id
-						                            FROM " + schemadb + @"[ordine_pezzi] AS OP 
-                                                    INNER JOIN " + schemadb + @"[ordini_elenco] AS OE 
+						                            FROM " + ProgramParameters.schemadb + @"[ordine_pezzi] AS OP 
+                                                    INNER JOIN " + ProgramParameters.schemadb + @"[ordini_elenco] AS OE 
 											            ON OE.Id = OP.ID_ordine 
-										            INNER JOIN " + schemadb + @" [offerte_pezzi] AS OFP 
+										            INNER JOIN " + ProgramParameters.schemadb + @" [offerte_pezzi] AS OFP 
 											            ON OFP.ID_ricambio = OP.ID_ricambio AND OFP.ID_offerta=OE.ID_offerta
                                                     WHERE
                                                         OP.Id=@idoff
@@ -5325,16 +5294,16 @@ namespace mangaerordini
 					                            )
                                         LIMIT 1;
 
-                                    DELETE FROM " + schemadb + @"[ordine_pezzi] WHERE Id=@idoff LIMIT 1;
+                                    DELETE FROM " + ProgramParameters.schemadb + @"[ordine_pezzi] WHERE Id=@idoff LIMIT 1;
 
-                                    UPDATE " + schemadb + @"[ordini_elenco]
-                                        SET totale_ordine = IFNULL((SELECT SUM(OP.pezzi * OP.prezzo_unitario_sconto) FROM " + schemadb + @"[ordine_pezzi] AS OP WHERE OP.ID_ordine = @idord),0)
+                                    UPDATE " + ProgramParameters.schemadb + @"[ordini_elenco]
+                                        SET totale_ordine = IFNULL((SELECT SUM(OP.pezzi * OP.prezzo_unitario_sconto) FROM " + ProgramParameters.schemadb + @"[ordine_pezzi] AS OP WHERE OP.ID_ordine = @idord),0)
                                         WHERE Id = @idord 
                                         LIMIT 1; 
                                     ";
             if (updateFprice)
             {
-                commandText += @"UPDATE " + schemadb + @"[ordini_elenco]
+                commandText += @"UPDATE " + ProgramParameters.schemadb + @"[ordini_elenco]
 												SET 
                                                     prezzo_finale = " + ((updateFpriceSconto) ? " (totale_ordine*(1-sconto/100)) " : " totale_ordine ") + @"
 												WHERE Id = @idord
@@ -5342,8 +5311,8 @@ namespace mangaerordini
             }
 
 
-            using (var transaction = connection.BeginTransaction())
-            using (SQLiteCommand cmd = new SQLiteCommand(commandText, connection, transaction))
+            using (var transaction = ProgramParameters.connection.BeginTransaction())
+            using (SQLiteCommand cmd = new SQLiteCommand(commandText, ProgramParameters.connection, transaction))
             {
                 try
                 {
@@ -5354,7 +5323,7 @@ namespace mangaerordini
 
                     transaction.Commit();
 
-                    if (Boolean.Parse(settings["calendario"]["aggiornaCalendario"]) == true)
+                    if (Boolean.Parse(UserSettings.settings["calendario"]["aggiornaCalendario"]) == true)
                     {
                         string ordinecode = "";
                         DateTime eta = DateTime.MinValue;
@@ -5362,10 +5331,10 @@ namespace mangaerordini
                         commandText = @"SELECT 
                                             codice_ordine,
                                             data_ETA
-                                        FROM " + schemadb + @"[ordini_elenco] 
+                                        FROM " + ProgramParameters.schemadb + @"[ordini_elenco] 
                                         WHERE Id=@idord LIMIT 1;";
 
-                        using (SQLiteCommand cmd3 = new SQLiteCommand(commandText, connection))
+                        using (SQLiteCommand cmd3 = new SQLiteCommand(commandText, ProgramParameters.connection))
                         {
                             try
                             {
@@ -5382,16 +5351,16 @@ namespace mangaerordini
                             }
                             catch (SQLiteException ex)
                             {
-                                MessageBox.Show("Errore durante lettura dati ordine(dati calendario). Codice: " + ReturnErorrCode(ex));
+                                OnTopMessage.Error("Errore durante lettura dati ordine(dati calendario). Codice: " + DbTools.ReturnErorrCode(ex));
                             }
                         }
 
-                        if (!String.IsNullOrEmpty(ordinecode) && FindAppointment(settings["calendario"]["nomeCalendario"], ordinecode))
+                        if (!String.IsNullOrEmpty(ordinecode) && CalendarManager.FindAppointment(UserSettings.settings["calendario"]["nomeCalendario"], ordinecode))
                         {
-                            dialogResult = MessageBox.Show("Vuoi aggiornare l'evento sul calendario con le nuove informazioni?", "Aggiornare Evento Ordine Calendario", MessageBoxButtons.YesNo);
+                            dialogResult = OnTopMessage.Question("Vuoi aggiornare l'evento sul calendario con le nuove informazioni?", "Aggiornare Evento Ordine Calendario");
                             if (dialogResult == DialogResult.Yes)
                             {
-                                UpdateCalendar(ordinecode, ordinecode, idordine, eta, false);
+                                CalendarManager.UpdateCalendar(ordinecode, ordinecode, idordine, eta, false);
                             }
                         }
                     }
@@ -5419,14 +5388,14 @@ namespace mangaerordini
 
                     BtChiudiOrdOgg_Click(this, EventArgs.Empty);
 
-                    MessageBox.Show("Oggetti eliminati dall'ordine.");
+                    OnTopMessage.Information("Oggetti eliminati dall'ordine.");
 
                 }
                 catch (SQLiteException ex)
                 {
                     transaction.Rollback();
 
-                    MessageBox.Show("Errore durante upate tot ordine (aggiornamento stato oggetto offerta). Codice: " + ReturnErorrCode(ex));
+                    OnTopMessage.Error("Errore durante upate tot ordine (aggiornamento stato oggetto offerta). Codice: " + DbTools.ReturnErorrCode(ex));
                     //ABILITA CAMPI & BOTTONI
                     UpdateFields("OCR", "FE", true);
                     UpdateFields("OCR", "E", true);
@@ -5466,13 +5435,13 @@ namespace mangaerordini
             int stato_ordine = FieldOrdStato.SelectedItem.GetHashCode();
             stato_ordine = (stato_ordine < 0) ? 0 : stato_ordine;
 
-            ValidationResult dataOrdValue;
-            ValidationResult dataETAOrdValue;
+            DataValidation.ValidationResult dataOrdValue;
+            DataValidation.ValidationResult dataETAOrdValue;
 
-            ValidationResult prezzoSpedizione = new ValidationResult();
-            ValidationResult scontoV;
-            ValidationResult tot_ordineV;
-            ValidationResult prezzo_finaleV;
+            DataValidation.ValidationResult prezzoSpedizione = new DataValidation.ValidationResult();
+            DataValidation.ValidationResult scontoV;
+            DataValidation.ValidationResult tot_ordineV;
+            DataValidation.ValidationResult prezzo_finaleV;
 
             string er_list = "";
             if (string.IsNullOrEmpty(n_ordine) || !Regex.IsMatch(n_ordine, @"^\d+$"))
@@ -5480,10 +5449,10 @@ namespace mangaerordini
                 er_list += "Numero Ordine non valido o vuoto" + Environment.NewLine;
             }
 
-            dataOrdValue = ValidateDate(dataOrdString);
+            dataOrdValue = DataValidation.ValidateDate(dataOrdString);
             er_list += dataOrdValue.Error;
 
-            dataETAOrdValue = ValidateDate(dataETAString);
+            dataETAOrdValue = DataValidation.ValidateDate(dataETAString);
             er_list += dataETAOrdValue.Error;
 
             if (DateTime.Compare(dataOrdValue.DateValue, dataETAOrdValue.DateValue) > 0)
@@ -5491,33 +5460,33 @@ namespace mangaerordini
                 er_list += "Data di Arrivo(ETA) antecedente a quella di creazione dell'ordine" + Environment.NewLine;
             }
 
-            scontoV = ValidateSconto(sconto);
+            scontoV = DataValidation.ValidateSconto(sconto);
             er_list += scontoV.Error;
 
-            tot_ordineV = ValidatePrezzo(tot_ordine);
+            tot_ordineV = DataValidation.ValidatePrezzo(tot_ordine);
             er_list += tot_ordineV.Error;
 
-            prezzo_finaleV = ValidatePrezzo(prezzo_finale);
+            prezzo_finaleV = DataValidation.ValidatePrezzo(prezzo_finale);
             er_list += prezzo_finaleV.Error;
 
             if (!string.IsNullOrEmpty(spedizioni))
             {
                 if (!string.IsNullOrEmpty(spedizioni))
                 {
-                    prezzoSpedizione = ValidateSpedizione(spedizioni, gestSP);
+                    prezzoSpedizione = DataValidation.ValidateSpedizione(spedizioni, gestSP);
                     er_list += prezzoSpedizione.Error;
                 }
             }
 
             if (er_list != "")
             {
-                MessageBox.Show(er_list);
+                OnTopMessage.Alert(er_list);
                 UpdateFields("OCR", "A", true);
                 BtCreaOrdine.Enabled = false;
                 return;
             }
 
-            DialogResult res = MessageBox.Show("Vuoi salvare le modifiche all'ordine?", "Conferma Salvataggio Modifiche Ordine", MessageBoxButtons.OKCancel, MessageBoxIcon.Information);
+            DialogResult res = MessageBox.Show("Vuoi salvare le modifiche all'ordine?", "Conferma Salvataggio Modifiche Ordine", MessageBoxButtons.OKCancel, MessageBoxIcon.Information, MessageBoxDefaultButton.Button1, MessageBoxOptions.DefaultDesktopOnly);
             if (res != DialogResult.OK)
             {
                 UpdateFields("OCR", "A", true);
@@ -5536,10 +5505,10 @@ namespace mangaerordini
                                                     data_ETA,
                                                     prezzo_finale,
                                                     stato
-                                                FROM " + schemadb + @"[ordini_elenco] WHERE Id=@idord LIMIT " + recordsPerPage;
+                                                FROM " + ProgramParameters.schemadb + @"[ordini_elenco] WHERE Id=@idord LIMIT " + recordsPerPage;
 
 
-            using (SQLiteCommand cmd = new SQLiteCommand(commandText, connection))
+            using (SQLiteCommand cmd = new SQLiteCommand(commandText, ProgramParameters.connection))
             {
                 try
                 {
@@ -5561,11 +5530,11 @@ namespace mangaerordini
                 }
                 catch (SQLiteException ex)
                 {
-                    MessageBox.Show("Errore durante eliminazione ordine (aggiornamento toast). Codice: " + ReturnErorrCode(ex));
+                    OnTopMessage.Error("Errore durante eliminazione ordine (aggiornamento toast). Codice: " + DbTools.ReturnErorrCode(ex));
                 }
             }
 
-            commandText = @"UPDATE " + schemadb + @"[ordini_elenco] SET 
+            commandText = @"UPDATE " + ProgramParameters.schemadb + @"[ordini_elenco] SET 
 									codice_ordine= @codo, 
                                     data_ordine=@dataord, 
 									data_ETA=@dataeta, 
@@ -5580,7 +5549,7 @@ namespace mangaerordini
 
 
 
-            using (SQLiteCommand cmd = new SQLiteCommand(commandText, connection))
+            using (SQLiteCommand cmd = new SQLiteCommand(commandText, ProgramParameters.connection))
             {
                 try
                 {
@@ -5624,17 +5593,17 @@ namespace mangaerordini
                     UpdateOfferteCrea(offerteCreaCurPage);
 
 
-                    if (Boolean.Parse(settings["calendario"]["aggiornaCalendario"]) == true)
+                    if (Boolean.Parse(UserSettings.settings["calendario"]["aggiornaCalendario"]) == true)
                     {
-                        if (FindAppointment(settings["calendario"]["nomeCalendario"], oldRef))
+                        if (CalendarManager.FindAppointment(UserSettings.settings["calendario"]["nomeCalendario"], oldRef))
                         {
                             bool removed = false;
                             if (oldStato != stato_ordine && stato_ordine == 1)
                             {
-                                res = MessageBox.Show("L'ordine è stato chiuso, vuoi rimuoverlo dal calendario?", "Conferma Rimozione Ordine da Calendario", MessageBoxButtons.OKCancel, MessageBoxIcon.Information);
+                                res = MessageBox.Show("L'ordine è stato chiuso, vuoi rimuoverlo dal calendario?", "Conferma Rimozione Ordine da Calendario", MessageBoxButtons.OKCancel, MessageBoxIcon.Information, MessageBoxDefaultButton.Button1, MessageBoxOptions.DefaultDesktopOnly);
                                 if (res != DialogResult.OK)
                                 {
-                                    RemoveAppointment(oldRef);
+                                    CalendarManager.RemoveAppointment(oldRef);
                                     removed = true;
                                 }
                             }
@@ -5642,25 +5611,25 @@ namespace mangaerordini
                             {
                                 if (DateTime.Compare(oldETA, dataETAOrdValue.DateValue) == 0 && (oldPrezF != prezzo_finaleV.DecimalValue || oldRef != n_ordine))
                                 {
-                                    res = MessageBox.Show("Vuoi aggiornare l'evento del calendario relativo alll'ordine con le nuove informazioni?", "Conferma Aggiornamento Ordine Calendario", MessageBoxButtons.OKCancel, MessageBoxIcon.Information);
+                                    res = MessageBox.Show("Vuoi aggiornare l'evento del calendario relativo alll'ordine con le nuove informazioni?", "Conferma Aggiornamento Ordine Calendario", MessageBoxButtons.OKCancel, MessageBoxIcon.Information, MessageBoxDefaultButton.Button1, MessageBoxOptions.DefaultDesktopOnly);
                                     if (res != DialogResult.Yes)
                                     {
-                                        UpdateCalendar(oldRef, n_ordine, id_ordine, dataETAOrdValue.DateValue, false);
+                                        CalendarManager.UpdateCalendar(oldRef, n_ordine, id_ordine, dataETAOrdValue.DateValue, false);
                                     }
                                 }
                                 else if (DateTime.Compare(oldETA, dataETAOrdValue.DateValue) != 0)
                                 {
-                                    res = MessageBox.Show("Vuoi aggiornare l'evento del calendario relativo alll'ordine con le nuove informazioni?" + Environment.NewLine + "L'evento verrà cancellato per poi essere inserito nuovamente.", "Conferma Aggiornamento Ordine Calendario", MessageBoxButtons.OKCancel, MessageBoxIcon.Information);
+                                    res = MessageBox.Show("Vuoi aggiornare l'evento del calendario relativo alll'ordine con le nuove informazioni?" + Environment.NewLine + "L'evento verrà cancellato per poi essere inserito nuovamente.", "Conferma Aggiornamento Ordine Calendario", MessageBoxButtons.OKCancel, MessageBoxIcon.Information, MessageBoxDefaultButton.Button1, MessageBoxOptions.DefaultDesktopOnly);
                                     if (res != DialogResult.Yes)
                                     {
-                                        UpdateCalendar(oldRef, n_ordine, id_ordine, dataETAOrdValue.DateValue);
+                                        CalendarManager.UpdateCalendar(oldRef, n_ordine, id_ordine, dataETAOrdValue.DateValue);
                                     }
                                 }
                             }
                         }
                     }
 
-                    MessageBox.Show("Ordine Aggiornato.");
+                    OnTopMessage.Information("Ordine Aggiornato.");
 
                     DateTime today = DateTime.Today;
                     FieldOrdData.Text = today.ToString("dd/MM/yyyy");
@@ -5668,7 +5637,7 @@ namespace mangaerordini
                 }
                 catch (SQLiteException ex)
                 {
-                    MessageBox.Show("Errore durante aggiornamento ordine. Codice: " + ReturnErorrCode(ex));
+                    OnTopMessage.Error("Errore durante aggiornamento ordine. Codice: " + DbTools.ReturnErorrCode(ex));
                     UpdateFields("OCR", "A", true);
                 }
             }
@@ -5685,28 +5654,28 @@ namespace mangaerordini
             string prezzo_scontato = FieldOrdOggPsc.Text.Trim();
             string pezzi = FieldOrdOggQta.Text.Trim();
 
-            ValidationResult prezzo_originaleV;
-            ValidationResult prezzo_scontatoV;
-            ValidationResult dataETAOrdValue;
+            DataValidation.ValidationResult prezzo_originaleV;
+            DataValidation.ValidationResult prezzo_scontatoV;
+            DataValidation.ValidationResult dataETAOrdValue;
 
             string er_list = "";
 
-            dataETAOrdValue = ValidateDate(dataETAString);
+            dataETAOrdValue = DataValidation.ValidateDate(dataETAString);
             er_list += dataETAOrdValue.Error;
 
-            prezzo_originaleV = ValidatePrezzo(prezzo_originale);
+            prezzo_originaleV = DataValidation.ValidatePrezzo(prezzo_originale);
             er_list += prezzo_originaleV.Error;
 
-            prezzo_scontatoV = ValidatePrezzo(prezzo_scontato);
+            prezzo_scontatoV = DataValidation.ValidatePrezzo(prezzo_scontato);
             er_list += prezzo_scontatoV.Error;
 
 
-            ValidationResult qtaP = ValidateQta(pezzi);
+            DataValidation.ValidationResult qtaP = DataValidation.ValidateQta(pezzi);
             er_list += qtaP.Error;
 
             if (er_list != "")
             {
-                MessageBox.Show(er_list);
+                OnTopMessage.Alert(er_list);
 
                 FieldOrdOggPOr.Enabled = true;
                 FieldOrdOggPsc.Enabled = true;
@@ -5720,7 +5689,7 @@ namespace mangaerordini
                 return;
             }
 
-            DialogResult res = MessageBox.Show("Vuoi salvare le modifiche all'oggetto?", "Conferma Salvataggio Modifiche Oggetto Ordine", MessageBoxButtons.OKCancel, MessageBoxIcon.Information);
+            DialogResult res = MessageBox.Show("Vuoi salvare le modifiche all'oggetto?", "Conferma Salvataggio Modifiche Oggetto Ordine", MessageBoxButtons.OKCancel, MessageBoxIcon.Information, MessageBoxDefaultButton.Button1, MessageBoxOptions.DefaultDesktopOnly);
             if (res != DialogResult.OK)
             {
 
@@ -5738,27 +5707,27 @@ namespace mangaerordini
 
 
             string commandText = @" BEGIN TRANSACTION;
-                                    UPDATE OR ROLLBACK " + schemadb + @"[ordine_pezzi]
+                                    UPDATE OR ROLLBACK " + ProgramParameters.schemadb + @"[ordine_pezzi]
 									    SET
 										    prezzo_unitario_originale=@por, prezzo_unitario_sconto=@pos,pezzi=@pezzi, ETA=@eta
 									    WHERE
 										    Id=@idoggoff
 									    LIMIT 1;
 
-                                    UPDATE OR ROLLBACK " + schemadb + @"[ordini_elenco]
-									    SET totale_ordine = IFNULL((SELECT SUM(OP.pezzi * OP.prezzo_unitario_sconto) FROM " + schemadb + @"[ordine_pezzi] AS OP WHERE OP.ID_ordine = @idord),0)
+                                    UPDATE OR ROLLBACK " + ProgramParameters.schemadb + @"[ordini_elenco]
+									    SET totale_ordine = IFNULL((SELECT SUM(OP.pezzi * OP.prezzo_unitario_sconto) FROM " + ProgramParameters.schemadb + @"[ordine_pezzi] AS OP WHERE OP.ID_ordine = @idord),0)
 									    WHERE Id = @idord LIMIT 1;
                                     ";
             if (CheckBoxOrdOggSconto.Checked)
             {
-                commandText += @"UPDATE OR ROLLBACK " + schemadb + @"[ordini_elenco] 
+                commandText += @"UPDATE OR ROLLBACK " + ProgramParameters.schemadb + @"[ordini_elenco] 
 									SET prezzo_finale = IFNULL(totale_ordine*(1-sconto/100),0)
 									WHERE Id=@idord LIMIT 1;";
             }
             commandText += "COMMIT;";
 
 
-            using (SQLiteCommand cmd = new SQLiteCommand(commandText, connection))
+            using (SQLiteCommand cmd = new SQLiteCommand(commandText, ProgramParameters.connection))
             {
                 try
                 {
@@ -5774,7 +5743,7 @@ namespace mangaerordini
 
                     cmd.ExecuteNonQuery();
 
-                    if (Boolean.Parse(settings["calendario"]["aggiornaCalendario"]) == true)
+                    if (Boolean.Parse(UserSettings.settings["calendario"]["aggiornaCalendario"]) == true)
                     {
                         if (Convert.ToDecimal(old_prezzo_scontatoV.Text) != prezzo_scontatoV.DecimalValue || Convert.ToInt32(old_pezziV.Text) != qtaP.IntValue || DateTime.Compare(Convert.ToDateTime(old_dataETAOrdValue.Text).Date, dataETAOrdValue.DateValue) != 0)
                         {
@@ -5784,10 +5753,10 @@ namespace mangaerordini
                             commandText = @"SELECT 
                                                 codice_ordine,
                                                 data_ETA
-                                            FROM " + schemadb + @"[ordini_elenco] 
+                                            FROM " + ProgramParameters.schemadb + @"[ordini_elenco] 
                                             WHERE Id=@idord LIMIT 1;";
 
-                            using (SQLiteCommand cmd3 = new SQLiteCommand(commandText, connection))
+                            using (SQLiteCommand cmd3 = new SQLiteCommand(commandText, ProgramParameters.connection))
                             {
                                 try
                                 {
@@ -5804,16 +5773,16 @@ namespace mangaerordini
                                 }
                                 catch (SQLiteException ex)
                                 {
-                                    MessageBox.Show("Errore durante lettura dati ordine(dati calendario). Codice: " + ReturnErorrCode(ex));
+                                    OnTopMessage.Error("Errore durante lettura dati ordine(dati calendario). Codice: " + DbTools.ReturnErorrCode(ex));
                                 }
                             }
 
-                            if (!String.IsNullOrEmpty(ordinecode) && FindAppointment(settings["calendario"]["nomeCalendario"], ordinecode))
+                            if (!String.IsNullOrEmpty(ordinecode) && CalendarManager.FindAppointment(UserSettings.settings["calendario"]["nomeCalendario"], ordinecode))
                             {
-                                DialogResult dialogResult = MessageBox.Show("Vuoi aggiornare l'evento sul calendario con le nuove informazioni?", "Aggiornare Evento Ordine Calendario", MessageBoxButtons.YesNo);
+                                DialogResult dialogResult = OnTopMessage.Question("Vuoi aggiornare l'evento sul calendario con le nuove informazioni?", "Aggiornare Evento Ordine Calendario");
                                 if (dialogResult == DialogResult.Yes)
                                 {
-                                    UpdateCalendar(ordinecode, ordinecode, idordine, eta, false);
+                                    CalendarManager.UpdateCalendar(ordinecode, ordinecode, idordine, eta, false);
                                 }
                             }
                         }
@@ -5849,11 +5818,11 @@ namespace mangaerordini
 
                     CheckBoxOrdOggCheckAddNotOffer.Enabled = true;
 
-                    MessageBox.Show("Oggetto aggiornato.");
+                    OnTopMessage.Information("Oggetto aggiornato.");
                 }
                 catch (SQLiteException ex)
                 {
-                    MessageBox.Show("Errore durante aggiornamento oggetto. Codice: " + ReturnErorrCode(ex));
+                    OnTopMessage.Error("Errore durante aggiornamento oggetto. Codice: " + DbTools.ReturnErorrCode(ex));
                     UpdateFields("OAO", "E", false);
                     UpdateFields("OCR", "FE", true);
                 }
@@ -6066,12 +6035,12 @@ namespace mangaerordini
                 {
                     string commandText = @"SELECT 
 										prezzo
-									   FROM " + schemadb + @"[pezzi_ricambi]
+									   FROM " + ProgramParameters.schemadb + @"[pezzi_ricambi]
 									   WHERE Id=@id_ricambio 
                                         LIMIT 1;";
 
 
-                    using (SQLiteCommand cmd = new SQLiteCommand(commandText, connection))
+                    using (SQLiteCommand cmd = new SQLiteCommand(commandText, ProgramParameters.connection))
                     {
                         try
                         {
@@ -6082,7 +6051,7 @@ namespace mangaerordini
                         }
                         catch (SQLiteException ex)
                         {
-                            MessageBox.Show("Errore durante recupero prezzo ricambio. Codice: " + ReturnErorrCode(ex));
+                            OnTopMessage.Error("Errore durante recupero prezzo ricambio. Codice: " + DbTools.ReturnErorrCode(ex));
 
                             return;
                         }
@@ -6106,11 +6075,11 @@ namespace mangaerordini
             DataGridView[] data_grid = new DataGridView[] { DataGridViewVisualizzaOrdini };
 
 
-            string commandText = "SELECT COUNT(*) FROM " + schemadb + @"[ordini_elenco];";
+            string commandText = "SELECT COUNT(*) FROM " + ProgramParameters.schemadb + @"[ordini_elenco];";
             int count = 1;
 
 
-            using (SQLiteCommand cmdCount = new SQLiteCommand(commandText, connection))
+            using (SQLiteCommand cmdCount = new SQLiteCommand(commandText, ProgramParameters.connection))
             {
                 try
                 {
@@ -6136,7 +6105,7 @@ namespace mangaerordini
                 }
                 catch (SQLiteException ex)
                 {
-                    MessageBox.Show("Errore durante verifica records in elenco ordini. Codice: " + ReturnErorrCode(ex));
+                    OnTopMessage.Error("Errore durante verifica records in elenco ordini. Codice: " + DbTools.ReturnErorrCode(ex));
 
 
                     return;
@@ -6166,12 +6135,12 @@ namespace mangaerordini
                                     (CASE OE.gestione_spedizione WHEN 0 THEN 'Exlude from Tot.' WHEN 1 THEN 'Add total & No Discount' WHEN 2 THEN 'Add Tot with Discount' ELSE '' END) AS spedg,
 									(CASE OE.stato WHEN 0 THEN 'APERTO'  WHEN 1 THEN 'CHIUSO' END) AS Stato
 
-								   FROM " + schemadb + @"[ordini_elenco] AS OE 
-								   LEFT JOIN " + schemadb + @"[offerte_elenco] OFE 
+								   FROM " + ProgramParameters.schemadb + @"[ordini_elenco] AS OE 
+								   LEFT JOIN " + ProgramParameters.schemadb + @"[offerte_elenco] OFE 
 										ON OFE.Id = OE.ID_offerta 
-								   LEFT JOIN " + schemadb + @"[clienti_elenco] AS CE 
+								   LEFT JOIN " + ProgramParameters.schemadb + @"[clienti_elenco] AS CE 
 										ON CE.Id = OFE.ID_cliente 
-								   LEFT JOIN " + schemadb + @"[clienti_riferimenti] AS CR 
+								   LEFT JOIN " + ProgramParameters.schemadb + @"[clienti_riferimenti] AS CR 
 										ON CR.Id = OFE.ID_riferimento 
                                     WHERE OE.ID_offerta IS NOT NULL " + addInfo + @" 
 
@@ -6195,10 +6164,10 @@ namespace mangaerordini
                                     (CASE OE.gestione_spedizione WHEN 0 THEN 'Exlude from Tot.' WHEN 1 THEN 'Add total & No Discount' WHEN 2 THEN 'Add Tot with Discount' ELSE '' END) AS spedg,
 									(CASE OE.stato WHEN 0 THEN 'APERTO'  WHEN 1 THEN 'CHIUSO' END) AS Stato
 
-								   FROM " + schemadb + @"[ordini_elenco] AS OE
-								   LEFT JOIN " + schemadb + @"[clienti_elenco] AS CE 
+								   FROM " + ProgramParameters.schemadb + @"[ordini_elenco] AS OE
+								   LEFT JOIN " + ProgramParameters.schemadb + @"[clienti_elenco] AS CE 
 										ON CE.Id = OE.ID_cliente 
-								   LEFT JOIN " + schemadb + @"[clienti_riferimenti] AS CR 
+								   LEFT JOIN " + ProgramParameters.schemadb + @"[clienti_riferimenti] AS CR 
 										ON CR.Id = OE.ID_riferimento 
                                     WHERE OE.ID_offerta IS NULL " + addInfo + @" 
 
@@ -6207,7 +6176,7 @@ namespace mangaerordini
             page--;
 
 
-            using (SQLiteDataAdapter cmd = new SQLiteDataAdapter(commandText, connection))
+            using (SQLiteDataAdapter cmd = new SQLiteDataAdapter(commandText, ProgramParameters.connection))
             {
                 try
                 {
@@ -6252,7 +6221,7 @@ namespace mangaerordini
                 }
                 catch (SQLiteException ex)
                 {
-                    MessageBox.Show("Errore durante popolamento tabella Visualizzazione Ordini. Codice: " + ReturnErorrCode(ex));
+                    OnTopMessage.Error("Errore durante popolamento tabella Visualizzazione Ordini. Codice: " + DbTools.ReturnErorrCode(ex));
 
 
                     return;
@@ -6278,15 +6247,15 @@ namespace mangaerordini
 									strftime('%d/%m/%Y', OP.ETA) AS ETA,
 								    PR.descrizione AS descrizione
 
-									FROM " + schemadb + @"[ordine_pezzi] AS OP
-								   LEFT JOIN " + schemadb + @"[pezzi_ricambi] AS PR
+									FROM " + ProgramParameters.schemadb + @"[ordine_pezzi] AS OP
+								   LEFT JOIN " + ProgramParameters.schemadb + @"[pezzi_ricambi] AS PR
 									ON PR.Id = OP.ID_ricambio
 								   
 									WHERE OP.ID_ordine=@idord 
 									GROUP BY OP.Id, PR.nome, PR.codice, OP.prezzo_unitario_originale, OP.prezzo_unitario_sconto, OP.pezzi, OP.ETA, PR.descrizione
 									ORDER BY OP.Id;";
 
-            using (SQLiteDataAdapter cmd = new SQLiteDataAdapter(commandText, connection))
+            using (SQLiteDataAdapter cmd = new SQLiteDataAdapter(commandText, ProgramParameters.connection))
             {
                 try
                 {
@@ -6325,7 +6294,7 @@ namespace mangaerordini
                 }
                 catch (SQLiteException ex)
                 {
-                    MessageBox.Show("Errore durante popolamento tabella oggetti ordini. Codice: " + ReturnErorrCode(ex));
+                    OnTopMessage.Error("Errore durante popolamento tabella oggetti ordini. Codice: " + DbTools.ReturnErorrCode(ex));
                 }
             }
             return;
@@ -6370,12 +6339,12 @@ namespace mangaerordini
                                                          ELSE 0  
                                                       END) ),'.',',')  AS optotf
 
-									   FROM " + schemadb + @"[ordini_elenco] AS OP
-									   LEFT JOIN " + schemadb + @"[offerte_elenco] AS OE
+									   FROM " + ProgramParameters.schemadb + @"[ordini_elenco] AS OP
+									   LEFT JOIN " + ProgramParameters.schemadb + @"[offerte_elenco] AS OE
 										ON OE.Id = OP.ID_offerta
-									   LEFT JOIN " + schemadb + @"[clienti_elenco] AS CE
+									   LEFT JOIN " + ProgramParameters.schemadb + @"[clienti_elenco] AS CE
 										ON CE.Id = OE.ID_cliente
-									   LEFT JOIN " + schemadb + @"[clienti_riferimenti] AS CR
+									   LEFT JOIN " + ProgramParameters.schemadb + @"[clienti_riferimenti] AS CR
 										ON CR.Id = OE.ID_riferimento
                                          WHERE OP.ID_offerta IS NOT NULL AND OP.id=@idOrdine
 
@@ -6406,16 +6375,16 @@ namespace mangaerordini
                                                          ELSE 0  
                                                       END) ),'.',',')  AS optotf
 
-									   FROM " + schemadb + @"[ordini_elenco] AS OP
-									   LEFT JOIN " + schemadb + @"[clienti_elenco] AS CE
+									   FROM " + ProgramParameters.schemadb + @"[ordini_elenco] AS OP
+									   LEFT JOIN " + ProgramParameters.schemadb + @"[clienti_elenco] AS CE
 										ON CE.Id = OP.ID_cliente
-									   LEFT JOIN " + schemadb + @"[clienti_riferimenti] AS CR
+									   LEFT JOIN " + ProgramParameters.schemadb + @"[clienti_riferimenti] AS CR
 										ON CR.Id = OP.ID_riferimento
 
 									   WHERE OP.ID_offerta IS NULL AND OP.id = @idOrdine LIMIT 1;";
 
 
-                    using (SQLiteCommand cmd = new SQLiteCommand(commandText, connection))
+                    using (SQLiteCommand cmd = new SQLiteCommand(commandText, ProgramParameters.connection))
                     {
                         try
                         {
@@ -6452,7 +6421,7 @@ namespace mangaerordini
                         }
                         catch (SQLiteException ex)
                         {
-                            MessageBox.Show("Errore durante recupero info visualizzaaione ordine. Codice: " + ReturnErorrCode(ex));
+                            OnTopMessage.Error("Errore durante recupero info visualizzaaione ordine. Codice: " + DbTools.ReturnErorrCode(ex));
 
                             return;
                         }
@@ -6469,17 +6438,6 @@ namespace mangaerordini
 
         //APPUNTAMNETI
 
-        public class CalendarResult
-        {
-            public bool Success { get; set; } = false;
-
-            public bool Found { get; set; } = false;
-
-            public DateTime AppointmentDate { get; set; } = DateTime.Now.AddDays(-7);
-
-            public Outlook.Folder CalendarFolder { get; set; } = null;
-        }
-
         private void CreaEventoCalendario_Click(object sender, EventArgs e)
         {
             UpdateFields("VS", "E", false);
@@ -6487,27 +6445,27 @@ namespace mangaerordini
             string nordine = VisOrdNumero.Text;
             string opde = VisOrdETA.Text;
 
-            ValidationResult dateAppoint = new ValidationResult
+            DataValidation.ValidationResult dateAppoint = new DataValidation.ValidationResult
             {
                 DateValue = DateTime.MinValue
             };
 
-            ValidationResult dataETAOrdValue;
+            DataValidation.ValidationResult dataETAOrdValue;
 
 
-            dataETAOrdValue = ValidateDate(opde);
+            dataETAOrdValue = DataValidation.ValidateDate(opde);
 
             if (dataETAOrdValue.Error != null)
             {
-                MessageBox.Show(dataETAOrdValue.Error);
+                OnTopMessage.Alert(dataETAOrdValue.Error);
                 UpdateFields("VS", "E", true);
                 return;
             }
 
-            if (!FindAppointment(settings["calendario"]["nomeCalendario"], nordine))
+            if (!CalendarManager.FindAppointment(UserSettings.settings["calendario"]["nomeCalendario"], nordine))
             {
-                DialogResult dialogResult = MessageBox.Show("Creare l'appuntamento? Una volta creato, sarà necessario salvarlo." + Environment.NewLine + Environment.NewLine
-                                                            + "ATTENZIONE: NON rimuovere la stringa finale ##ManaOrdini[numero_ordine]## dal titolo dell'appunatmento. Serve per riconoscere l'evento.", "Creazione Appuntamento Calendario", MessageBoxButtons.YesNo);
+                DialogResult dialogResult = OnTopMessage.Question("Creare l'appuntamento? Una volta creato, sarà necessario salvarlo." + Environment.NewLine + Environment.NewLine
+                                                            + "ATTENZIONE: NON rimuovere la stringa finale ##ManaOrdini[numero_ordine]## dal titolo dell'appunatmento. Serve per riconoscere l'evento.", "Creazione Appuntamento Calendario");
                 if (dialogResult != DialogResult.Yes)
                 {
                     UpdateFields("VS", "E", true);
@@ -6516,25 +6474,25 @@ namespace mangaerordini
 
                 while (dateAppoint.DateValue == DateTime.MinValue)
                 {
-                    string input = Interaction.InputBox("Inserire data in cui ricevere la notifica relativa all'ordine.", "Data Notifica Ordine", (dataETAOrdValue.DateValue).ToString(dateFormat));
+                    string input = Interaction.InputBox("Inserire data in cui ricevere la notifica relativa all'ordine.", "Data Notifica Ordine", (dataETAOrdValue.DateValue).ToString(ProgramParameters.dateFormat));
                     if (String.ReferenceEquals(input, String.Empty))
                     {
-                        MessageBox.Show("Azione Cancellata");
+                        OnTopMessage.Alert("Azione Cancellata");
                         UpdateFields("VS", "E", true);
                         return;
                     }
 
-                    dateAppoint = ValidateDate(input);
+                    dateAppoint = DataValidation.ValidateDate(input);
 
                     if (dateAppoint.Error != null)
                     {
-                        MessageBox.Show("Controllare formato data. Impossibile convertire in formato data corretto.");
+                        OnTopMessage.Alert("Controllare formato data. Impossibile convertire in formato data corretto.");
                         dateAppoint.DateValue = DateTime.MinValue;
                         continue;
                     }
                     else if (DateTime.Compare(dateAppoint.DateValue, DateTime.MinValue) != 0 && DateTime.Compare(dateAppoint.DateValue, dataETAOrdValue.DateValue) > 0)
                     {
-                        DialogResult confDataLaterOrder = MessageBox.Show("La data scelta va oltre alla data di consegna dell'ordine, continuare?" + Environment.NewLine + "NOTA: al momento il programma non è in grado di gestire automaticamente le modifiche se la data dell'avviso va oltre a quella di consegna." + Environment.NewLine + "Se necessario aggiornare l'ETA dell'ordine.", "Creazione Appuntamento Calendario", MessageBoxButtons.YesNo);
+                        DialogResult confDataLaterOrder = OnTopMessage.Question("La data scelta va oltre alla data di consegna dell'ordine, continuare?" + Environment.NewLine + "NOTA: al momento il programma non è in grado di gestire automaticamente le modifiche se la data dell'avviso va oltre a quella di consegna." + Environment.NewLine + "Se necessario aggiornare l'ETA dell'ordine.", "Creazione Appuntamento Calendario");
                         if (confDataLaterOrder == DialogResult.No)
                         {
                             dateAppoint.DateValue = DateTime.MinValue;
@@ -6543,7 +6501,7 @@ namespace mangaerordini
                     }
                     else if (DateTime.Compare(dateAppoint.DateValue, DateTime.MinValue) != 0 && DateTime.Compare(dateAppoint.DateValue, DateTime.Now.Date) < 0)
                     {
-                        DialogResult confDataLaterOrder = MessageBox.Show("La data scelta è antecedente alla dato odierna, continuare?", "Creazione Appuntamento Calendario", MessageBoxButtons.YesNo);
+                        DialogResult confDataLaterOrder = OnTopMessage.Question("La data scelta è antecedente alla dato odierna, continuare?", "Creazione Appuntamento Calendario");
                         if (confDataLaterOrder == DialogResult.No)
                         {
                             dateAppoint.DateValue = DateTime.MinValue;
@@ -6552,14 +6510,14 @@ namespace mangaerordini
                     }
                 }
 
-                string body = CreateAppointmentBody(Convert.ToInt32(VisOrdId.Text.Trim()));
+                string body = CalendarManager.CreateAppointmentBody(Convert.ToInt32(VisOrdId.Text.Trim()));
 
-                AddAppointment(nordine, body, dateAppoint.DateValue);
+                CalendarManager.AddAppointment(nordine, body, dateAppoint.DateValue);
 
             }
             else
             {
-                MessageBox.Show("Evento già presente. Rimuoverlo o aggiornarlo se necessario.");
+                OnTopMessage.Information("Evento già presente. Rimuoverlo o aggiornarlo se necessario.");
             }
 
             UpdateFields("VS", "E", true);
@@ -6571,12 +6529,12 @@ namespace mangaerordini
             string nordine = VisOrdNumero.Text;
             string ETA = VisOrdETA.Text;
 
-            ValidationResult dataETAOrdValue;
-            dataETAOrdValue = ValidateDate(ETA);
+            DataValidation.ValidationResult dataETAOrdValue;
+            dataETAOrdValue = DataValidation.ValidateDate(ETA);
 
             if (dataETAOrdValue.Error != null)
             {
-                MessageBox.Show("Data non valida o vuota");
+                OnTopMessage.Alert("Data non valida o vuota");
                 return;
             }
             else
@@ -6584,13 +6542,13 @@ namespace mangaerordini
                 dataETAOrdValue.DateValue = dataETAOrdValue.DateValue.AddDays(1);
             }
 
-            if (FindAppointment(settings["calendario"]["nomeCalendario"], nordine))
+            if (CalendarManager.FindAppointment(UserSettings.settings["calendario"]["nomeCalendario"], nordine))
             {
-                RemoveAppointment(nordine);
+                CalendarManager.RemoveAppointment(nordine);
             }
             else
             {
-                MessageBox.Show("Evento non presente." + Environment.NewLine + Environment.NewLine + "NOTA: il proramma ricerca solo gli eventi tra la data di creazione ordine e la data di consegna." + Environment.NewLine + " Se l'evento è stato modfiicato a mano oltre queste date, il porgramma non lo troverà.");
+                OnTopMessage.Alert("Evento non presente.");
             }
         }
 
@@ -6602,13 +6560,13 @@ namespace mangaerordini
             int id_ordine = Convert.ToInt32(VisOrdId.Text);
             DateTime estDate = Convert.ToDateTime(VisOrdETA.Text);
 
-            if (FindAppointment(settings["calendario"]["nomeCalendario"], oldRef))
+            if (CalendarManager.FindAppointment(UserSettings.settings["calendario"]["nomeCalendario"], oldRef))
             {
-                UpdateCalendar(oldRef, newRef, id_ordine, estDate, false);
+                CalendarManager.UpdateCalendar(oldRef, newRef, id_ordine, estDate, false);
             }
             else
             {
-                MessageBox.Show("Evento non presente.");
+                OnTopMessage.Alert("Evento non presente.");
             }
             UpdateFields("VS", "E", true);
 
@@ -6620,24 +6578,24 @@ namespace mangaerordini
 
             string newRef = VisOrdNumero.Text;
 
-            Outlook.Folder personalCalendar = FindCalendar(settings["calendario"]["nomeCalendario"]);
+            Outlook.Folder personalCalendar = CalendarManager.FindCalendar(UserSettings.settings["calendario"]["nomeCalendario"]);
 
             Outlook.Items restrictedItems;
 
-            if (!FindAppointment(settings["calendario"]["nomeCalendario"], newRef, personalCalendar))
+            if (!CalendarManager.FindAppointment(UserSettings.settings["calendario"]["nomeCalendario"], newRef, personalCalendar))
             {
-                MessageBox.Show("Non esiste un evento a calendario.");
+                OnTopMessage.Information("Non esiste un evento a calendario.");
                 UpdateFields("VS", "E", true);
                 return;
             }
 
-            CalendarResult caldate = GetDbDateCalendar(new string[] { newRef });
+            CalendarManager.CalendarResult caldate = CalendarManager.GetDbDateCalendar(new string[] { newRef });
 
-            restrictedItems = CalendarGetItems(personalCalendar, caldate.AppointmentDate.AddDays(-1), caldate.AppointmentDate.AddDays(1), newRef);
+            restrictedItems = CalendarManager.CalendarGetItems(personalCalendar, caldate.AppointmentDate.AddDays(-1), caldate.AppointmentDate.AddDays(1), newRef);
 
             foreach (Outlook.AppointmentItem entry in restrictedItems)
             {
-                ValidationResult answer = new ValidationResult();
+                DataValidation.ValidationResult answer = new DataValidation.ValidationResult();
 
                 while (answer.DateValue == DateTime.MinValue || DateTime.Compare(entry.Start, answer.DateValue) != 0)
                 {
@@ -6649,27 +6607,27 @@ namespace mangaerordini
                         return;
                     }
 
-                    answer = ValidateDateTime(editDate);
+                    answer = DataValidation.ValidateDateTime(editDate);
                     if (answer.Error != null)
-                        MessageBox.Show(answer.Error);
+                        OnTopMessage.Alert(answer.Error);
                 }
 
                 if (DateTime.Compare(entry.Start, answer.DateValue) == 0)
                 {
-                    MessageBox.Show("Operazione annullata");
+                    OnTopMessage.Alert("Operazione annullata");
                 }
                 else
                 {
                     try
                     {
-                        UpdateDbDateAppointment(answer.DateValue, newRef);
+                        CalendarManager.UpdateDbDateAppointment(answer.DateValue, newRef);
                         entry.Start = answer.DateValue;
                         entry.Save();
-                        MessageBox.Show("Data aggiornata.");
+                        OnTopMessage.Information("Data aggiornata.");
                     }
                     catch
                     {
-                        MessageBox.Show("Si è verificato un erorre. Data non aggiornata.");
+                        OnTopMessage.Error("Si è verificato un erorre. Data non aggiornata.");
                     }
                 }
             }
@@ -6682,8 +6640,8 @@ namespace mangaerordini
             UpdateFields("VS", "E", false);
             string newRef = VisOrdNumero.Text;
 
-            Outlook.Folder personalCalendar = FindCalendar(settings["calendario"]["nomeCalendario"]);
-            Outlook.Items restrictedItems = CalendarGetItems(personalCalendar, DateTime.Now.AddDays(-7), DateTime.MaxValue, newRef);
+            Outlook.Folder personalCalendar = CalendarManager.FindCalendar(UserSettings.settings["calendario"]["nomeCalendario"]);
+            Outlook.Items restrictedItems = CalendarManager.CalendarGetItems(personalCalendar, DateTime.Now.AddDays(-7), DateTime.MaxValue, newRef);
 
             List<Tuple<string, Outlook.AppointmentItem>> listaApp = new List<Tuple<string, Outlook.AppointmentItem>>();
 
@@ -6697,696 +6655,16 @@ namespace mangaerordini
 
             if (c == 1)
             {
-                MessageBox.Show("Nessun duplicato a partire da una settimana fa.");
+                OnTopMessage.Information("Nessun duplicato a partire da una settimana fa.");
             }
             else
             {
-                if (MessageBox.Show("Sono stati trovati " + c + " eventi per lo stesso ordine." + Environment.NewLine + "Procedere con le operazioni di eliminazione? Verrà chiesta conferma per ogni evento." + Environment.NewLine + Environment.NewLine + "Attenzione: eventi multipli sono inconflitto con la gestione eventi del programma.", "Eventi Multipli per Ordine " + newRef, MessageBoxButtons.YesNo) == DialogResult.Yes)
+                if (OnTopMessage.Question("Sono stati trovati " + c + " eventi per lo stesso ordine." + Environment.NewLine + "Procedere con le operazioni di eliminazione? Verrà chiesta conferma per ogni evento." + Environment.NewLine + Environment.NewLine + "Attenzione: eventi multipli sono inconflitto con la gestione eventi del programma.", "Eventi Multipli per Ordine " + newRef) == DialogResult.Yes)
                 {
-                    RemoveAppointment(newRef, listaApp);
+                    CalendarManager.RemoveAppointment(newRef, listaApp);
                 }
             }
             UpdateFields("VS", "E", true);
-        }
-
-        private void UpdateCalendar(string oldRef, string newRef, int id_ordine, DateTime estDate, bool delete = true)
-        {
-            bool check = false;
-            if (delete == true)
-                check = RemoveAppointment(oldRef);
-
-            if (check == true || delete == false)
-            {
-                Thread.CurrentThread.CurrentCulture = new CultureInfo("it-IT");
-
-                ValidationResult dateAppoint = new ValidationResult
-                {
-                    DateValue = DateTime.MinValue
-                };
-
-                string body = CreateAppointmentBody(id_ordine);
-
-                if (delete == true)
-                {
-                    while (dateAppoint.DateValue == DateTime.MinValue)
-                    {
-                        string input = Interaction.InputBox("Inserire la data per l'appunatmento sul calendario? Una volta creato, sarà necessario salvarlo." + Environment.NewLine + Environment.NewLine
-                                                            + "ATTENZIONE: NON rimuovere la stringa finale ##ManaOrdini[numero_ordine]## dal titolo dell'appunatmento. Serve per riconoscere l'evento.", "Modifica Appuntamento Calendario", (estDate).ToString(dateFormat));
-                        if (String.ReferenceEquals(input, String.Empty))
-                        {
-                            MessageBox.Show("Azione Cancellata");
-                            UpdateFields("VS", "E", true);
-                            return;
-                        }
-
-                        dateAppoint = ValidateDate(input);
-
-                        if (dateAppoint.Error != null)
-                        {
-                            MessageBox.Show("Controllare formato data. Impossibile convertire in formato data corretto.");
-                            dateAppoint.DateValue = DateTime.MinValue;
-                            continue;
-                        }
-
-                        if (DateTime.Compare(dateAppoint.DateValue, DateTime.MinValue) != 0 && DateTime.Compare(dateAppoint.DateValue, estDate) > 0)
-                        {
-                            DialogResult confDataLaterOrder = MessageBox.Show("La data scelta va oltre alla data di consegna dell'ordine, continuare?", "Creazione Appuntamento Calendario", MessageBoxButtons.YesNo);
-                            if (confDataLaterOrder == DialogResult.No)
-                            {
-                                dateAppoint.DateValue = DateTime.MinValue;
-                            }
-                        }
-
-                        if (DateTime.Compare(dateAppoint.DateValue, DateTime.MinValue) != 0 && DateTime.Compare(dateAppoint.DateValue, DateTime.Now.Date) < 0)
-                        {
-                            DialogResult confDataLaterOrder = MessageBox.Show("La data scelta è antecedente alla dato odierna, continuare?", "Creazione Appuntamento Calendario", MessageBoxButtons.YesNo);
-                            if (confDataLaterOrder == DialogResult.No)
-                            {
-                                dateAppoint.DateValue = DateTime.MinValue;
-                            }
-                        }
-                    }
-                    AddAppointment(newRef, body, dateAppoint.DateValue);
-                }
-                else
-                    UpdateBodyCalendar(newRef, body);
-
-                MessageBox.Show("Appuntamento calendario aggiornato");
-            }
-        }
-
-        private void AddAppointment(string ordRef, string body, DateTime estDate)
-        {
-            try
-            {
-                Outlook.Folder personalCalendar = FindCalendar(settings["calendario"]["nomeCalendario"]);
-
-                if (personalCalendar == null)
-                {
-                    MessageBox.Show("Errore nella gestione calendari, non è possibile continuare. Provare a riavvaire outlook.");
-                    return;
-                }
-
-                if (FindAppointment(settings["calendario"]["nomeCalendario"], ordRef, personalCalendar))
-                {
-                    MessageBox.Show("Evento già presente. Rimuoverlo o aggiornarlo se necessario");
-                    return;
-                }
-
-                Outlook.AppointmentItem newAppointment = personalCalendar.Items.Add(Outlook.OlItemType.olAppointmentItem) as Outlook.AppointmentItem;
-                newAppointment.AllDayEvent = true;
-                newAppointment.Start = estDate + TimeSpan.Parse("8:00");
-                //estDate += TimeSpan.Parse("17:00");
-                newAppointment.End = estDate + TimeSpan.Parse("17:00");
-
-                newAppointment.Location = "";
-                newAppointment.Body = body;
-                newAppointment.Subject = "Reminder Ordine Numero:" + ordRef + "\t" + "##ManaOrdini" + ordRef + "##";
-
-                newAppointment.Display(true);
-
-                UpdateDbDateAppointment(estDate + TimeSpan.Parse("00:00:00"), ordRef);
-
-            }
-            catch (System.Exception ex)
-            {
-                MessageBox.Show("Si è verificato un errore durante la creazione dell'appuntamento. Errore: " + ex.Message);
-            }
-        }
-
-        private bool RemoveAppointment(string ordRef, List<Tuple<string, Outlook.AppointmentItem>> listaApp = null)
-        {
-            bool found = false;
-            int c = 0;
-            Outlook.Folder personalCalendar = FindCalendar(settings["calendario"]["nomeCalendario"]);
-
-            if (listaApp == null)
-            {
-                listaApp = new List<Tuple<string, Outlook.AppointmentItem>>();
-
-                if (personalCalendar == null)
-                {
-                    MessageBox.Show("Errore nella gestione calendari, non è possibile continuare. Provare a riavvaire Outlook.");
-                    return false;
-                }
-
-                if (!FindAppointment(settings["calendario"]["nomeCalendario"], ordRef, personalCalendar))
-                {
-                    MessageBox.Show("Evento non presente." + Environment.NewLine + Environment.NewLine + "NOTA: La data di partenza di ricerca degli eventi è 7 fa." + Environment.NewLine + " Se l'evento è stato modfiicato a mano oltre queste date, il porgramma non lo troverà.");
-                    return false;
-                }
-
-                DateTime start = DateTime.Now.AddDays(-1);
-
-                Outlook.Items restrictedItems = CalendarGetItems(personalCalendar, start, DateTime.MaxValue, ordRef);
-
-                string pattern = @"^.+##ManaOrdini([0-9]+)##$";
-
-                foreach (Outlook.AppointmentItem apptItem in restrictedItems)
-                {
-                    foreach (Match match in Regex.Matches(apptItem.Subject, pattern, RegexOptions.IgnoreCase))
-                    {
-                        listaApp.Add(new Tuple<string, Outlook.AppointmentItem>(match.Groups[1].Value.Trim(), apptItem));
-                        c++;
-                    }
-                }
-
-                MessageBox.Show(c + " elemento/i trovato/i con l'identificativo dell'evento. Verrà chiesta conferma prima dell'eliminazione di ciascun evento.");
-            }
-            else
-            {
-                c = listaApp.Count;
-            }
-
-            int deleted = 0;
-            for (int i = 0; i < c; i++)
-            {
-                DialogResult dialogResult = MessageBox.Show("Cancellare l'appuntamento col nome: '" + listaApp[i].Item2.Subject + "' fissato in data: " + (listaApp[i].Item2.Start) + "?", "Eliminazione Evento da Calendario (Evento " + (i + 1) + " di " + c + ") - Ordine Numero: " + ordRef, MessageBoxButtons.YesNo);
-                if (dialogResult == DialogResult.Yes)
-                {
-                    try
-                    {
-                        listaApp[i].Item2.Delete();
-                        UpdateDbDateAppointment(null, listaApp[i].Item1);
-                        found = true;
-                        deleted++;
-                        MessageBox.Show("Evento calendario rimosso.");
-                    }
-                    catch
-                    {
-                        MessageBox.Show("Si è verificato un errore durante l'eliminazione. Controllare il calendario.");
-                        return false;
-                    }
-                }
-            }
-
-            if (c - deleted > 1)
-            {
-                MessageBox.Show("Attenzione, esistono ancora eventi multipli per lo stesso ordine.");
-            }
-
-            if (deleted != c)
-            {
-                Outlook.Items restrictedItems = CalendarGetItems(personalCalendar, DateTime.Now.AddDays(-7), DateTime.MaxValue, ordRef);
-
-                foreach (Outlook.AppointmentItem apptItem in restrictedItems)
-                {
-                    UpdateDbDateAppointment(apptItem.Start, ordRef);
-                    return true;
-                }
-            }
-
-            if (found == true)
-            {
-                MessageBox.Show("Operazioni concluse.");
-                return true;
-            }
-
-            return false;
-
-        }
-
-        private bool? MoveAppointment(string oldCalendar, string newCalendar)
-        {
-            Outlook.Folder personalCalendar = FindCalendar(oldCalendar);
-            Outlook.Folder newCalendarFolder = FindCalendar(newCalendar);
-
-            if (personalCalendar == null || newCalendarFolder == null)
-            {
-                MessageBox.Show("Errore nella gestione calendari, non è possibile continuare. Provare a riavvaire Outlook.");
-                return false;
-            }
-
-            Outlook.Items restrictedItems = CalendarGetItems(personalCalendar, DateTime.Now.AddDays(-2), DateTime.MaxValue);
-
-            bool error_free = true;
-            int c = 0;
-
-            List<Outlook.AppointmentItem> listaApp = new List<Outlook.AppointmentItem>();
-            foreach (Outlook.AppointmentItem apptItem in restrictedItems)
-            {
-
-                if (Regex.IsMatch(apptItem.Subject, @"^.*##ManaOrdini\d{1,}##.*$"))
-                {
-                    listaApp.Add(apptItem);
-                    c++;
-                }
-
-                for (int i = 0; i < c; i++)
-                {
-                    try
-                    {
-                        listaApp[i].Move(newCalendarFolder);
-                    }
-                    catch (System.Exception ex)
-                    {
-                        MessageBox.Show("Si è verificato un errore durante la creazione dell'appuntamento. Errore: " + ex.Message);
-                        error_free = false;
-                    }
-                }
-            }
-
-            return error_free;
-        }
-
-        private bool UpdateBodyCalendar(string ordRef, string body)
-        {
-
-            Outlook.Folder personalCalendar = FindCalendar(settings["calendario"]["nomeCalendario"]);
-
-            if (personalCalendar == null)
-            {
-                MessageBox.Show("Errore nella gestione calendari, non è possibile continuare. Provare a riavvaire Outlook.");
-                return false;
-            }
-
-            //Outlook.Items restrictedItems = CalendarGetItems(personalCalendar, DateTime.Now.AddDays(-1), DateTime.MaxValue, ordRef);
-
-            Outlook.Items restrictedItems;
-
-            CalendarResult answer = GetDbDateCalendar(new string[] { ordRef });
-
-            if (answer.Found)
-                restrictedItems = CalendarGetItems(personalCalendar, answer.AppointmentDate.AddDays(-1), answer.AppointmentDate.AddDays(1), ordRef);
-            else
-                restrictedItems = CalendarGetItems(personalCalendar, answer.AppointmentDate, DateTime.MaxValue, ordRef);
-
-            bool updated = false;
-
-            foreach (Outlook.AppointmentItem apptItem in restrictedItems)
-            {
-                apptItem.Body = body;
-                apptItem.Save();
-                updated = true;
-            }
-
-            return updated;
-        }
-
-        private string CreateAppointmentBody(int id_ordine)
-        {
-            string clnome = "";
-            string clstato = "";
-            string clprov = "";
-            string clcitt = "";
-            string crnome = "";
-            string crtel = "";
-            string crmail = "";
-            string optot = "";
-            string opde = "";
-            string optotf = "";
-            string prezzofinaleIclSped = "";
-
-
-            string commandText = @"SELECT
-												OP.Id AS idord,
-												(CASE OP.stato WHEN 0 THEN 'APERTO'  WHEN 1 THEN 'CHIUSO' END) AS ordstat,
-												OP.codice_ordine AS codice_ordine,
-												CE.nome as clnome,
-												CE.stato as clstato,
-												CE.provincia as clprov,
-												CE.citta as clcitt,
-
-												CR.nome as crnome,
-												CR.telefono as crtel,
-												CR.mail as crmail,
-												strftime('%d/%m/%Y', OP.data_ordine) AS opdo,
-												strftime('%d/%m/%Y', OP.data_ETA) AS opde,
-												REPLACE( printf('%.2f',OP.totale_ordine ),'.',',')  AS optot,
-                                                REPLACE(  (
-                                                        printf('%.2f',OP.prezzo_finale  ) || 
-                                                        ' (' ||    
-                                                        printf('%.2f',OP.sconto ) || '%)'),'.',',')  AS optotf,
-
-                                                REPLACE(printf('%.2f',OP.prezzo_finale + (CASE OP.gestione_spedizione  
-                                                                                         WHEN 1 THEN   OP.costo_spedizione
-                                                                                         WHEN 2 THEN   OP.costo_spedizione*(1-OP.sconto/100) 
-                                                                                         ELSE 0  
-                                                                                      END) ),'.',',') AS prezzofinaleIclSped
-												
-
-									   FROM " + schemadb + @"[ordini_elenco] AS OP
-									   LEFT JOIN " + schemadb + @"[offerte_elenco] AS OE
-										ON OE.Id = OP.ID_offerta
-									   LEFT JOIN " + schemadb + @"[clienti_elenco] AS CE
-										ON CE.Id = OE.ID_cliente
-									   LEFT JOIN " + schemadb + @"[clienti_riferimenti] AS CR
-										ON CR.Id = OE.ID_riferimento
-
-									   WHERE OP.ID_offerta IS NOT NULL AND OP.id=@idOrdine
-
-                                        UNION ALL
-                                        SELECT
-												OP.Id AS idord,
-												(CASE OP.stato WHEN 0 THEN 'APERTO'  WHEN 1 THEN 'CHIUSO' END) AS ordstat,
-												OP.codice_ordine AS codice_ordine,
-												CE.nome as clnome,
-												CE.stato as clstato,
-												CE.provincia as clprov,
-												CE.citta as clcitt,
-
-												CR.nome as crnome,
-												CR.telefono as crtel,
-												CR.mail as crmail,
-												strftime('%d/%m/%Y', OP.data_ordine) AS opdo,
-												strftime('%d/%m/%Y', OP.data_ETA) AS opde,
-												REPLACE( printf('%.2f',OP.totale_ordine ),'.',',')  AS optot,
-                                                REPLACE(  (
-                                                        printf('%.2f',OP.prezzo_finale  ) || 
-                                                        ' (' ||    
-                                                        printf('%.2f',OP.sconto ) || '%)'),'.',',')  AS optotf,
-
-                                                REPLACE(printf('%.2f',OP.prezzo_finale + (CASE OP.gestione_spedizione  
-                                                                                         WHEN 1 THEN   OP.costo_spedizione
-                                                                                         WHEN 2 THEN   OP.costo_spedizione*(1-OP.sconto/100) 
-                                                                                         ELSE 0  
-                                                                                      END) ),'.',',') AS prezzofinaleIclSped
-												
-
-									   FROM " + schemadb + @"[ordini_elenco] AS OP
-									   LEFT JOIN " + schemadb + @"[clienti_elenco] AS CE
-										ON CE.Id = OP.ID_cliente
-									   LEFT JOIN " + schemadb + @"[clienti_riferimenti] AS CR
-										ON CR.Id = OP.ID_riferimento
-
-									   WHERE OP.ID_offerta IS NULL AND OP.id=@idOrdine  
-
-                                        LIMIT 1;";
-
-
-            using (SQLiteCommand cmd = new SQLiteCommand(commandText, connection))
-            {
-                try
-                {
-                    cmd.Parameters.AddWithValue("@idOrdine", id_ordine);
-
-                    SQLiteDataReader reader = cmd.ExecuteReader();
-                    while (reader.Read())
-                    {
-                        clnome = Convert.ToString(reader["clnome"]);
-                        clstato = Convert.ToString(reader["clstato"]);
-                        clprov = Convert.ToString(reader["clprov"]).ToUpper();
-                        clcitt = Convert.ToString(reader["clcitt"]);
-                        crnome = Convert.ToString(reader["crnome"]);
-                        crtel = Convert.ToString(reader["crtel"]);
-                        crmail = Convert.ToString(reader["crmail"]);
-                        optot = Convert.ToString(reader["optot"]);
-                        opde = Convert.ToString(reader["opde"]);
-                        optotf = Convert.ToString(reader["optotf"]);
-                        prezzofinaleIclSped = Convert.ToString(reader["prezzofinaleIclSped"]);
-                    }
-                }
-                catch (SQLiteException ex)
-                {
-                    MessageBox.Show("Errore durante recupero info ordine(appuntamento). Codice: " + ReturnErorrCode(ex));
-
-                    return "";
-                }
-            }
-
-            string body = "";
-
-            body += clnome + Environment.NewLine;
-            body += clcitt + " (" + clprov + ") " + clstato + Environment.NewLine;
-            body += Environment.NewLine;
-            body += "Contatto: " + Environment.NewLine + crnome + "\t" + crtel + "\t" + crmail + Environment.NewLine;
-            body += Environment.NewLine;
-            body += "Data Consegna: " + Environment.NewLine + opde + Environment.NewLine;
-            body += Environment.NewLine;
-            body += "Totale Finale (Excl Sconti): " + "\t" + optot + Environment.NewLine;
-            body += Environment.NewLine;
-            body += "Totale Finale (Incl Sconti): " + "\t" + optotf + Environment.NewLine;
-            body += Environment.NewLine;
-            body += "Totale Finale (Incl. Spedizioni e sconti): " + "\t" + prezzofinaleIclSped + Environment.NewLine;
-            body += Environment.NewLine;
-            body += Environment.NewLine;
-            body += "Elenco Oggetti Ordine";
-            body += Environment.NewLine;
-
-            commandText = @"SELECT
-									OP.Id as ID,
-									PR.nome AS nome,
-									PR.codice AS code,
-									REPLACE( printf('%.2f',OP.prezzo_unitario_originale ),'.',',')  AS por,
-									REPLACE( printf('%.2f',OP.prezzo_unitario_sconto ),'.',',')  AS pos,
-									OP.pezzi AS qta,
-									REPLACE( printf('%.2f',SUM(OP.prezzo_unitario_sconto * OP.pezzi) ),'.',',')  AS totale,
-									strftime('%d/%m/%Y', OP.ETA) AS ETA,
-								    PR.descrizione AS descrizione
-
-									FROM " + schemadb + @"[ordine_pezzi] AS OP
-								   LEFT JOIN " + schemadb + @"[pezzi_ricambi] AS PR
-									ON PR.Id = OP.ID_ricambio
-								   
-									WHERE OP.ID_ordine=@idord 
-									GROUP BY OP.Id, PR.nome, PR.codice, OP.prezzo_unitario_originale, OP.prezzo_unitario_sconto, OP.pezzi, PR.descrizione, PR.descrizione, OP.ETA
-									ORDER BY OP.Id;";
-
-
-            using (SQLiteCommand cmd = new SQLiteCommand(commandText, connection))
-            {
-                try
-                {
-                    cmd.Parameters.AddWithValue("@idord", id_ordine);
-
-                    SQLiteDataReader reader = cmd.ExecuteReader();
-                    while (reader.Read())
-                    {
-                        //body += "\t" + reader["code"] + "\tPrezzo: " + reader["pos"] + "€\tQuantità: " + reader["qta"] + "\tTotale: " + reader["totale"] + "€";
-                        body += "\t" + reader["code"] + "\t" + "Quantità: " + reader["qta"];
-                        body += Environment.NewLine + "\t\t" + "Prezzo Totale: " + reader["totale"] + "€" + "\t" + "Prezzo Unitario: " + reader["pos"] + "€";
-                        if (!String.IsNullOrEmpty(Convert.ToString(reader["descrizione"])))
-                            body += Environment.NewLine + "\t\t" + Convert.ToString(reader["descrizione"]);
-                        body += Environment.NewLine + "\t\t" + "Data Consegna Pezzo:" + "\t" + Convert.ToString(reader["ETA"]);
-
-                        body += Environment.NewLine;
-                        body += Environment.NewLine;
-                    }
-                }
-                catch (SQLiteException ex)
-                {
-                    MessageBox.Show("Errore durante recupero oggetti ordine(appuntamento). Codice: " + ReturnErorrCode(ex));
-                    return "";
-                }
-            }
-
-            return body;
-        }
-
-        private CalendarResult CreateCustomCalendar(string calName)
-        {
-            CalendarResult answer = new CalendarResult
-            {
-                Success = true
-            };
-
-            if (String.IsNullOrEmpty(calName))
-            {
-                answer.Found = true;
-            }
-            else
-            {
-                try
-                {
-                    Outlook.Application OlApp = new Outlook.Application();
-                    Outlook.Folder primaryCalendar = OlApp.Session.GetDefaultFolder(Outlook.OlDefaultFolders.olFolderCalendar) as Outlook.Folder;
-
-                    foreach (Outlook.Folder Calendar in primaryCalendar.Folders)
-                    {
-                        if (Calendar.Name == calName)
-                        {
-                            answer.Found = true;
-                            break;
-                        }
-                    }
-
-                    if (!answer.Found)
-                    {
-                        answer.CalendarFolder = primaryCalendar.Folders.Add(calName, Outlook.OlDefaultFolders.olFolderCalendar) as Outlook.Folder;
-                    }
-                }
-                catch
-                {
-                    MessageBox.Show("Errore durante verifica necessità cartella OutLook. Impossibile aggiornare informazioni." + Environment.NewLine + "Incrociare dia per evitare danni ai dati");
-                    answer.Success = false;
-                }
-            }
-
-            return answer;
-        }
-
-        private Outlook.Folder FindCalendar(string calendarName)
-        {
-            Outlook.Application OlApp = new Outlook.Application();
-
-            Outlook.Folder AppointmentFolder =
-                OlApp.Session.GetDefaultFolder(
-                Outlook.OlDefaultFolders.olFolderCalendar)
-                as Outlook.Folder;
-
-            Outlook.Folder personalCalendar = AppointmentFolder;
-
-            if (!String.IsNullOrEmpty(calendarName) && AppointmentFolder.Name != calendarName)
-            {
-                foreach (Outlook.Folder personalCalendarLoop in AppointmentFolder.Folders)
-                {
-                    if (personalCalendarLoop.Name == calendarName)
-                    {
-                        return personalCalendarLoop;
-                    }
-                }
-
-                CalendarResult re = CreateCustomCalendar(calendarName);
-
-                if (re.Success && !re.Found)
-                    personalCalendar = re.CalendarFolder;
-                else if (!re.Success)
-                    return null;
-            }
-
-            return personalCalendar;
-        }
-
-        private Outlook.Items CalendarGetItems(Outlook.Folder personalCalendar, DateTime startDate, DateTime endDate, string orderef = "")
-        {
-
-            string AppCode = "##ManaOrdini" + orderef;
-            string filterDate = "[Start] >= '" + startDate.ToString("g") + "' AND [End] <= '" + endDate.ToString("g") + "'";
-            string filterSubject = "@SQL=" + "\"" + "urn:schemas:httpmail:subject" + "\"" + " LIKE '%" + AppCode + "%'";
-
-            Outlook.Items calendarItems = personalCalendar.Items.Restrict(filterDate);
-            calendarItems.IncludeRecurrences = true;
-            calendarItems.Sort("[Start]", Type.Missing);
-
-            Outlook.Items restrictedItems = calendarItems.Restrict(filterSubject);
-
-            return restrictedItems;
-        }
-
-        private bool FindAppointment(string CalendarName, string ordRef, Outlook.Folder personalCalendar = null)
-        {
-            try
-            {
-                if (personalCalendar == null)
-                {
-                    personalCalendar = FindCalendar(CalendarName);
-                    if (personalCalendar == null)
-                    {
-                        MessageBox.Show("Errore nella gestione calendari, non è possibile continuare. Provare a riavvaire Outlook.");
-                        return false;
-                    }
-                }
-
-                CalendarResult answer = GetDbDateCalendar(new string[] { ordRef });
-
-                if (answer.Success && !answer.Found)
-                    return false;
-
-                Outlook.Items restrictedItems = CalendarGetItems(personalCalendar, answer.AppointmentDate.AddDays(-(answer.Found ? 1 : 0)), answer.AppointmentDate.AddDays(+1), ordRef);
-
-                foreach (Outlook.AppointmentItem apptItem in restrictedItems)
-                {
-                    return true;
-                }
-
-                restrictedItems = CalendarGetItems(personalCalendar, DateTime.Now.AddDays(-7), DateTime.MaxValue, ordRef);
-
-                foreach (Outlook.AppointmentItem apptItem in restrictedItems)
-                {
-                    UpdateDbDateAppointment(apptItem.Start, ordRef);
-                    return true;
-                }
-
-                MessageBox.Show("Nel database è presente un appuntamento, ma non esiste corrispondenza in Outlook. Verificare informazioni, rischio conflitto." + Environment.NewLine + "Il dato su database è stato resetatto.");
-
-                UpdateDbDateAppointment(null, ordRef);
-
-                return false;
-            }
-            catch
-            {
-                MessageBox.Show("Errore durante verifica necessità cartella OutLook. Impossibile aggiornare informazioni." + Environment.NewLine + "Incrociare dita per evitare danni ai dati");
-                return false;
-            }
-        }
-
-        private void UpdateDbDateAppointment(DateTime? AppointmentDate, string ordRef)
-        {
-            ValidationResult codice_ordine = ValidateId(ordRef);
-            if (codice_ordine.Error != null)
-            {
-                MessageBox.Show("Impossibile aggiornare data evento sul database.");
-                return;
-            }
-
-            string commandText = @"UPDATE  " + schemadb + @"[ordini_elenco] SET data_calendar_event = @dataVal WHERE codice_ordine = @ordCode LIMIT 1;";
-            using (SQLiteCommand cmd = new SQLiteCommand(commandText, connection))
-            {
-                try
-                {
-                    if (AppointmentDate != null)
-                    {
-                        DateTime temp = (DateTime)AppointmentDate;
-                        AppointmentDate = new DateTime(temp.Year, temp.Month, temp.Day, 0, 0, 0);
-
-                        cmd.Parameters.AddWithValue("@dataVal", AppointmentDate);
-                    }
-                    else
-                    {
-                        cmd.Parameters.AddWithValue("@dataVal", DBNull.Value);
-                    }
-
-                    cmd.Parameters.AddWithValue("@ordCode", codice_ordine.IntValue);
-
-                    cmd.ExecuteNonQuery();
-                }
-                catch (SQLiteException ex)
-                {
-                    MessageBox.Show("Errore durante aggiornamento date calendario al database. Codice: " + ReturnErorrCode(ex));
-                }
-            }
-        }
-
-        private CalendarResult GetDbDateCalendar(string[] ordRef)
-        {
-            CalendarResult answer = new CalendarResult();
-            List<int> ids = new List<int>();
-
-            foreach (string idOrd in ordRef)
-            {
-                ValidationResult codice_ordine = ValidateId(idOrd);
-                if (codice_ordine.Error != null)
-                {
-                    MessageBox.Show("Codice ordine errato.");
-                    return answer;
-                }
-
-                ids.Add((int)codice_ordine.IntValue);
-            }
-
-            string commandText = @"SELECT data_calendar_event FROM " + schemadb + @"[ordini_elenco] WHERE codice_ordine IN (@ordCode)  LIMIT 1;";
-            using (SQLiteCommand cmd = new SQLiteCommand(commandText, connection))
-            {
-                try
-                {
-                    answer.Success = true;
-
-                    cmd.Parameters.AddWithValue("@ordCode", string.Join(", ", ids));
-                    object res = cmd.ExecuteScalar();
-
-                    if (res != DBNull.Value)
-                    {
-                        answer.Found = true;
-                        answer.AppointmentDate = (DateTime)res;
-                    }
-                }
-                catch (SQLiteException ex)
-                {
-                    MessageBox.Show("Errore durante aggiornamento date calendario al database. Codice: " + ReturnErorrCode(ex));
-                }
-            }
-
-            return answer;
         }
 
         //SETTING
@@ -7405,66 +6683,35 @@ namespace mangaerordini
                 {
                     if (!email.IsValid(element))
                     {
-                        MessageBox.Show(element + " non è una email valida.");
+                        OnTopMessage.Alert(element + " non è una email valida.");
                         return;
                     }
                 }
             }
 
-
-            if (settings["calendario"]["nomeCalendario"] != nomeCal)
+            if (UserSettings.settings["calendario"]["nomeCalendario"] != nomeCal)
             {
-                DialogResult dialogResult = MessageBox.Show("Stai per cambiare nome al calendario, il software proverà a spostare gli eventi pianificati da oggi in avanti nel nuovo calendario. In caso di errori, gli eventi rimanenti dovranno essere modificati manualmente. Continuare?", "Cambio Nome CAlendario - Aggiornamento Eventi Calendario", MessageBoxButtons.YesNo);
+                DialogResult dialogResult = OnTopMessage.Question("Stai per cambiare nome al calendario, il software proverà a spostare gli eventi pianificati da oggi in avanti nel nuovo calendario. In caso di errori, gli eventi rimanenti dovranno essere modificati manualmente. Continuare?", "Cambio Nome CAlendario - Aggiornamento Eventi Calendario");
                 if (dialogResult == DialogResult.Yes)
                 {
-                    if (MoveAppointment(settings["calendario"]["nomeCalendario"], nomeCal) == false)
+                    if (CalendarManager.MoveAppointment(UserSettings.settings["calendario"]["nomeCalendario"], nomeCal) == false)
                     {
-                        MessageBox.Show("Errore: Il nome è stato aggiornato, ma non è stato possibile spostare alcuni eventi. Controllare manualemnte");
+                        OnTopMessage.Error("Errore: Il nome è stato aggiornato, ma non è stato possibile spostare alcuni eventi. Controllare manualemnte");
                     }
-                    settings["calendario"]["nomeCalendario"] = nomeCal;
+                    UserSettings.settings["calendario"]["nomeCalendario"] = nomeCal;
                 }
                 else
                 {
-                    settingCalendarioNome.Text = settings["calendario"]["nomeCalendario"];
+                    settingCalendarioNome.Text = UserSettings.settings["calendario"]["nomeCalendario"];
                 }
             }
 
-            settings["calendario"]["aggiornaCalendario"] = Convert.ToString(upCalendar);
-            settings["calendario"]["destinatari"] = destinatari;
+            UserSettings.settings["calendario"]["aggiornaCalendario"] = Convert.ToString(upCalendar);
+            UserSettings.settings["calendario"]["destinatari"] = destinatari;
 
-            UpdateSettingApp();
+            UserSettings.UpdateSettingApp();
 
-            MessageBox.Show("Impostazioni Salvate");
-        }
-
-        private void UpdateSettingApp()
-        {
-            string json = JsonConvert.SerializeObject(settings);
-            File.WriteAllText(settingFile, json);
-        }
-
-        private void ReadSettingApp()
-        {
-            settings.Add("calendario", new Dictionary<string, string>());
-            settings["calendario"].Add("aggiornaCalendario", "true");
-            settings["calendario"].Add("destinatari", "");
-            settings["calendario"].Add("nomeCalendario", "");
-
-            string json = File.ReadAllText(settingFile);
-            Dictionary<string, Dictionary<string, string>> read_settings = JsonConvert.DeserializeObject<Dictionary<string, Dictionary<string, string>>>(json);
-
-            CopyDict(read_settings);
-        }
-
-        public void CopyDict(Dictionary<string, Dictionary<string, string>> dict)
-        {
-            foreach (KeyValuePair<string, Dictionary<string, string>> rootKv in dict)
-            {
-                foreach (KeyValuePair<string, string> childKv in rootKv.Value)
-                {
-                    settings[rootKv.Key][childKv.Key] = dict[rootKv.Key][childKv.Key];
-                }
-            }
+            OnTopMessage.Information("Impostazioni Salvate");
         }
 
         //PAGE NAVIGATION
@@ -7531,7 +6778,7 @@ namespace mangaerordini
 
                 if (!int.TryParse(page, out int value))
                 {
-                    MessageBox.Show("Numero pagina non valido");
+                    OnTopMessage.Alert("Numero pagina non valido");
                     txtboxCurPage.Text = Convert.ToString(selCurValue);
                     return;
                 }
@@ -7795,13 +7042,13 @@ namespace mangaerordini
                 new ComboBoxList() { Name = "", Value = -1 }
             };
 
-            string commandText = "SELECT Id,modello,seriale FROM " + schemadb + @"[clienti_macchine] ORDER BY Id ASC;";
+            string commandText = "SELECT Id,modello,seriale FROM " + ProgramParameters.schemadb + @"[clienti_macchine] ORDER BY Id ASC;";
 
             if (idcl > 0)
-                commandText = "SELECT Id,modello,seriale FROM " + schemadb + @"[clienti_macchine] WHERE ID_cliente=@idcl ORDER BY Id ASC;";
+                commandText = "SELECT Id,modello,seriale FROM " + ProgramParameters.schemadb + @"[clienti_macchine] WHERE ID_cliente=@idcl ORDER BY Id ASC;";
 
 
-            using (SQLiteCommand cmd = new SQLiteCommand(commandText, connection))
+            using (SQLiteCommand cmd = new SQLiteCommand(commandText, ProgramParameters.connection))
             {
 
                 try
@@ -7817,7 +7064,7 @@ namespace mangaerordini
                 }
                 catch (SQLiteException ex)
                 {
-                    MessageBox.Show("Errore populate_combobox_machine. Codice: " + ReturnErorrCode(ex));
+                    OnTopMessage.Error("Errore populate_combobox_machine. Codice: " + DbTools.ReturnErorrCode(ex));
 
 
                     return;
@@ -7849,13 +7096,13 @@ namespace mangaerordini
             {
                 idoff = SelOffCrea.SelectedItem.GetHashCode();
                 extenQuery += @" AND Id NOT IN (
-                                                    SELECT ID_ricambio FROM " + schemadb + @"[offerte_pezzi] WHERE ID_offerta=@idoff 
+                                                    SELECT ID_ricambio FROM " + ProgramParameters.schemadb + @"[offerte_pezzi] WHERE ID_offerta=@idoff 
 
                                                     UNION 
 
                                                     SELECT OP.ID_ricambio 
-                                                        FROM " + schemadb + @"[ordine_pezzi] AS OP 
-                                                        INNER JOIN " + schemadb + @"[ordini_elenco] AS OE 
+                                                        FROM " + ProgramParameters.schemadb + @"[ordine_pezzi] AS OP 
+                                                        INNER JOIN " + ProgramParameters.schemadb + @"[ordini_elenco] AS OE 
                                                             ON OE.Id =  OP.ID_ordine
                                                     WHERE OP.Outside_Offer=true AND OE.ID_offerta 
                                                 ) 
@@ -7868,14 +7115,14 @@ namespace mangaerordini
                 extenQuery += " AND ( Id LIKE @filterstr OR nome LIKE @filterstr OR codice LIKE @filterstr)  ";
             }
 
-            string commandText = @"SELECT Id,nome,codice FROM " + schemadb + @"[pezzi_ricambi] WHERE ID_macchina IS NULL " + extenQuery + " ORDER BY Id ASC;";
+            string commandText = @"SELECT Id,nome,codice FROM " + ProgramParameters.schemadb + @"[pezzi_ricambi] WHERE ID_macchina IS NULL " + extenQuery + " ORDER BY Id ASC;";
 
             if (idmc > 0)
-                commandText = "SELECT Id,nome,codice FROM " + schemadb + @"[pezzi_ricambi] WHERE (ID_macchina=@idmc)  " + extenQuery + " ORDER BY Id ASC;";
+                commandText = "SELECT Id,nome,codice FROM " + ProgramParameters.schemadb + @"[pezzi_ricambi] WHERE (ID_macchina=@idmc)  " + extenQuery + " ORDER BY Id ASC;";
 
 
 
-            using (SQLiteCommand cmd = new SQLiteCommand(commandText, connection))
+            using (SQLiteCommand cmd = new SQLiteCommand(commandText, ProgramParameters.connection))
             {
                 try
                 {
@@ -7891,7 +7138,7 @@ namespace mangaerordini
                 }
                 catch (SQLiteException ex)
                 {
-                    MessageBox.Show("Errore populate_combobox_ricambi. Codice: " + ReturnErorrCode(ex));
+                    OnTopMessage.Error("Errore populate_combobox_ricambi. Codice: " + DbTools.ReturnErorrCode(ex));
 
 
                     return;
@@ -7924,7 +7171,7 @@ namespace mangaerordini
             if (offpezziSel == true)
             {
                 idOrd = ComboSelOrd.SelectedItem.GetHashCode();
-                extenQuery += " AND Id NOT IN (SELECT ID_ricambio FROM " + schemadb + @"[ordine_pezzi] WHERE ID_ordine=@idoff) ";
+                extenQuery += " AND Id NOT IN (SELECT ID_ricambio FROM " + ProgramParameters.schemadb + @"[ordine_pezzi] WHERE ID_ordine=@idoff) ";
             }
 
             if (!String.IsNullOrEmpty(FieldOrdOggPezzoFiltro_Text))
@@ -7933,14 +7180,14 @@ namespace mangaerordini
                 extenQuery += " AND ( Id LIKE @filterstr OR nome LIKE @filterstr OR codice LIKE @filterstr)  ";
             }
 
-            string commandText = @"SELECT Id,nome,codice FROM " + schemadb + @"[pezzi_ricambi] WHERE ID_macchina IS NULL " + extenQuery + " ORDER BY Id ASC;";
+            string commandText = @"SELECT Id,nome,codice FROM " + ProgramParameters.schemadb + @"[pezzi_ricambi] WHERE ID_macchina IS NULL " + extenQuery + " ORDER BY Id ASC;";
 
             if (idmc > 0)
-                commandText = "SELECT Id,nome,codice FROM " + schemadb + @"[pezzi_ricambi] WHERE (ID_macchina=@idmc)  " + extenQuery + " ORDER BY Id ASC;";
+                commandText = "SELECT Id,nome,codice FROM " + ProgramParameters.schemadb + @"[pezzi_ricambi] WHERE (ID_macchina=@idmc)  " + extenQuery + " ORDER BY Id ASC;";
 
 
 
-            using (SQLiteCommand cmd = new SQLiteCommand(commandText, connection))
+            using (SQLiteCommand cmd = new SQLiteCommand(commandText, ProgramParameters.connection))
             {
                 try
                 {
@@ -7958,7 +7205,7 @@ namespace mangaerordini
                 }
                 catch (SQLiteException ex)
                 {
-                    MessageBox.Show("Errore populate_combobox_ricambi. Codice: " + ReturnErorrCode(ex));
+                    OnTopMessage.Error("Errore populate_combobox_ricambi. Codice: " + DbTools.ReturnErorrCode(ex));
 
 
                     return;
@@ -7986,10 +7233,10 @@ namespace mangaerordini
             };
 
 
-            string commandText = "SELECT Id,nome,stato, provincia, citta FROM " + schemadb + @"[clienti_elenco] ORDER BY Id ASC;";
+            string commandText = "SELECT Id,nome,stato, provincia, citta FROM " + ProgramParameters.schemadb + @"[clienti_elenco] ORDER BY Id ASC;";
 
 
-            using (SQLiteCommand cmd = new SQLiteCommand(commandText, connection))
+            using (SQLiteCommand cmd = new SQLiteCommand(commandText, ProgramParameters.connection))
             {
 
                 try
@@ -8004,7 +7251,7 @@ namespace mangaerordini
                 }
                 catch (SQLiteException ex)
                 {
-                    MessageBox.Show("Errore populate_combobox_clienti. Codice: " + ReturnErorrCode(ex));
+                    OnTopMessage.Error("Errore populate_combobox_clienti. Codice: " + DbTools.ReturnErorrCode(ex));
 
 
                     return;
@@ -8029,10 +7276,10 @@ namespace mangaerordini
                 new ComboBoxList() { Name = "", Value = -1 }
             };
 
-            string commandText = "SELECT Id,nome FROM " + schemadb + @"[fornitori] ORDER BY Id ASC;";
+            string commandText = "SELECT Id,nome FROM " + ProgramParameters.schemadb + @"[fornitori] ORDER BY Id ASC;";
 
 
-            using (SQLiteCommand cmd = new SQLiteCommand(commandText, connection))
+            using (SQLiteCommand cmd = new SQLiteCommand(commandText, ProgramParameters.connection))
             {
 
                 try
@@ -8047,7 +7294,7 @@ namespace mangaerordini
                 }
                 catch (SQLiteException ex)
                 {
-                    MessageBox.Show("Errore populate_combobox_fornitore. Codice: " + ReturnErorrCode(ex));
+                    OnTopMessage.Error("Errore populate_combobox_fornitore. Codice: " + DbTools.ReturnErorrCode(ex));
 
 
                     return;
@@ -8074,14 +7321,14 @@ namespace mangaerordini
                 new ComboBoxList() { Name = "", Value = -1 }
             };
 
-            string commandText = "SELECT Id,nome FROM " + schemadb + @"[clienti_riferimenti] ORDER BY Id ASC;";
+            string commandText = "SELECT Id,nome FROM " + ProgramParameters.schemadb + @"[clienti_riferimenti] ORDER BY Id ASC;";
 
             if (ID_cliente > 0)
             {
-                commandText = "SELECT Id,nome FROM " + schemadb + @"[clienti_riferimenti] WHERE ID_clienti=@idcl ORDER BY Id ASC;";
+                commandText = "SELECT Id,nome FROM " + ProgramParameters.schemadb + @"[clienti_riferimenti] WHERE ID_clienti=@idcl ORDER BY Id ASC;";
             }
 
-            using (SQLiteCommand cmd = new SQLiteCommand(commandText, connection))
+            using (SQLiteCommand cmd = new SQLiteCommand(commandText, ProgramParameters.connection))
             {
                 try
                 {
@@ -8097,7 +7344,7 @@ namespace mangaerordini
                 }
                 catch (SQLiteException ex)
                 {
-                    MessageBox.Show("Errore populate_combobox_pref. Codice: " + ReturnErorrCode(ex));
+                    OnTopMessage.Error("Errore populate_combobox_pref. Codice: " + DbTools.ReturnErorrCode(ex));
 
 
                     return;
@@ -8130,8 +7377,8 @@ namespace mangaerordini
 									OE.codice_offerta AS noff,
 									  (CE.nome  || ' (' ||  CE.stato || ' - ' || CE.provincia || ' - ' || CE.citta || ')') AS cliente
 
-									FROM " + schemadb + @"[offerte_elenco] AS OE
-									LEFT JOIN " + schemadb + @"[clienti_elenco] AS CE
+									FROM " + ProgramParameters.schemadb + @"[offerte_elenco] AS OE
+									LEFT JOIN " + ProgramParameters.schemadb + @"[clienti_elenco] AS CE
 										ON CE.Id=OE.[ID_cliente]
 									WHERE OE.stato=0 " + queryExtra + @" 
                                     ORDER BY OE.Id DESC;";
@@ -8140,7 +7387,7 @@ namespace mangaerordini
             int countResIDCL = 0;
 
 
-            using (SQLiteCommand cmd = new SQLiteCommand(commandText, connection))
+            using (SQLiteCommand cmd = new SQLiteCommand(commandText, ProgramParameters.connection))
             {
                 try
                 {
@@ -8161,7 +7408,7 @@ namespace mangaerordini
                 }
                 catch (SQLiteException ex)
                 {
-                    MessageBox.Show("Errore populate_combobox_offerte_crea. Codice: " + ReturnErorrCode(ex));
+                    OnTopMessage.Error("Errore populate_combobox_offerte_crea. Codice: " + DbTools.ReturnErorrCode(ex));
 
 
                     return;
@@ -8248,12 +7495,12 @@ namespace mangaerordini
 
 
             if (transformed)
-                commandText = @"SELECT Id AS id, codice_offerta AS codice FROM " + schemadb + @"[offerte_elenco] WHERE ID_cliente=@idcl AND trasformato_ordine=0 AND stato=1;";
+                commandText = @"SELECT Id AS id, codice_offerta AS codice FROM " + ProgramParameters.schemadb + @"[offerte_elenco] WHERE ID_cliente=@idcl AND trasformato_ordine=0 AND stato=1;";
             else
-                commandText = @"SELECT Id AS id, codice_offerta AS codice FROM " + schemadb + @"[offerte_elenco] WHERE Id=@idof;";
+                commandText = @"SELECT Id AS id, codice_offerta AS codice FROM " + ProgramParameters.schemadb + @"[offerte_elenco] WHERE Id=@idof;";
 
 
-            using (SQLiteCommand cmd = new SQLiteCommand(commandText, connection))
+            using (SQLiteCommand cmd = new SQLiteCommand(commandText, ProgramParameters.connection))
             {
                 try
                 {
@@ -8275,7 +7522,7 @@ namespace mangaerordini
                 }
                 catch (SQLiteException ex)
                 {
-                    MessageBox.Show("Errore populate_combobox_ordini_crea. Codice: " + ReturnErorrCode(ex));
+                    OnTopMessage.Error("Errore populate_combobox_ordini_crea. Codice: " + DbTools.ReturnErorrCode(ex));
 
 
                     return;
@@ -8307,10 +7554,10 @@ namespace mangaerordini
 										OE.Id AS id,
 										OE.codice_ordine AS noff,
 										 (CE.nome || ' (' || CE.stato || '-' || CE.provincia || '-' || CE.citta || ')') AS Cliente
-									FROM " + schemadb + @"[ordini_elenco] AS OE 
-									LEFT JOIN " + schemadb + @"[offerte_elenco] AS OFE 
+									FROM " + ProgramParameters.schemadb + @"[ordini_elenco] AS OE 
+									LEFT JOIN " + ProgramParameters.schemadb + @"[offerte_elenco] AS OFE 
 										ON OFE.Id = OE.[ID_offerta] 
-									LEFT JOIN " + schemadb + @"[clienti_elenco] AS CE 
+									LEFT JOIN " + ProgramParameters.schemadb + @"[clienti_elenco] AS CE 
 										ON CE.Id = OFE.[ID_cliente]
 									WHERE OE.ID_offerta IS NOT NULL AND OE.stato=0 " + queryExtra + @" 
 
@@ -8320,14 +7567,14 @@ namespace mangaerordini
 										OE.Id AS id,
 										OE.codice_ordine AS noff,
 										 (CE.nome || ' (' || CE.stato || '-' || CE.provincia || '-' || CE.citta || ')') AS Cliente
-									FROM " + schemadb + @"[ordini_elenco] AS OE
-									LEFT JOIN " + schemadb + @"[clienti_elenco] AS CE 
+									FROM " + ProgramParameters.schemadb + @"[ordini_elenco] AS OE
+									LEFT JOIN " + ProgramParameters.schemadb + @"[clienti_elenco] AS CE 
 										ON CE.Id = OE.ID_cliente
 									WHERE OE.ID_offerta IS NULL AND OE.stato=0 AND OE.ID_cliente=@idcl
                                     ORDER BY OE.Id DESC;";
 
 
-            using (SQLiteCommand cmd = new SQLiteCommand(commandText, connection))
+            using (SQLiteCommand cmd = new SQLiteCommand(commandText, ProgramParameters.connection))
             {
                 try
                 {
@@ -8347,7 +7594,7 @@ namespace mangaerordini
                 }
                 catch (SQLiteException ex)
                 {
-                    MessageBox.Show("Errore populate_combobox_ordini. Codice: " + ReturnErorrCode(ex));
+                    OnTopMessage.Error("Errore populate_combobox_ordini. Codice: " + DbTools.ReturnErorrCode(ex));
 
 
                     return;
@@ -8624,9 +7871,9 @@ namespace mangaerordini
 
         private void UpdateSetting()
         {
-            settingCalendarioNome.Text = settings["calendario"]["nomeCalendario"];
-            settingCalendarioDestinatari.Text = settings["calendario"]["destinatari"];
-            settingCalendarioUpdate.Checked = Boolean.Parse(settings["calendario"]["aggiornaCalendario"]);
+            settingCalendarioNome.Text = UserSettings.settings["calendario"]["nomeCalendario"];
+            settingCalendarioDestinatari.Text = UserSettings.settings["calendario"]["destinatari"];
+            settingCalendarioUpdate.Checked = Boolean.Parse(UserSettings.settings["calendario"]["aggiornaCalendario"]);
         }
 
         private void UpdateFields(string tabC, string action, bool stat, bool clean = true)
@@ -9138,387 +8385,20 @@ namespace mangaerordini
         private void Form1_FormClosing(object sender, FormClosingEventArgs e)
         {
 
-            if (connection != null && connection.State == ConnectionState.Open)
+            if (ProgramParameters.connection != null && ProgramParameters.connection.State == ConnectionState.Open)
             {
                 RunSQLiteOptimize(1000);
-                connection.Close();
+                ProgramParameters.connection.Close();
             }
-        }
-
-        public string ReturnErorrCode(SQLiteException ex)
-        {
-            Dictionary<int, string> er = new Dictionary<int, string>
-            {
-                { 787, Environment.NewLine + "L'informazione che si sta provando ad eliminare è associata ad un elemento, eliminare prima l'elemento e poi riprovare." + Environment.NewLine + Environment.NewLine + "Esempio: se si sta provando ad eliminare un'offerta per la quale è stato creato un ordine, eliminare prima l'ordine e poi l'offerta." },
-                { 2067, Environment.NewLine + "Esiste già un elemento nel database con le stesse uniche informazioni." }
-            };
-
-
-            if (er.ContainsKey(ex.ErrorCode))
-                return er[ex.ErrorCode];
-            else
-                return ex.Message;
         }
 
         private void Timer_RunSQLiteOptimize_Tick(object sender, EventArgs e)
         {
-            if (connection != null && connection.State == ConnectionState.Open)
+            if (ProgramParameters.connection != null && ProgramParameters.connection.State == ConnectionState.Open)
             {
                 RunSQLiteOptimize();
             }
         }
-
-        //ALTRO
-        private void DataGridViewOrd_ColumnSortModeChanged(object sender, DataGridViewColumnEventArgs e)
-        {
-            MessageBox.Show(Convert.ToString(e.Column));
-            MessageBox.Show("w");
-        }
-
-        //Validate functions
-
-        public class ValidationResult
-        {
-            public bool Success { get; set; } = false;
-            public bool BoolValue { get; set; } = false;
-            public decimal? DecimalValue { get; set; } = null;
-            public int? IntValue { get; set; } = null;
-            public string Error { get; set; } = null;
-            public DateTime DateValue { get; set; } = DateTime.MinValue;
-        }
-
-        public ValidationResult ValidateId(string id)
-        {
-            ValidationResult answer = new ValidationResult();
-
-            if (!int.TryParse(id, out int idV))
-            {
-                answer.Error = "ID non valido o vuoto" + Environment.NewLine;
-            }
-            else
-            {
-                answer.IntValue = idV;
-            }
-
-            return answer;
-        }
-
-        public ValidationResult ValidateCliente(int idcl)
-        {
-            ValidationResult answer = new ValidationResult();
-
-            if (idcl < 0)
-            {
-                answer.Success = true;
-                answer.BoolValue = false;
-                answer.Error = "Selezionare cliente dalla lista." + Environment.NewLine;
-
-                return answer;
-            }
-
-            string commandText = "SELECT COUNT(*) FROM " + schemadb + @"[clienti_elenco] WHERE ([Id] = @user) LIMIT 1;";
-
-            using (SQLiteCommand cmd = new SQLiteCommand(commandText, connection))
-            {
-                try
-                {
-                    cmd.CommandText = commandText;
-                    cmd.Parameters.AddWithValue("@user", idcl);
-
-                    answer.IntValue = Convert.ToInt32(cmd.ExecuteScalar());
-                    answer.Success = true;
-                }
-                catch (SQLiteException ex)
-                {
-                    answer.Success = false;
-                    answer.Error = "Errore durante verifica ID Cliente. Codice: " + ReturnErorrCode(ex);
-                    return answer;
-                }
-
-                if (answer.IntValue < 1)
-                {
-                    answer.BoolValue = false;
-                    answer.Error = "Cliente non valido o vuoto" + Environment.NewLine;
-                }
-                else
-                {
-                    answer.BoolValue = true;
-                }
-
-                return answer;
-            }
-        }
-
-        public string ValidateCodiceRicambio(string codice)
-        {
-            Regex rgx = new Regex(@"^[a-zA-Z]{1}\d{1,}[-]\d{1,}$");
-
-            if (string.IsNullOrEmpty(codice) || !rgx.IsMatch(codice))
-            {
-                return "Codice non valido o vuoto" + Environment.NewLine;
-            }
-
-            return "";
-        }
-
-        public ValidationResult ValidatePrezzo(string prezzo)
-        {
-            ValidationResult answer = new ValidationResult
-            {
-                Success = Decimal.TryParse(prezzo, style, culture, out decimal prezzoD)
-            };
-
-            if (!answer.Success)
-            {
-                answer.Error = "Prezzo non valido(##,##) o vuoto" + Environment.NewLine;
-                return answer;
-            }
-            if (prezzoD < 0)
-            {
-                answer.Error = "Il prezzo deve essere positivo" + Environment.NewLine;
-                return answer;
-            }
-
-            answer.DecimalValue = prezzoD;
-            return answer;
-        }
-
-        public ValidationResult ValidateSconto(string sconto)
-        {
-            ValidationResult answer = new ValidationResult
-            {
-                Success = true
-            };
-
-            if (!Decimal.TryParse(sconto, style, culture, out decimal scontoV) || !Regex.IsMatch(sconto, @"^[\d,.]+$"))
-            {
-                answer.Success = false;
-            }
-
-            if (!answer.Success)
-            {
-                answer.Error = "Sconto non valido(##,##) o vuoto" + Environment.NewLine;
-                return answer;
-            }
-            else if (scontoV < 0 || scontoV > 100)
-            {
-                answer.Error = "Lo Sconto deve essere compreso tra 0 e 100. " + Environment.NewLine;
-                return answer;
-            }
-            else
-            {
-                answer.DecimalValue = scontoV;
-            }
-
-            return answer;
-        }
-
-        public ValidationResult ValidateFornitore(int id)
-        {
-            string commandText = "SELECT COUNT(*) FROM " + schemadb + @"[fornitori] WHERE ([Id] = @user) LIMIT 1";
-
-            ValidationResult answer = new ValidationResult();
-
-            using (SQLiteCommand cmd = new SQLiteCommand(commandText, connection))
-            {
-                try
-                {
-                    cmd.CommandText = commandText;
-                    cmd.Parameters.AddWithValue("@user", id);
-
-                    answer.IntValue = Convert.ToInt32(cmd.ExecuteScalar());
-                    answer.Success = true;
-                }
-                catch (SQLiteException ex)
-                {
-                    answer.Success = false;
-                    answer.Error = "Errore durante verifica ID Fornitore. Codice: " + ReturnErorrCode(ex);
-                    return answer;
-                }
-            }
-
-            if (answer.IntValue < 1)
-            {
-                answer.BoolValue = false;
-                answer.Error = "Fornitore non presente nel database" + Environment.NewLine;
-            }
-            else
-            {
-                answer.BoolValue = true;
-            }
-
-            return answer;
-        }
-
-        public ValidationResult ValidateMacchina(int id)
-        {
-            string commandText = "SELECT COUNT(*) FROM " + schemadb + @"[clienti_macchine] WHERE ([Id] = @user) LIMIT 1;";
-            ValidationResult answer = new ValidationResult
-            {
-                Success = true
-            };
-
-            if (id > 0)
-            {
-                using (SQLiteCommand cmd = new SQLiteCommand(commandText, connection))
-                {
-                    try
-                    {
-                        cmd.CommandText = commandText;
-                        cmd.Parameters.AddWithValue("@user", id);
-
-                        answer.IntValue = Convert.ToInt32(cmd.ExecuteScalar());
-                    }
-                    catch (SQLiteException ex)
-                    {
-                        answer.Error = "Errore durante verifica ID Macchina. Codice: " + ReturnErorrCode(ex);
-                        answer.Success = false;
-
-                        return answer;
-                    }
-                }
-                if (answer.IntValue < 1)
-                {
-                    answer.BoolValue = false;
-                    answer.Error = "Macchina non presente nel database" + Environment.NewLine;
-                }
-                else
-                {
-                    answer.BoolValue = true;
-                }
-                return answer;
-            }
-
-            return answer;
-        }
-
-        public ValidationResult ValidatePRef(int id)
-        {
-            string commandText = "SELECT COUNT(*) FROM " + schemadb + @"[clienti_riferimenti] WHERE ([Id] = @user) LIMIT 1;";
-
-            ValidationResult answer = new ValidationResult();
-
-            using (SQLiteCommand cmd = new SQLiteCommand(commandText, connection))
-            {
-                try
-                {
-                    cmd.CommandText = commandText;
-                    cmd.Parameters.AddWithValue("@user", id);
-
-                    answer.IntValue = Convert.ToInt32(cmd.ExecuteScalar());
-                    answer.Success = true;
-
-                    if (answer.IntValue < 1)
-                    {
-                        answer.BoolValue = false;
-                        answer.Error = "Persona di riferimento non valida o vuota." + Environment.NewLine;
-                    }
-                    else
-                    {
-                        answer.BoolValue = true;
-                    }
-                }
-                catch (SQLiteException ex)
-                {
-                    answer.Success = false;
-                    answer.Error = "Errore durante verifica ID Persona Riferiemnto. Codice: " + ReturnErorrCode(ex);
-                }
-            }
-
-            return answer;
-        }
-
-        public ValidationResult ValidateSpedizione(string spedizioni, int gestSP)
-        {
-            ValidationResult answer = new ValidationResult();
-
-            if (!Decimal.TryParse(spedizioni, style, culture, out decimal prezzo))
-            {
-                answer.Error += "Prezzo spedizione non valido(##,##) o vuoto" + Environment.NewLine;
-            }
-            else
-            {
-                if (prezzo < 0)
-                {
-                    answer.Error += "Il prezzo spedizione deve essere positivo" + Environment.NewLine;
-                }
-                else
-                {
-                    answer.DecimalValue = prezzo;
-                }
-            }
-
-            if (gestSP < 0)
-            {
-                answer.Error += "Selezionare opzione per la gestione del costo della spedizione" + Environment.NewLine;
-            }
-
-            return answer;
-        }
-
-        public ValidationResult ValidateDate(string stringDate)
-        {
-            ValidationResult answer = new ValidationResult();
-
-            if (!DateTime.TryParseExact(stringDate, dateFormat, provider, DateTimeStyles.None, out DateTime dataOrdValue))
-            {
-                answer.Error += "Valore: " + stringDate + ". Data non valida o vuota" + Environment.NewLine;
-            }
-            else
-            {
-                answer.DateValue = dataOrdValue;
-            }
-
-            return answer;
-        }
-
-        public ValidationResult ValidateDateTime(string stringDate)
-        {
-            ValidationResult answer = new ValidationResult();
-
-            if (!DateTime.TryParseExact(stringDate, dateFormatTime, provider, DateTimeStyles.None, out DateTime dataOrdValue))
-            {
-                answer.Error += "Valore: " + stringDate + ". Data non valida o vuota" + Environment.NewLine;
-            }
-            else
-            {
-                answer.DateValue = dataOrdValue;
-            }
-
-            return answer;
-        }
-
-        public ValidationResult ValidateQta(string qta)
-        {
-            ValidationResult answer = new ValidationResult();
-
-            if (!int.TryParse(qta, out int qtaV))
-            {
-                answer.Error += "Quantità non valida o vuota." + Environment.NewLine;
-            }
-            else
-            {
-                if (qtaV < 1)
-                    answer.Error += "La quanità deve essere positiva, intera e maggiore di 0." + Environment.NewLine;
-            }
-
-            answer.IntValue = qtaV;
-
-            return answer;
-        }
-
-        public ValidationResult ValidateName(string nome, string sub = "\b")
-        {
-            ValidationResult answer = new ValidationResult();
-
-            if (string.IsNullOrEmpty(nome))
-            {
-                answer.Error += "Nome " + sub + " non valido o vuoto" + Environment.NewLine;
-            }
-
-            return answer;
-        }
-
 
         //CREDITI
 
