@@ -177,7 +177,7 @@ namespace mangaerordini
                 {
                     string folderPath = db_backup_path.SelectedPath;
 
-                    string iden = DateTime.Now.ToString();
+                    string iden = DateTime.Now.ToString("yyyyMMddHHmmss");
                     iden = iden.Replace(":", "").Replace(" ", "").Replace(@"/", "");
 
                     bk_fileName = folderPath + "/db_managerordini_" + iden + ".sqlitebak";
@@ -330,7 +330,7 @@ namespace mangaerordini
                     cmd.CommandText = commandText;
                     cmd.ExecuteNonQuery();
 
-                    OnTopMessage.Error("Ottimizzzazione Eseguita");
+                    OnTopMessage.Information("Ottimizzzazione Eseguita");
 
                 }
                 catch (SQLiteException ex)
