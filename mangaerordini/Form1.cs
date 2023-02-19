@@ -39,8 +39,8 @@ namespace mangaerordini
         string AddOffCreaOggettoPezzoFiltro_Text = "";
         string FieldOrdOggPezzoFiltro_Text = "";
 
+        UserSettings UserSettings = new UserSettings();
         readonly DataValidation DataValidation = new DataValidation();
-        readonly UserSettings UserSettings = new UserSettings();
         readonly CalendarManager CalendarManager = new CalendarManager();
         readonly DbTools DbTools = new DbTools();
 
