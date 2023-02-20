@@ -113,14 +113,14 @@ namespace mangaerordini
         {
             if (File.Exists(db_check_file) == false)
             {
-                DialogResult dialogResult = OnTopQuestionMessageBox("Il file del database non è stato trovato. Generare un nuovo file?" + Environment.NewLine + "Premere No per altre opzioni." + Environment.NewLine + Environment.NewLine + "Altriemnti chiudere il programma e copiare e incollare il file '" + ProgramParameters.db_file_name + "'  dalla cartella precedente nella cartella 'db' che si trova nel percorso corrente dell'eseguibile e riavviare il software.", "Errore - File Databse non trovato");
+                DialogResult dialogResult = OnTopMessage.Question("Il file del database non è stato trovato. Generare un nuovo file?" + Environment.NewLine + "Premere No per altre opzioni." + Environment.NewLine + Environment.NewLine + "Altriemnti chiudere il programma e copiare e incollare il file '" + ProgramParameters.db_file_name + "'  dalla cartella precedente nella cartella 'db' che si trova nel percorso corrente dell'eseguibile e riavviare il software.", "Errore - File Databse non trovato");
                 if (dialogResult == DialogResult.Yes)
                 {
                     RunSqlScriptFile(ProgramParameters.exeFolderPath + @"\db\tables\tables.sql", connectionString);
                 }
                 else if (dialogResult == DialogResult.No)
                 {
-                    dialogResult = OnTopQuestionMessageBox("Vuoi selezionare un file da copiare nella destinazione? Altriemnti premere No per uscire dal programma", "Errore - File Databse non trovato");
+                    dialogResult = OnTopMessage.Question("Vuoi selezionare un file da copiare nella destinazione? Altriemnti premere No per uscire dal programma", "Errore - File Databse non trovato");
                     if (dialogResult == DialogResult.Yes)
                     {
                         using (OpenFileDialog openFileDialog = new OpenFileDialog())
@@ -130,12 +130,12 @@ namespace mangaerordini
                             openFileDialog.FilterIndex = 2;
                             openFileDialog.RestoreDirectory = true;
 
-                            if (openFileDialog.ShowDialog() == DialogResult.OK)
+                            if (OnTopMessage.ShowOpenFileDialog(openFileDialog) == DialogResult.OK)
                             {
                                 File.Copy(openFileDialog.FileName, ProgramParameters.exeFolderPath + ProgramParameters.db_file_path + ProgramParameters.db_file_name);
                                 if (File.Exists(db_check_file) == true)
                                 {
-                                    dialogResult = OnTopQuestionMessageBox("File copiato, vuoi eliminare l'originale?", "Errore - File Databse non trovato");
+                                    dialogResult = OnTopMessage.Question("File copiato, vuoi eliminare l'originale?", "Errore - File Databse non trovato");
                                     if (dialogResult == DialogResult.Yes)
                                     {
                                         File.Delete(openFileDialog.FileName);
@@ -221,7 +221,7 @@ namespace mangaerordini
                                         }
                 };
 
-                DialogResult dialogResult = OnTopQuestionMessageBox("Vuoi che il software identifichi se necessario e aggiornare un evento di calendario? Prima di procedere chiede conferma. " + Environment.NewLine + "Se disabilitato, il tutto dovrà essere fatto manualemnte", "Aggiornamento Automatico Eventi Calendario");
+                DialogResult dialogResult = OnTopMessage.Question("Vuoi che il software identifichi se necessario e aggiornare un evento di calendario? Prima di procedere chiede conferma. " + Environment.NewLine + "Se disabilitato, il tutto dovrà essere fatto manualemnte", "Aggiornamento Automatico Eventi Calendario");
                 if (dialogResult == DialogResult.Yes)
                 {
                     settings["calendario"].Add("aggiornaCalendario", "true");
@@ -273,7 +273,7 @@ namespace mangaerordini
                         {
                             if (bkAsked == false)
                             {
-                                DialogResult dialogResult = OnTopQuestionMessageBox("Aggiornamenti database trovati. Eseguire backup database prima di effettuare l'aggiornamento(consigliato)?", "Backup Database");
+                                DialogResult dialogResult = OnTopMessage.Question("Aggiornamenti database trovati. Eseguire backup database prima di effettuare l'aggiornamento(consigliato)?", "Backup Database");
                                 if (dialogResult == DialogResult.Yes)
                                 {
                                     BkBackup();
@@ -320,13 +320,13 @@ namespace mangaerordini
         {
             using (FolderBrowserDialog db_backup_path = new FolderBrowserDialog())
             {
-                var dialogreturn = DialogResult.No;
+                DialogResult dialogreturn = DialogResult.No;
 
                 if (!automata)
                 {
                     db_backup_path.SelectedPath = Environment.GetFolderPath(Environment.SpecialFolder.DesktopDirectory);
                     db_backup_path.SelectedPath = ProgramParameters.exeFolderPath;
-                    dialogreturn = db_backup_path.ShowDialog();
+                    dialogreturn = OnTopMessage.ShowFolderBrowserDialog(db_backup_path);
                 }
 
                 if (automata == true || dialogreturn == DialogResult.OK)
@@ -356,7 +356,7 @@ namespace mangaerordini
                             source.BackupDatabase(destination, "main", "main", -1, null, 0);
                             if (!automata)
                             {
-                                OnTopInfoMessageBox("Backup eseguito");
+                                OnTopMessage.Information("Backup eseguito");
                                 Process.Start(folderPath);
                             }
                         }
@@ -483,7 +483,7 @@ namespace mangaerordini
 
                 UserSettings UserSettings = new UserSettings();
 
-                if (!File.Exists(tempfile)) File.Create(tempfile);
+                if (!File.Exists(tempfile)) File.Create(tempfile).Close();
 
                 Outlook.Folder cal = CalendarManager.FindCalendar(UserSettings.settings["calendario"]["nomeCalendario"]);
 
@@ -505,7 +505,7 @@ namespace mangaerordini
 
                 if (!String.IsNullOrEmpty(startDate))
                 {
-                    Outlook.Items restrictedItems = CalendarManager.CalendarGetItems(cal, Convert.ToDateTime(startDate).AddDays(-1), Convert.ToDateTime(startDate).AddDays(+1)) ;
+                    Outlook.Items restrictedItems = CalendarManager.CalendarGetItems(cal, Convert.ToDateTime(startDate).AddDays(-1), Convert.ToDateTime(startDate).AddDays(+1));
 
                     Dictionary<int, DateTime> ordNum = new Dictionary<int, DateTime>();
 
@@ -554,16 +554,6 @@ namespace mangaerordini
 
                 }
             }
-        }
-
-        public static DialogResult OnTopQuestionMessageBox(string body, string title = "")
-        {
-            return MessageBox.Show(body, title, MessageBoxButtons.YesNo, MessageBoxIcon.Question, MessageBoxDefaultButton.Button1, MessageBoxOptions.DefaultDesktopOnly);
-        }
-
-        public static void OnTopInfoMessageBox(string body, string title = "")
-        {
-            MessageBox.Show(body, title, MessageBoxButtons.OK, MessageBoxIcon.Information, MessageBoxDefaultButton.Button1, MessageBoxOptions.DefaultDesktopOnly);
         }
 
         static void ExitProgram()

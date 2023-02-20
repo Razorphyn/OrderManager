@@ -16,9 +16,9 @@ using System.Text;
 using System.Text.RegularExpressions;
 using System.Windows.Forms;
 using Application = System.Windows.Forms.Application;
-using MessageBox = System.Windows.Forms.MessageBox;
 using Outlook = Microsoft.Office.Interop.Outlook;
 using Razorphyn;
+using System.Runtime.InteropServices;
 
 namespace mangaerordini
 {
@@ -39,18 +39,20 @@ namespace mangaerordini
         string AddOffCreaOggettoPezzoFiltro_Text = "";
         string FieldOrdOggPezzoFiltro_Text = "";
 
+        [DllImport("User32.dll", SetLastError = true)]
+        static extern void SwitchToThisWindow(IntPtr hWnd, bool fAltTab);
+
         UserSettings UserSettings = new UserSettings();
         readonly DataValidation DataValidation = new DataValidation();
         readonly CalendarManager CalendarManager = new CalendarManager();
         readonly DbTools DbTools = new DbTools();
+        readonly OnTopMessage OnTopMessage = new OnTopMessage();
 
         public Form1()
         {
             InitializeComponent();
 
-            Timer_RunSQLiteOptimize.Interval = 60 * 1000;
-
-            this.FormClosing += new System.Windows.Forms.FormClosingEventHandler(this.Form1_FormClosing);
+            this.FormClosing += new FormClosingEventHandler(this.Form1_FormClosing);
 
             ProgramParameters.connection.Open();
             ProgramParameters.connection.SetExtendedResultCodes(true);
@@ -64,39 +66,12 @@ namespace mangaerordini
             this.ResizeBegin += (s, e) => { this.SuspendLayout(); };
             this.ResizeEnd += (s, e) => { this.ResumeLayout(true); };
 
-            this.Text = System.Reflection.Assembly.GetExecutingAssembly().GetName().Name;
+            this.Text = Assembly.GetExecutingAssembly().GetName().Name;
 
-            this.SetStyle(ControlStyles.DoubleBuffer | ControlStyles.UserPaint | ControlStyles.AllPaintingInWmPaint,
-              true);
+            this.SetStyle(ControlStyles.DoubleBuffer | ControlStyles.UserPaint | ControlStyles.AllPaintingInWmPaint, true);
             this.UpdateStyles();
 
-            var TabPagelist = this.Controls.OfType<TabPage>();
-
-            foreach (TabPage ele in TabPagelist)
-            {
-                typeof(TabPage).InvokeMember(
-                   "DoubleBuffered",
-                   BindingFlags.NonPublic | BindingFlags.Instance | BindingFlags.SetProperty,
-                   null,
-                   ele,
-                   new object[] { true }
-                );
-            }
-
-            var GridViewlist = this.Controls.OfType<DataGridView>();
-
-            foreach (DataGridView ele in GridViewlist)
-            {
-                typeof(DataGridView).InvokeMember(
-                   "DoubleBuffered",
-                   BindingFlags.NonPublic | BindingFlags.Instance | BindingFlags.SetProperty,
-                   null,
-                   ele,
-                   new object[] { true }
-                );
-
-                ele.RowHeadersWidthSizeMode = DataGridViewRowHeadersWidthSizeMode.EnableResizing;
-            }
+            FixBuffer(this);
 
             var comboBoxes = this.Controls.OfType<ComboBox>();
 
@@ -158,6 +133,9 @@ namespace mangaerordini
             FieldOrdOggPezzoFiltro.PlaceholderText = "Filtra per Id,Nome o Codice";
 
             buildVersionValue.Text = Convert.ToString(Application.ProductVersion);
+
+            //FocusProcess(Process.GetCurrentProcess().ProcessName);
+            SwitchToThisWindow(this.Handle, true);
         }
 
         //ALTRO
@@ -173,7 +151,7 @@ namespace mangaerordini
                 db_backup_path.SelectedPath = ProgramParameters.exeFolderPath;
                 string bk_fileName;
 
-                if (db_backup_path.ShowDialog() == DialogResult.OK)
+                if (OnTopMessage.ShowFolderBrowserDialog(db_backup_path) == DialogResult.OK)
                 {
                     string folderPath = db_backup_path.SelectedPath;
 
@@ -218,7 +196,7 @@ namespace mangaerordini
                 openFileDialog.Filter = "Database (.sqlitebak)|*.sqlitebak";
                 openFileDialog.FilterIndex = 2;
                 openFileDialog.RestoreDirectory = true;
-                if (openFileDialog.ShowDialog() == DialogResult.OK)
+                if (OnTopMessage.ShowOpenFileDialog(openFileDialog) == DialogResult.OK)
                 {
                     filePath = openFileDialog.FileName;
                 }
@@ -262,7 +240,7 @@ namespace mangaerordini
                 openFileDialog.FilterIndex = 2;
                 openFileDialog.RestoreDirectory = true;
 
-                if (openFileDialog.ShowDialog() == DialogResult.OK)
+                if (OnTopMessage.ShowOpenFileDialog(openFileDialog) == DialogResult.OK)
                 {
                     try
                     {
@@ -401,8 +379,7 @@ namespace mangaerordini
                 csv_path.SelectedPath = Environment.GetFolderPath(Environment.SpecialFolder.DesktopDirectory);
                 csv_path.SelectedPath = ProgramParameters.exeFolderPath;
 
-
-                if (csv_path.ShowDialog() == DialogResult.OK)
+                if (OnTopMessage.ShowFolderBrowserDialog(csv_path) == DialogResult.OK)
                 {
                     string folderPath = csv_path.SelectedPath;
                     string iden = DateTime.Now.ToString("yyMMddHHmmss");
@@ -471,13 +448,9 @@ namespace mangaerordini
                             catch (SQLiteException ex)
                             {
                                 OnTopMessage.Error("Errore durante lettura dati Offerte esportazione in csv. Codice: " + DbTools.ReturnErorrCode(ex));
-
-
                                 return;
                             }
                         }
-
-
                     }
 
                     if (exportOrdini)
@@ -548,9 +521,7 @@ namespace mangaerordini
                                 cmd.SelectCommand.Parameters.AddWithValue("@startdate", start);
                                 cmd.SelectCommand.Parameters.AddWithValue("@enddate", end);
 
-
                                 cmd.Fill(ds);
-
 
                                 using (var writer = new StreamWriter(folderPath + @"\" + "ORDINI_" + iden + ".csv", true, Encoding.UTF8))
                                 using (var csv = new CsvWriter(writer, ProgramParameters.provider))
@@ -577,7 +548,6 @@ namespace mangaerordini
                             }
                         }
                     }
-
                 }
             }
         }
@@ -5486,7 +5456,7 @@ namespace mangaerordini
                 return;
             }
 
-            DialogResult res = MessageBox.Show("Vuoi salvare le modifiche all'ordine?", "Conferma Salvataggio Modifiche Ordine", MessageBoxButtons.OKCancel, MessageBoxIcon.Information, MessageBoxDefaultButton.Button1, MessageBoxOptions.DefaultDesktopOnly);
+            DialogResult res = OnTopMessage.Question("Vuoi salvare le modifiche all'ordine?", "Conferma Salvataggio Modifiche Ordine", MessageBoxButtons.OKCancel);
             if (res != DialogResult.OK)
             {
                 UpdateFields("OCR", "A", true);
@@ -5600,7 +5570,7 @@ namespace mangaerordini
                             bool removed = false;
                             if (oldStato != stato_ordine && stato_ordine == 1)
                             {
-                                res = MessageBox.Show("L'ordine è stato chiuso, vuoi rimuoverlo dal calendario?", "Conferma Rimozione Ordine da Calendario", MessageBoxButtons.OKCancel, MessageBoxIcon.Information, MessageBoxDefaultButton.Button1, MessageBoxOptions.DefaultDesktopOnly);
+                                res = OnTopMessage.Question("L'ordine è stato chiuso, vuoi rimuoverlo dal calendario?", "Conferma Rimozione Ordine da Calendario", MessageBoxButtons.OKCancel);
                                 if (res != DialogResult.OK)
                                 {
                                     CalendarManager.RemoveAppointment(oldRef);
@@ -5611,7 +5581,7 @@ namespace mangaerordini
                             {
                                 if (DateTime.Compare(oldETA, dataETAOrdValue.DateValue) == 0 && (oldPrezF != prezzo_finaleV.DecimalValue || oldRef != n_ordine))
                                 {
-                                    res = MessageBox.Show("Vuoi aggiornare l'evento del calendario relativo alll'ordine con le nuove informazioni?", "Conferma Aggiornamento Ordine Calendario", MessageBoxButtons.OKCancel, MessageBoxIcon.Information, MessageBoxDefaultButton.Button1, MessageBoxOptions.DefaultDesktopOnly);
+                                    res = OnTopMessage.Question("Vuoi aggiornare l'evento del calendario relativo alll'ordine con le nuove informazioni?", "Conferma Aggiornamento Ordine Calendario", MessageBoxButtons.OKCancel);
                                     if (res != DialogResult.Yes)
                                     {
                                         CalendarManager.UpdateCalendar(oldRef, n_ordine, id_ordine, dataETAOrdValue.DateValue, false);
@@ -5619,7 +5589,7 @@ namespace mangaerordini
                                 }
                                 else if (DateTime.Compare(oldETA, dataETAOrdValue.DateValue) != 0)
                                 {
-                                    res = MessageBox.Show("Vuoi aggiornare l'evento del calendario relativo alll'ordine con le nuove informazioni?" + Environment.NewLine + "L'evento verrà cancellato per poi essere inserito nuovamente.", "Conferma Aggiornamento Ordine Calendario", MessageBoxButtons.OKCancel, MessageBoxIcon.Information, MessageBoxDefaultButton.Button1, MessageBoxOptions.DefaultDesktopOnly);
+                                    res = OnTopMessage.Question("Vuoi aggiornare l'evento del calendario relativo alll'ordine con le nuove informazioni?" + Environment.NewLine + "L'evento verrà cancellato per poi essere inserito nuovamente.", "Conferma Aggiornamento Ordine Calendario", MessageBoxButtons.OKCancel);
                                     if (res != DialogResult.Yes)
                                     {
                                         CalendarManager.UpdateCalendar(oldRef, n_ordine, id_ordine, dataETAOrdValue.DateValue);
@@ -5689,7 +5659,7 @@ namespace mangaerordini
                 return;
             }
 
-            DialogResult res = MessageBox.Show("Vuoi salvare le modifiche all'oggetto?", "Conferma Salvataggio Modifiche Oggetto Ordine", MessageBoxButtons.OKCancel, MessageBoxIcon.Information, MessageBoxDefaultButton.Button1, MessageBoxOptions.DefaultDesktopOnly);
+            DialogResult res = OnTopMessage.Question("Vuoi salvare le modifiche all'oggetto?", "Conferma Salvataggio Modifiche Oggetto Ordine", MessageBoxButtons.OKCancel);
             if (res != DialogResult.OK)
             {
 
@@ -8423,6 +8393,37 @@ namespace mangaerordini
             System.Diagnostics.Process.Start("https://github.com/Fody/Costura");
         }
 
+        //ALTRO
+
+        public static void FixBuffer(Form1 parentForm)
+        {
+            var TabPagelist = parentForm.Controls.OfType<TabPage>();
+            var GridViewlist = parentForm.Controls.OfType<DataGridView>();
+
+            foreach (TabPage ele in TabPagelist)
+            {
+                typeof(TabPage).InvokeMember(
+                   "DoubleBuffered",
+                   BindingFlags.NonPublic | BindingFlags.Instance | BindingFlags.SetProperty,
+                   null,
+                   ele,
+                   new object[] { true }
+                );
+            }
+
+            foreach (DataGridView ele in GridViewlist)
+            {
+                typeof(DataGridView).InvokeMember(
+                   "DoubleBuffered",
+                   BindingFlags.NonPublic | BindingFlags.Instance | BindingFlags.SetProperty,
+                   null,
+                   ele,
+                   new object[] { true }
+                );
+
+                ele.RowHeadersWidthSizeMode = DataGridViewRowHeadersWidthSizeMode.EnableResizing;
+            }
+        }
 
     }
 
