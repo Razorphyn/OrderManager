@@ -25,11 +25,11 @@ namespace Razorphyn
             public Outlook.Folder CalendarFolder { get; set; } = null;
         }
 
-        public void UpdateCalendar(string oldRef, string newRef, int id_ordine, DateTime estDate, bool delete = true)
+        public void UpdateCalendar(Outlook.Folder personalCalendar, string oldRef, string newRef, int id_ordine, DateTime estDate, bool delete = true)
         {
             bool check = false;
             if (delete == true)
-                check = RemoveAppointment(oldRef);
+                check = RemoveAppointment(personalCalendar, oldRef);
 
             if (check == true || delete == false)
             {
@@ -82,30 +82,27 @@ namespace Razorphyn
                             }
                         }
                     }
-                    AddAppointment(newRef, body, dateAppoint.DateValue);
+                    AddAppointment(personalCalendar, newRef, body, dateAppoint.DateValue);
                 }
                 else
-                    UpdateBodyCalendar(newRef, body);
+                    UpdateBodyCalendar(personalCalendar, newRef, body);
 
                 OnTopMessage.Information("Appuntamento calendario aggiornato");
+
             }
         }
 
-        public void AddAppointment(string ordRef, string body, DateTime estDate)
+        public void AddAppointment(Outlook.Folder personalCalendar, string ordRef, string body, DateTime estDate)
         {
-            UserSettings UserSettings = new UserSettings();
-
             try
             {
-                Outlook.Folder personalCalendar = FindCalendar(UserSettings.settings["calendario"]["nomeCalendario"]);
-
                 if (personalCalendar == null)
                 {
                     OnTopMessage.Error("Errore nella gestione calendari, non è possibile continuare. Provare a riavvaire outlook.");
                     return;
                 }
 
-                if (FindAppointment(UserSettings.settings["calendario"]["nomeCalendario"], ordRef, personalCalendar))
+                if (FindAppointment(personalCalendar, ordRef))
                 {
                     OnTopMessage.Alert("Evento già presente. Rimuoverlo o aggiornarlo se necessario");
                     return;
@@ -123,7 +120,6 @@ namespace Razorphyn
                 newAppointment.Display(true);
 
                 UpdateDbDateAppointment(estDate + TimeSpan.Parse("00:00:00"), ordRef);
-
             }
             catch (System.Exception ex)
             {
@@ -131,13 +127,10 @@ namespace Razorphyn
             }
         }
 
-        public bool RemoveAppointment(string ordRef, List<Tuple<string, Outlook.AppointmentItem>> listaApp = null)
+        public bool RemoveAppointment(Outlook.Folder personalCalendar, string ordRef, List<Tuple<string, Outlook.AppointmentItem>> listaApp = null)
         {
-            UserSettings UserSettings = new UserSettings();
-
             bool found = false;
             int c = 0;
-            Outlook.Folder personalCalendar = FindCalendar(UserSettings.settings["calendario"]["nomeCalendario"]);
 
             if (listaApp == null)
             {
@@ -149,7 +142,7 @@ namespace Razorphyn
                     return false;
                 }
 
-                if (!FindAppointment(UserSettings.settings["calendario"]["nomeCalendario"], ordRef, personalCalendar))
+                if (!FindAppointment(personalCalendar, ordRef))
                 {
                     OnTopMessage.Alert("Evento non presente." + Environment.NewLine + Environment.NewLine + "NOTA: La data di partenza di ricerca degli eventi è 7 fa." + Environment.NewLine + " Se l'evento è stato modfiicato a mano oltre queste date, il porgramma non lo troverà.");
                     return false;
@@ -225,10 +218,10 @@ namespace Razorphyn
 
         }
 
-        public bool? MoveAppointment(string oldCalendar, string newCalendar)
+        public bool? MoveAppointment(Outlook.Application OlApp, string oldCalendar, string newCalendar)
         {
-            Outlook.Folder personalCalendar = FindCalendar(oldCalendar);
-            Outlook.Folder newCalendarFolder = FindCalendar(newCalendar);
+            Outlook.Folder personalCalendar = FindCalendar(OlApp, oldCalendar);
+            Outlook.Folder newCalendarFolder = FindCalendar(OlApp, newCalendar);
 
             if (personalCalendar == null || newCalendarFolder == null)
             {
@@ -268,12 +261,8 @@ namespace Razorphyn
             return error_free;
         }
 
-        public bool UpdateBodyCalendar(string ordRef, string body)
+        public bool UpdateBodyCalendar(Outlook.Folder personalCalendar, string ordRef, string body)
         {
-            UserSettings UserSettings = new UserSettings();
-
-            Outlook.Folder personalCalendar = FindCalendar(UserSettings.settings["calendario"]["nomeCalendario"]);
-
             if (personalCalendar == null)
             {
                 OnTopMessage.Error("Errore nella gestione calendari, non è possibile continuare. Provare a riavvaire Outlook.");
@@ -489,7 +478,90 @@ namespace Razorphyn
             return body;
         }
 
-        private CalendarResult CreateCustomCalendar(string calName)
+        public void AggiornaDataCalendario(Outlook.Folder personalCalendar, string newRef)
+        {
+            DataValidation DataValidation = new DataValidation();
+            Outlook.Items restrictedItems;
+
+            if (!FindAppointment(personalCalendar, newRef))
+            {
+                OnTopMessage.Information("Non esiste un evento a calendario.");
+                return;
+            }
+
+            CalendarResult caldate = GetDbDateCalendar(new string[] { newRef });
+
+            restrictedItems = CalendarGetItems(personalCalendar, caldate.AppointmentDate.AddDays(-1), caldate.AppointmentDate.AddDays(1), newRef);
+
+            foreach (Outlook.AppointmentItem entry in restrictedItems)
+            {
+                DataValidation.ValidationResult answer = new DataValidation.ValidationResult();
+
+                while (answer.DateValue == DateTime.MinValue)
+                {
+                    string editDate = Interaction.InputBox("Inserire nuova data e ora (" + ProgramParameters.dateFormatTime + "evento:", "Modifica data evento: " + entry.Subject, Convert.ToString(entry.Start));
+
+                    if (String.IsNullOrEmpty(editDate))
+                    {
+                        return;
+                    }
+
+                    answer = DataValidation.ValidateDateTime(editDate);
+                    if (answer.Error != null)
+                        OnTopMessage.Alert(answer.Error);
+                }
+
+                if (DateTime.Compare(entry.Start, answer.DateValue) == 0)
+                {
+                    OnTopMessage.Alert("Data Invariata. Operazione annullata");
+                    break;
+                }
+                else
+                {
+                    try
+                    {
+                        UpdateDbDateAppointment(answer.DateValue, newRef);
+                        entry.Start = answer.DateValue;
+                        entry.Save();
+                        OnTopMessage.Information("Data aggiornata.");
+                    }
+                    catch
+                    {
+                        OnTopMessage.Error("Si è verificato un erorre. Data non aggiornata.");
+                    }
+                }
+            }
+        }
+
+        public void FindCalendarDuplicate(Outlook.Folder personalCalendar, string newRef)
+        {
+            Outlook.Items restrictedItems = CalendarGetItems(personalCalendar, DateTime.Now.AddDays(-7), DateTime.MaxValue, newRef);
+
+            List<Tuple<string, Outlook.AppointmentItem>> listaApp = new List<Tuple<string, Outlook.AppointmentItem>>();
+
+            int c = 0;
+
+            foreach (Outlook.AppointmentItem apptItem in restrictedItems)
+            {
+                listaApp.Add(new Tuple<string, Outlook.AppointmentItem>(newRef, apptItem));
+                c++;
+            }
+
+            if (c < 2)
+            {
+                OnTopMessage.Information("Nessun duplicato a partire da una settimana fa.");
+            }
+            else
+            {
+                if (OnTopMessage.Question("Sono stati trovati " + c + " eventi per lo stesso ordine." + Environment.NewLine + "Procedere con le operazioni di eliminazione? Verrà chiesta conferma per ogni evento." + Environment.NewLine + Environment.NewLine + "Attenzione: eventi multipli sono inconflitto con la gestione eventi del programma.", "Eventi Multipli per Ordine " + newRef) == DialogResult.Yes)
+                {
+                    RemoveAppointment(personalCalendar, newRef, listaApp);
+                }
+            }
+            return;
+        }
+
+        private CalendarResult CreateCustomCalendar(Outlook.Application OlApp, string calName)
         {
             CalendarResult answer = new CalendarResult
             {
@@ -504,7 +576,6 @@ namespace Razorphyn
             {
                 try
                 {
-                    Outlook.Application OlApp = new Outlook.Application();
                     Outlook.Folder primaryCalendar = OlApp.Session.GetDefaultFolder(Outlook.OlDefaultFolders.olFolderCalendar) as Outlook.Folder;
 
                     foreach (Outlook.Folder Calendar in primaryCalendar.Folders)
@@ -526,19 +597,18 @@ namespace Razorphyn
                     OnTopMessage.Error("Errore durante verifica necessità cartella OutLook. Impossibile aggiornare informazioni." + Environment.NewLine + "Incrociare dia per evitare danni ai dati");
                     answer.Success = false;
                 }
+                finally
+                {
+                    //ReleaseObj(OlApp);
+                }
             }
 
             return answer;
         }
 
-        public Outlook.Folder FindCalendar(string calendarName)
+        public Outlook.Folder FindCalendar(Outlook.Application OlApp, string calendarName)
         {
-            Outlook.Application OlApp = new Outlook.Application();
-
-            Outlook.Folder AppointmentFolder =
-                OlApp.Session.GetDefaultFolder(
-                Outlook.OlDefaultFolders.olFolderCalendar)
-                as Outlook.Folder;
+            Outlook.Folder AppointmentFolder = OlApp.Session.GetDefaultFolder(Outlook.OlDefaultFolders.olFolderCalendar) as Outlook.Folder;
 
             Outlook.Folder personalCalendar = AppointmentFolder;
 
@@ -552,13 +622,17 @@ namespace Razorphyn
                     }
                 }
 
-                CalendarResult re = CreateCustomCalendar(calendarName);
+                CalendarResult re = CreateCustomCalendar(OlApp, calendarName);
 
                 if (re.Success && !re.Found)
                     personalCalendar = re.CalendarFolder;
                 else if (!re.Success)
+                {
                     return null;
+                }
             }
+
+            //ReleaseObj(OlApp);
 
             return personalCalendar;
         }
@@ -579,26 +653,24 @@ namespace Razorphyn
             return restrictedItems;
         }
 
-        public bool FindAppointment(string CalendarName, string ordRef, Outlook.Folder personalCalendar = null)
+        public bool FindAppointment(Outlook.Folder personalCalendar, string ordRef)
         {
             try
             {
-                if (personalCalendar == null)
+                if (personalCalendar is null)
                 {
-                    personalCalendar = FindCalendar(CalendarName);
-                    if (personalCalendar == null)
-                    {
-                        OnTopMessage.Error("Errore nella gestione calendari, non è possibile continuare. Provare a riavvaire Outlook.");
-                        return false;
-                    }
+                    return false;
                 }
 
                 CalendarResult answer = GetDbDateCalendar(new string[] { ordRef });
 
                 if (answer.Success && !answer.Found)
+                {
                     return false;
+                }
 
-                Outlook.Items restrictedItems = CalendarGetItems(personalCalendar, answer.AppointmentDate.AddDays(-(answer.Found ? 1 : 0)), answer.AppointmentDate.AddDays(+1), ordRef);
+                int sumDay = -(answer.Found ? 1 : 0);
+                Outlook.Items restrictedItems = CalendarGetItems(personalCalendar, answer.AppointmentDate.AddDays(sumDay), answer.AppointmentDate.AddDays(1), ordRef);
 
                 foreach (Outlook.AppointmentItem apptItem in restrictedItems)
                 {
@@ -616,19 +688,26 @@ namespace Razorphyn
                 OnTopMessage.Alert("Nel database è presente un appuntamento, ma non esiste corrispondenza in Outlook. Verificare informazioni, rischio conflitto." + Environment.NewLine + "Il dato su database è stato resetatto.");
 
                 UpdateDbDateAppointment(null, ordRef);
-
                 return false;
             }
-            catch
+            catch (System.Exception ex)
             {
-                OnTopMessage.Error("Errore durante verifica necessità cartella OutLook. Impossibile aggiornare informazioni." + Environment.NewLine + "Incrociare dita per evitare danni ai dati");
+                OnTopMessage.Error("Errore durante verifica presenza appuntamento. Impossibile aggiornare informazioni." + Environment.NewLine + "Incrociare dita per evitare danni ai dati" + Environment.NewLine + ex.Message);
                 return false;
             }
         }
 
         public void UpdateDbDateAppointment(DateTime? AppointmentDate, string ordRef)
         {
+            MessageBox.Show("" + AppointmentDate);
+
+            if (DateTime.Compare((DateTime)AppointmentDate, DateTime.MinValue) == 0)
+            {
+                return;
+            }
+
             var DataValidation = new DataValidation();
+
             DataValidation.ValidationResult codice_ordine = DataValidation.ValidateId(ordRef);
             if (codice_ordine.Error != null)
             {
@@ -641,7 +720,7 @@ namespace Razorphyn
             {
                 try
                 {
-                    if (AppointmentDate != null)
+                    if (!(AppointmentDate is null))
                     {
                         DateTime temp = (DateTime)AppointmentDate;
                         AppointmentDate = new DateTime(temp.Year, temp.Month, temp.Day, 0, 0, 0);
@@ -692,7 +771,7 @@ namespace Razorphyn
                     cmd.Parameters.AddWithValue("@ordCode", string.Join(", ", ids));
                     object res = cmd.ExecuteScalar();
 
-                    if (res != DBNull.Value && res !=null)
+                    if (res != DBNull.Value && !(res is null) && DateTime.Compare((DateTime)res, DateTime.MinValue) == 1)
                     {
                         answer.Found = true;
                         answer.AppointmentDate = (DateTime)res;
@@ -703,8 +782,18 @@ namespace Razorphyn
                     OnTopMessage.Error("Errore durante aggiornamento date calendario al database. Codice: " + DbTools.ReturnErorrCode(ex));
                 }
             }
-
             return answer;
+        }
+
+        public void ReleaseObj(object obj)
+        {
+            obj = null;
+
+            GC.Collect();
+            GC.WaitForPendingFinalizers();
+            GC.Collect();
+            return;
+
         }
 
     }
