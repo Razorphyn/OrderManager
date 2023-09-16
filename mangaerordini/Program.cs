@@ -1,6 +1,6 @@
-using AutoUpdaterDotNET;
 using Microsoft.VisualBasic;
 using Newtonsoft.Json;
+using Razorphyn;
 using System;
 using System.Collections.Generic;
 using System.Data.SQLite;
@@ -11,9 +11,7 @@ using System.Runtime.InteropServices;
 using System.Text.RegularExpressions;
 using System.Threading;
 using System.Windows.Forms;
-using Outlook = Microsoft.Office.Interop.Outlook;
-using Razorphyn;
-using Windows.Devices.Lights;
+using Windows.ApplicationModel.Chat;
 
 namespace mangaerordini
 {
@@ -28,11 +26,9 @@ namespace mangaerordini
         static readonly string db_check_file = ProgramParameters.exeFolderPath + ProgramParameters.db_file_path + ProgramParameters.db_file_name;
 
         static readonly string nameTempDbRetsore = "temp_updateDB_then_delete_do_not_use_this_name_pls";
-        static readonly string connectionString = @"Data Source = " + ProgramParameters.exeFolderPath + ProgramParameters.db_file_path + ProgramParameters.db_file_name + @";cache=shared; synchronous  = NORMAL ;  journal_mode=WAL; temp_store = memory;  mmap_size = 30000000000; ";
-        static readonly SQLiteConnection connection = new SQLiteConnection(connectionString);
+        static readonly SQLiteConnection connection = new(ProgramParameters.connectionStringAdmin);
 
-        static readonly CalendarManager CalendarManager = new CalendarManager();
-        static readonly ProgramUpdateFunctions ProgramUpdateFunctions = new ProgramUpdateFunctions();
+        static readonly ProgramUpdateFunctions ProgramUpdateFunctions = new();
 
         [STAThread]
         private static void Main()
@@ -46,14 +42,14 @@ namespace mangaerordini
 
             string mutexId = string.Format("Global\\{{{0}}}", appGuid);
 
-            Mutex mutex = new System.Threading.Mutex(false, mutexId, out bool created);
+            Mutex mutex = new(false, mutexId, out bool created);
             created = (created) ? mutex.WaitOne(TimeSpan.FromSeconds(2), true) : created;
             try
             {
                 if (!created)
                 {
                     OnTopMessage.Error("L'applicazione è già in esecuzione.");
-                    ExitProgram();
+                    Utility.ExitProgram();
                 }
             }
             finally
@@ -63,6 +59,8 @@ namespace mangaerordini
 
             Application.EnableVisualStyles();
             Application.SetCompatibleTextRenderingDefault(false);
+
+            CheckSetting();
 
             ProgramUpdateFunctions.CheckUpdates();
 
@@ -76,9 +74,7 @@ namespace mangaerordini
 
             CheckDbUpdate(versione);
 
-            CheckSetting();
-
-            Application.Run(new Form1());
+            Application.Run(new Main());
         }
 
         public class DbCallResult
@@ -95,14 +91,14 @@ namespace mangaerordini
                 DialogResult dialogResult = OnTopMessage.Question("Il file del database non è stato trovato. Generare un nuovo file?" + Environment.NewLine + "Premere No per altre opzioni." + Environment.NewLine + Environment.NewLine + "Altriemnti chiudere il programma e copiare e incollare il file '" + ProgramParameters.db_file_name + "'  dalla cartella precedente nella cartella 'db' che si trova nel percorso corrente dell'eseguibile e riavviare il software.", "Errore - File Databse non trovato");
                 if (dialogResult == DialogResult.Yes)
                 {
-                    RunSqlScriptFile(ProgramParameters.exeFolderPath + @"\db\tables\tables.sql", connectionString);
+                    RunSqlScriptFile(ProgramParameters.exeFolderPath + @"\db\tables\tables.sql", ProgramParameters.connectionStringAdmin);
                 }
                 else if (dialogResult == DialogResult.No)
                 {
                     dialogResult = OnTopMessage.Question("Vuoi selezionare un file da copiare nella destinazione? Altriemnti premere No per uscire dal programma", "Errore - File Databse non trovato");
                     if (dialogResult == DialogResult.Yes)
                     {
-                        using (OpenFileDialog openFileDialog = new OpenFileDialog())
+                        using (OpenFileDialog openFileDialog = new())
                         {
                             openFileDialog.InitialDirectory = ProgramParameters.exeFolderPath;
                             openFileDialog.Filter = "SQLite Database (*.db)|*.db";
@@ -124,29 +120,29 @@ namespace mangaerordini
                             else
                             {
                                 OnTopMessage.Error("Il Programma verrà chiuso.", "Chiusura Programma");
-                                ExitProgram();
+                                Utility.ExitProgram();
                             }
                         }
                     }
                     else
                     {
-                        ExitProgram();
+                        Utility.ExitProgram();
                     }
                 }
                 else
                 {
-                    ExitProgram();
+                    Utility.ExitProgram();
                 }
             }
         }
 
         private static DbCallResult ReturnVersione()
         {
-            DbCallResult answer = new DbCallResult();
+            DbCallResult answer = new();
 
             //Retrieve database version, if not exist add default
             string commandText = "SELECT versione FROM " + ProgramParameters.schemadb + @"[informazioni] WHERE Id=1 LIMIT 1;";
-            using (SQLiteCommand cmd = new SQLiteCommand(commandText, connection))
+            using (SQLiteCommand cmd = new(commandText, connection))
             {
                 try
                 {
@@ -158,7 +154,7 @@ namespace mangaerordini
                     if (answer.DecimalValue == 0)
                     {
                         commandText = "INSERT INTO " + ProgramParameters.schemadb + @"[informazioni](Id,versione) VALUES (1,1);";
-                        using (SQLiteCommand cmd2 = new SQLiteCommand(commandText, connection))
+                        using (SQLiteCommand cmd2 = new(commandText, connection))
                         {
                             try
                             {
@@ -191,7 +187,7 @@ namespace mangaerordini
             {
                 string calendarName = GetCalendarName();
 
-                Dictionary<string, Dictionary<string, string>> settings = new Dictionary<string, Dictionary<string, string>>
+                Dictionary<string, Dictionary<string, string>> settings = new()
                 {
                     ["calendario"] = new Dictionary<string, string>
                                         {
@@ -232,13 +228,13 @@ namespace mangaerordini
             // Add hash check?
             if (Directory.Exists(ProgramParameters.exeFolderPath + db_update_folder))
             {
-                DirectoryInfo d = new DirectoryInfo(ProgramParameters.exeFolderPath + db_update_folder);
+                DirectoryInfo d = new(ProgramParameters.exeFolderPath + db_update_folder);
 
                 FileInfo[] Files = d.GetFiles("*.sql"); //Getting sql files
                 string str = "";
 
                 bool bkAsked = false;
-                Array.Sort(Files, delegate (FileInfo x, FileInfo y) { return Decimal.Compare(Convert.ToDecimal(Path.GetFileNameWithoutExtension(x.Name)), Convert.ToDecimal(Path.GetFileNameWithoutExtension(y.Name))); });
+                Array.Sort(Files, delegate (FileInfo x, FileInfo y) { return Decimal.Compare(Convert.ToDecimal(Path.GetFileNameWithoutExtension(x.Name).Replace('.', ',')), Convert.ToDecimal(Path.GetFileNameWithoutExtension(y.Name).Replace('.', ','))); });
 
                 foreach (FileInfo file in Files)
                 {
@@ -246,7 +242,7 @@ namespace mangaerordini
                     string[] fnames_ver = str.Split('-');
                     int index_str = (fnames_ver.Length > 1) ? 1 : 0;
 
-                    if (Decimal.TryParse(fnames_ver[index_str], out decimal dec))
+                    if (Decimal.TryParse(fnames_ver[index_str].Replace('.',','), out decimal dec))
                     {
                         if (versione.DecimalValue < dec)
                         {
@@ -263,30 +259,34 @@ namespace mangaerordini
                             //do backup anyway to rollback in case of errors
                             BkBackup(true);
 
-                            bool success = RunSqlScriptFile(ProgramParameters.exeFolderPath + db_update_folder + @"\" + file.Name, connectionString);
+                            ProgramUpdateFunctions.PreUpdateDataManipulation(Convert.ToDecimal(fnames_ver[index_str]));
+
+                            bool success = RunSqlScriptFile(ProgramParameters.exeFolderPath + db_update_folder + @"\" + file.Name, ProgramParameters.connectionStringAdmin);
+                            bool PostUpdateDataManipulationSucess = true;
 
                             if (success)
                             {
-                                //delete automatic backup
-                                DelTempFileBkDb();
+                                PostUpdateDataManipulationSucess = ProgramUpdateFunctions.PostUpdateDataManipulation(Convert.ToDecimal(fnames_ver[index_str]));
+                            }
 
-                                ProgramUpdateFunctions.UpdateDataManipulation(Convert.ToDecimal(fnames_ver[index_str]));
+                            if (!success || !PostUpdateDataManipulationSucess)
+                            {
+                                //if error then restore db and delete temp backup
+                                BtDbRestoreAutomatic();
+
+                                OnTopMessage.Error("Errore durante aggiornamento database. Il programma non può esssere avviato. Il database verra ripristinato." + Environment.NewLine + "Contatta uno sviluppatore competente");
+                                Utility.ExitProgram();
                             }
                             else
                             {
-                                //if error then restore db and delete temp backup
-                                BtDbRestore();
                                 DelTempFileBkDb();
-
-                                OnTopMessage.Error("Errore durante aggiornamento database. Il programma non può esssere avviato." + Environment.NewLine + "Contatta uno sviluppatore competente");
-                                ExitProgram();
                             }
                         }
                     }
                     else
                     {
                         OnTopMessage.Error("Errore nel parse dei file" + str + ", controllare i file nella cartella db/update e riavviare il programma");
-                        ExitProgram();
+                        Utility.ExitProgram();
                     }
                 }
             }
@@ -294,7 +294,7 @@ namespace mangaerordini
 
         private static void BkBackup(bool automata = false)
         {
-            using (FolderBrowserDialog db_backup_path = new FolderBrowserDialog())
+            using (FolderBrowserDialog db_backup_path = new())
             {
                 DialogResult dialogreturn = DialogResult.No;
 
@@ -347,11 +347,11 @@ namespace mangaerordini
             return;
         }
 
-        private static void BtDbRestore()
+        private static void BtDbRestoreAutomatic()
         {
             string filePath = ProgramParameters.exeFolderPath + ProgramParameters.db_file_path + nameTempDbRetsore;
 
-            if (!String.IsNullOrEmpty(filePath))
+            if (!String.IsNullOrEmpty(filePath) && File.Exists(filePath))
             {
                 using (var source = new SQLiteConnection("Data Source=" + filePath))
                 using (var destination = new SQLiteConnection("Data Source=" + ProgramParameters.exeFolderPath + ProgramParameters.db_file_path + ProgramParameters.db_file_name))
@@ -360,6 +360,10 @@ namespace mangaerordini
                     destination.Open();
                     source.BackupDatabase(destination, "main", "main", -1, null, 0);
                 }
+            }
+            else if (!File.Exists(filePath))
+            {
+                OnTopMessage.Error("File backup non trovato.");
             }
             return;
         }
@@ -389,7 +393,7 @@ namespace mangaerordini
                 // split script on GO command
                 System.Collections.Generic.IEnumerable<string> commandStrings = Regex.Split(script, @"^\s*GO\s*$",
                                          RegexOptions.Multiline | RegexOptions.IgnoreCase);
-                using (SQLiteConnection connection = new SQLiteConnection(connectionString))
+                using (SQLiteConnection connection = new(connectionString))
                 {
                     connection.Open();
                     foreach (string commandString in commandStrings)
@@ -436,7 +440,7 @@ namespace mangaerordini
 
         private static void CheckPendingdataUpdate()
         {
-            DirectoryInfo d = new DirectoryInfo(ProgramParameters.exeFolderPath + ProgramParameters.db_file_path);
+            DirectoryInfo d = new(ProgramParameters.exeFolderPath + ProgramParameters.db_file_path);
 
             FileInfo[] Files = d.GetFiles("*.pending"); //Getting sql files
 
@@ -446,22 +450,9 @@ namespace mangaerordini
             {
                 if (Decimal.TryParse(Path.GetFileNameWithoutExtension(file.Name), out decimal dec))
                 {
-                    ProgramUpdateFunctions.UpdateDataManipulation(dec);
+                    ProgramUpdateFunctions.PostUpdateDataManipulation(dec);
                 }
             }
         }
-
-        static void ExitProgram()
-        {
-            if (System.Windows.Forms.Application.MessageLoop)
-            {
-                System.Windows.Forms.Application.Exit();
-            }
-            else
-            {
-                System.Environment.Exit(1);
-            }
-        }
     }
-
 }
