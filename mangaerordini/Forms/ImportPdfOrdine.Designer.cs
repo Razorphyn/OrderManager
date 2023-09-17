@@ -238,7 +238,7 @@ namespace ManagerOrdini.Forms
             this.OrderItemCollection.ColumnStyles.Add(new System.Windows.Forms.ColumnStyle(System.Windows.Forms.SizeType.Absolute, 114F));
             this.OrderItemCollection.ColumnStyles.Add(new System.Windows.Forms.ColumnStyle(System.Windows.Forms.SizeType.Absolute, 109F));
             this.OrderItemCollection.ColumnStyles.Add(new System.Windows.Forms.ColumnStyle(System.Windows.Forms.SizeType.Absolute, 112F));
-            this.OrderItemCollection.ColumnStyles.Add(new System.Windows.Forms.ColumnStyle(System.Windows.Forms.SizeType.Absolute, 115F));
+            this.OrderItemCollection.ColumnStyles.Add(new System.Windows.Forms.ColumnStyle(System.Windows.Forms.SizeType.Absolute, 116F));
             this.OrderItemCollection.Controls.Add(this.label11, 9, 0);
             this.OrderItemCollection.Controls.Add(this.label10, 2, 0);
             this.OrderItemCollection.Controls.Add(this.label7, 0, 0);
@@ -261,9 +261,9 @@ namespace ManagerOrdini.Forms
             // 
             this.label11.AutoSize = true;
             this.label11.Dock = System.Windows.Forms.DockStyle.Fill;
-            this.label11.Location = new System.Drawing.Point(1006, 1);
+            this.label11.Location = new System.Drawing.Point(1005, 1);
             this.label11.Name = "label11";
-            this.label11.Size = new System.Drawing.Size(109, 50);
+            this.label11.Size = new System.Drawing.Size(110, 50);
             this.label11.TabIndex = 8;
             this.label11.Text = "ETA";
             this.label11.TextAlign = System.Drawing.ContentAlignment.MiddleCenter;
@@ -272,7 +272,7 @@ namespace ManagerOrdini.Forms
             // 
             this.label10.AutoSize = true;
             this.label10.Dock = System.Windows.Forms.DockStyle.Fill;
-            this.label10.Location = new System.Drawing.Point(393, 1);
+            this.label10.Location = new System.Drawing.Point(392, 1);
             this.label10.Name = "label10";
             this.label10.Size = new System.Drawing.Size(66, 50);
             this.label10.TabIndex = 7;
@@ -294,7 +294,7 @@ namespace ManagerOrdini.Forms
             // 
             this.label6.AutoSize = true;
             this.label6.Dock = System.Windows.Forms.DockStyle.Fill;
-            this.label6.Location = new System.Drawing.Point(893, 1);
+            this.label6.Location = new System.Drawing.Point(892, 1);
             this.label6.Name = "label6";
             this.label6.Size = new System.Drawing.Size(106, 50);
             this.label6.TabIndex = 5;
@@ -305,7 +305,7 @@ namespace ManagerOrdini.Forms
             // 
             this.label5.AutoSize = true;
             this.label5.Dock = System.Windows.Forms.DockStyle.Fill;
-            this.label5.Location = new System.Drawing.Point(783, 1);
+            this.label5.Location = new System.Drawing.Point(782, 1);
             this.label5.Name = "label5";
             this.label5.Size = new System.Drawing.Size(103, 50);
             this.label5.TabIndex = 4;
@@ -316,7 +316,7 @@ namespace ManagerOrdini.Forms
             // 
             this.label4.AutoSize = true;
             this.label4.Dock = System.Windows.Forms.DockStyle.Fill;
-            this.label4.Location = new System.Drawing.Point(668, 1);
+            this.label4.Location = new System.Drawing.Point(667, 1);
             this.label4.Name = "label4";
             this.label4.Size = new System.Drawing.Size(108, 50);
             this.label4.TabIndex = 3;
@@ -327,7 +327,7 @@ namespace ManagerOrdini.Forms
             // 
             this.label3.AutoSize = true;
             this.label3.Dock = System.Windows.Forms.DockStyle.Fill;
-            this.label3.Location = new System.Drawing.Point(559, 1);
+            this.label3.Location = new System.Drawing.Point(558, 1);
             this.label3.Name = "label3";
             this.label3.Size = new System.Drawing.Size(102, 50);
             this.label3.TabIndex = 2;
@@ -340,7 +340,7 @@ namespace ManagerOrdini.Forms
             this.label2.Dock = System.Windows.Forms.DockStyle.Fill;
             this.label2.Location = new System.Drawing.Point(89, 1);
             this.label2.Name = "label2";
-            this.label2.Size = new System.Drawing.Size(297, 50);
+            this.label2.Size = new System.Drawing.Size(296, 50);
             this.label2.TabIndex = 0;
             this.label2.Text = "Pezzo";
             this.label2.TextAlign = System.Drawing.ContentAlignment.MiddleCenter;
@@ -349,7 +349,7 @@ namespace ManagerOrdini.Forms
             // 
             this.label9.AutoSize = true;
             this.label9.Dock = System.Windows.Forms.DockStyle.Fill;
-            this.label9.Location = new System.Drawing.Point(466, 1);
+            this.label9.Location = new System.Drawing.Point(465, 1);
             this.label9.Name = "label9";
             this.label9.Size = new System.Drawing.Size(86, 50);
             this.label9.TabIndex = 1;
@@ -564,6 +564,7 @@ namespace ManagerOrdini.Forms
             this.ImportOfferPDFAdd.TabIndex = 112;
             this.ImportOfferPDFAdd.Text = "Crea Ordine";
             this.ImportOfferPDFAdd.UseVisualStyleBackColor = true;
+            this.ImportOfferPDFAdd.Click += new System.EventHandler(this.BtCreaOrdine_Click);
             // 
             // ImportPdfOrdine
             // 

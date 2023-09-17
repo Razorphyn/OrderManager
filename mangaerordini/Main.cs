@@ -5741,7 +5741,7 @@ namespace mangaerordini
                 return;
             }
 
-            GestioneOrdini.Answer esito = GestioneOrdini.AddObjToOrder(idordine, idiri, dataETAOrdValue, prezzo_originaleV, prezzo_scontatoV, qtaP,
+            GestioneOrdini.Answer esito = GestioneOrdini.AddObjToOrder(idordine, idiri, dataETAOrdValue.DateValue, (decimal)prezzo_originaleV.DecimalValue, (decimal)prezzo_scontatoV.DecimalValue, (int)qtaP.IntValue,
                                                                         CheckBoxOrdOggCheckAddNotOffer.Checked, CheckBoxOrdOggSconto.Checked, idoggOff);
 
             if (esito.Success)
@@ -7354,7 +7354,8 @@ namespace mangaerordini
                             f2.Dispose();
                         }
 
-                        LoadOfferteCreaTable();
+                        //LoadOrdiniTable();
+                        UpdateOrdini();
 
                         ComboSelOrd_SelectedIndexChanged(this, System.EventArgs.Empty);
                         SelOffCrea_SelectedIndexChanged(this, System.EventArgs.Empty);

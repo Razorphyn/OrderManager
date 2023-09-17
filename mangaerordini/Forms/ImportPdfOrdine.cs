@@ -1,4 +1,6 @@
-﻿using Newtonsoft.Json;
+﻿using Microsoft.VisualBasic;
+using Newtonsoft.Json;
+using NodaTime.Calendars;
 using PdfSharp.Pdf.Content.Objects;
 using Razorphyn;
 using System;
@@ -8,6 +10,7 @@ using System.Drawing;
 using System.Linq;
 using System.Text.RegularExpressions;
 using System.Windows.Forms;
+using Windows.Storage.Streams;
 using static iText.StyledXmlParser.Jsoup.Select.Evaluator;
 using static Razorphyn.Populate;
 using static Razorphyn.SupportClasses;
@@ -23,6 +26,8 @@ namespace ManagerOrdini.Forms
 
         long orderID = 0;
         long offerID = 0;
+        DateTime etaorder = DateTime.MinValue;
+
         List<long> ricambiOfferta = new();
 
         readonly TableLayoutPanel TabItem;
@@ -89,7 +94,7 @@ namespace ManagerOrdini.Forms
             ComboBoxOrdOfferta.SelectedIndexChanged += ComboBoxOrdOfferta_SelectedIndexChanged;
         }
 
-        private void BtCreaOrdine_Click(object sender, EventArgs e)
+        /*private void BtCreaOrdine_Click(object sender, EventArgs e)
         {
 
             string commandText;
@@ -256,14 +261,14 @@ namespace ManagerOrdini.Forms
 
                         if (DateTime.Compare(eta.DateValue, dataETAOrdValue.DateValue) < 0)
                         {
-                            er_list += "La data di arrivo del ricambio è antercendente all'arrivo dell'ordine " + Environment.NewLine;
+                            er_list += "La data di arrivo del ricambio è antecendente all'arrivo dell'ordine " + Environment.NewLine;
                         }
 
                         if (er_list != "")
                         {
                             er_list = "Il ricambio " + Items[i]["codice"] + " presenta errori:" + Environment.NewLine + er_list;
 
-                            er_list += Environment.NewLine + "L'elemento rimarrà in tabella per essere modificato e aggiunto.";
+                            er_list += Environment.NewLine + "L'elemento rimarrà in tabella per essere modificato.";
 
                             OnTopMessage.Alert(er_list);
 
@@ -276,7 +281,7 @@ namespace ManagerOrdini.Forms
                             idoggric = Convert.ToInt64(GetResource.GetIdRicambioInOffferta(id_offerta, idir).LongValue);
                         }
 
-                        GestioneOrdini.Answer esitoOgg = GestioneOrdini.AddObjToOrder(orderID, idir, eta, prezzoOrV, prezzoScV, qtaV,
+                        GestioneOrdini.Answer esitoOgg = GestioneOrdini.AddObjToOrder(orderID, idir, eta.DateValue, (decimal)prezzoOrV.DecimalValue, (decimal)prezzoScV.DecimalValue, (int)qtaV.IntValue,
                                                                                         isOffer, false, idoggric);
 
                         if (!esitoOgg.Success)
@@ -301,6 +306,182 @@ namespace ManagerOrdini.Forms
                 OnTopMessage.Error(esito.Error);
             }
 
+            return;
+        }*/
+
+        private void BtCreaOrdine_Click(object sender, EventArgs e)
+        {
+
+            if (orderID == 0)
+            {
+                string commandText;
+
+                long id_offerta = (CheckBoxOrdOffertaNonPresente.Checked == false) ? Convert.ToInt64(ComboBoxOrdOfferta.SelectedValue.ToString()) : -1;
+
+                long? id_cl = (CheckBoxOrdOffertaNonPresente.Checked == true) ? Convert.ToInt64(ComboBoxOrdCliente.SelectedValue.ToString()) : null;
+                long id_contatto = (CheckBoxOrdOffertaNonPresente.Checked == true && Convert.ToInt64(ComboBoxOrdContatto.SelectedValue.ToString()) > 0) ? Convert.ToInt64(ComboBoxOrdContatto.SelectedValue.ToString()) : -1;
+
+                long idsd = Convert.ToInt64(ComboBoxOrdSede.SelectedValue.ToString());
+
+                string n_ordine = FieldOrdNOrdine.Text.Trim();
+
+                string dataOrdString = FieldOrdData.Text.Trim();
+                string dataETAString = FieldOrdETA.Text.Trim();
+
+                string spedizioni = FieldOrdSped.Text.Trim();
+                int gestSP = Convert.ToInt32(FieldOrdSpedGestione.SelectedValue.ToString());
+
+                int stato_ordine = Convert.ToInt32(FieldOrdStato.SelectedValue.ToString());
+                stato_ordine = (stato_ordine < 0) ? 0 : stato_ordine;
+
+                DataValidation.ValidationResult answer;
+                DataValidation.ValidationResult prezzoSpedizione = new();
+                DataValidation.ValidationResult dataOrdValue;
+                DataValidation.ValidationResult dataETAOrdValue;
+                DataValidation.ValidationResult tot_ordineV = new();
+                DataValidation.ValidationResult prezzo_finaleV = new();
+                DataValidation.ValidationResult scontoV = new() { DecimalValue = 0 };
+
+                string er_list = "";
+
+                if (CheckBoxOrdOffertaNonPresente.Checked)
+                {
+                    answer = DataValidation.ValidateCliente((int)id_cl);
+                    if (!answer.Success)
+                    {
+                        OnTopMessage.Alert(answer.Error);
+                        return;
+                    }
+                    er_list += answer.Error;
+                }
+
+                if (string.IsNullOrEmpty(n_ordine) || !Regex.IsMatch(n_ordine, @"^\d+$"))
+                {
+                    er_list += "Numero Ordine non valido o vuoto" + Environment.NewLine;
+                }
+
+                dataOrdValue = DataValidation.ValidateDate(dataOrdString);
+                er_list += dataOrdValue.Error;
+
+                dataETAOrdValue = DataValidation.ValidateDate(dataETAString);
+                er_list += dataETAOrdValue.Error;
+
+                if (DateTime.Compare(dataOrdValue.DateValue, dataETAOrdValue.DateValue) > 0)
+                {
+                    er_list += "Data di Arrivo(ETA) antecedente a quella di creazione dell'ordine" + Environment.NewLine;
+                }
+
+                if (!string.IsNullOrEmpty(spedizioni))
+                {
+                    if (!string.IsNullOrEmpty(spedizioni))
+                    {
+                        prezzoSpedizione = DataValidation.ValidateSpedizione(spedizioni, gestSP);
+                        er_list += prezzoSpedizione.Error;
+                    }
+                }
+
+                tot_ordineV.DecimalValue = 0;
+                prezzo_finaleV.DecimalValue = 0;
+
+                if (CheckBoxOrdOffertaNonPresente.Checked == false)
+                {
+                    commandText = "SELECT COUNT(*) FROM " + ProgramParameters.schemadb + @"[offerte_elenco] WHERE ([Id] = @id_offerta) LIMIT 1;";
+                    int UserExist = 0;
+
+                    using (SQLiteCommand cmd = new(commandText, ProgramParameters.connection))
+                    {
+                        try
+                        {
+                            cmd.CommandText = commandText;
+                            cmd.Parameters.AddWithValue("@id_offerta", id_offerta);
+
+                            UserExist = Convert.ToInt32(cmd.ExecuteScalar());
+                            if (UserExist < 1)
+                            {
+                                er_list += "Offerta non valida" + Environment.NewLine;
+                            }
+                        }
+                        catch (SQLiteException ex)
+                        {
+                            OnTopMessage.Error("Errore durante verifica ID Offerta. Codice: " + DbTools.ReturnErorrCode(ex));
+                            return;
+                        }
+                    }
+                }
+
+                if (er_list != "")
+                {
+                    OnTopMessage.Alert(er_list);
+                    return;
+                }
+
+
+                GestioneOrdini.Answer esito = GestioneOrdini.CreateOrder(n_ordine, id_offerta, idsd, id_contatto, dataOrdValue, dataETAOrdValue,
+                                                                         tot_ordineV, scontoV, prezzo_finaleV, stato_ordine, prezzoSpedizione, gestSP,
+                                                                         CheckBoxOrdOffertaNonPresente.Checked, false);
+
+                if (esito.Success)
+                {
+                    OnTopMessage.Information("Ordine Creato.");
+
+                    etaorder = dataETAOrdValue.DateValue;
+                    orderID = esito.Id;
+                    offerID = id_offerta;
+                }
+                else
+                {
+                    OnTopMessage.Error(esito.Error);
+                }
+
+            }
+
+            if (orderID > 0)
+            {
+
+                List<Item> items = BuildItemList(etaorder, offerID);
+
+                int netAdded = 0;
+
+                int c = items.Count();
+
+                List<int> Rows2BeDel = new();
+
+                for (int i = 0; i < c; i++)
+                {
+
+                    netAdded++;
+
+                    if (!String.IsNullOrEmpty(items[i].Error))
+                    {
+                        OnTopMessage.Error(items[i].Error);
+                        continue;
+                    }
+
+                    long idoggric = 0;
+                    if (!items[i].isNotOffer)
+                    {
+                        idoggric = Convert.ToInt64(GetResource.GetIdRicambioInOffferta(offerID, items[i].id).LongValue);
+                    }
+
+                    GestioneOrdini.Answer esitoOgg = GestioneOrdini.AddObjToOrder(orderID, items[i].id, items[i].eta, items[i].prezzo, items[i].prezzo_scontato, items[i].qta,
+                                                                                    items[i].isNotOffer, false, idoggric);
+
+                    if (!esitoOgg.Success)
+                    {
+                        OnTopMessage.Error(esitoOgg.Error);
+                    }
+                    else
+                    {
+                        netAdded--;
+                        Rows2BeDel.Add(i + 1);
+                    }
+                }
+
+                if (netAdded == 0)
+                    this.Close();
+                else
+                    ImportPDFSupport.DeleteRows(TabItem, Rows2BeDel);
+            }
             return;
         }
 
@@ -442,6 +623,99 @@ namespace ManagerOrdini.Forms
 
             this.ricambiOfferta = JsonConvert.DeserializeObject<List<long>>(AnswerRicambiOfferta.General);
         }
+
+
+        //BUILD ITEM LIST
+
+        private List<Item> BuildItemList(DateTime dataETAOrdValue, long id_offer)
+        {
+            CheckBox[] CheckBoxImport = TabItem.Controls.OfType<CheckBox>().Where(i => i.Name.StartsWith("import")).ToArray();
+            ComboBox[] comboBoxesPezzi = TabItem.Controls.OfType<ComboBox>().Where(i => i.Name.StartsWith("pezzo")).ToArray();
+            CheckBox[] CheckBoxInOff = TabItem.Controls.OfType<CheckBox>().Where(i => i.Name.StartsWith("isOffer")).ToArray();
+            TextBox[] comboBoxesPrezziOff = TabItem.Controls.OfType<TextBox>().Where(i => i.Name.StartsWith("prez_of")).ToArray();
+            TextBox[] comboBoxesPrezziFin = TabItem.Controls.OfType<TextBox>().Where(i => i.Name.StartsWith("prez_fin")).ToArray();
+            TextBox[] comboBoxesQta = TabItem.Controls.OfType<TextBox>().Where(i => i.Name.StartsWith("qta")).ToArray();
+            DateTimePicker[] etaPicker = TabItem.Controls.OfType<DateTimePicker>().Where(i => i.Name.StartsWith("eta")).ToArray();
+
+            int c = comboBoxesPezzi.Count();
+
+            List<Item> listItems = new List<Item>();
+
+            for (int i = 0; i < c; i++)
+            {
+                if (!CheckBoxImport[i].Checked)
+                {
+                    continue;
+                }
+
+                Item item = new Item(
+                    Convert.ToInt64(comboBoxesPezzi[i].SelectedValue.ToString()),
+                    comboBoxesPrezziOff[i].Text.Trim(),
+                    comboBoxesPrezziFin[i].Text.Trim(),
+                    CheckBoxInOff[i].Checked,
+                    comboBoxesQta[i].Text.Trim(),
+                    etaPicker[i].Text.Trim()
+                );
+
+                string er_list = item.Error;
+
+                if (DateTime.Compare(item.eta, dataETAOrdValue) < 0)
+                {
+                    item.Error += "La data di arrivo del ricambio è antecendente all'arrivo dell'ordine " + Environment.NewLine;
+                }
+
+                if (item.Error != "")
+                {
+                    item.Error = "Il ricambio " + Items[i]["codice"] + " presenta errori:" + Environment.NewLine + item.Error;
+                    item.Error += Environment.NewLine + "L'elemento rimarrà in tabella per essere modificato.";
+                }
+                listItems.Add(item);
+            }
+
+            return RemoveDuplicateItemEntry(listItems);
+        }
+
+        private List<Item> RemoveDuplicateItemEntry(List<Item> items)
+        {
+            int c = items.Count;
+
+            for (int i = 0; i < c; i++)
+            {
+                for (int j = i + 1; j < c; j++)
+                {
+                    if (items[i].id == items[j].id)
+                    {
+                        string input = "";
+                        while (input != "1" && input != "2")
+                            input = Interaction.InputBox("Selezionare (1 o 2) tra i due seguenti oggetti quale tenere(si potranno fare modifiche in seguito):" + Environment.NewLine +
+                                                        "1)\t ETA: " + items[i].eta.Date + "; QTA:" + items[i].qta + Environment.NewLine +
+                                                        "\t\t PREZZO: " + items[i].prezzo + "; PREZZO Scontato: " + items[i].prezzo_scontato + Environment.NewLine +
+                                                        Environment.NewLine +
+                                                        "2)\t ETA;" + items[j].eta.Date + "; QTA:" + items[j].qta + Environment.NewLine + 
+                                                        "\t\t PREZZO: " + items[j].prezzo + "; PREZZO: " + items[j].prezzo_scontato
+                                                        , "Selezionare Oggetto").Trim();
+
+                        int index = Convert.ToInt32(input);
+
+                        if (index == 1)
+                        {
+                            items[i].qta += items[j].qta;
+                        }
+                        else
+                        {
+                            items[j].qta += items[i].qta;
+                            items[i] = items[j];
+                        }
+
+                        items.RemoveAt(j);
+                        c--;
+                    }
+                }
+            }
+
+            return items;
+        }
+
 
         //TABLE
 
@@ -757,6 +1031,47 @@ namespace ManagerOrdini.Forms
             {
                 picker.MinDate = date;
             }
+        }
+    }
+
+    public class Item
+    {
+        public long id;
+        public decimal prezzo;
+        public decimal prezzo_scontato;
+        public bool isNotOffer;
+        public int qta;
+        public DateTime eta;
+
+        public bool Added { get; set; } = false;
+        public string Error { get; set; } = "";
+
+        public Item(long idir, string prezzoOr, string prezzoSc, bool isOffer, string qta, string etaItem)
+        {
+            if (idir < 1)
+            {
+                Error += "Il ricambio non esiste nel database.";
+            }
+            else
+                id = idir;
+
+            DataValidation.ValidationResult prezzoOrV = DataValidation.ValidatePrezzo(prezzoOr);
+            Error += prezzoOrV.Error;
+            this.prezzo = prezzoOrV.DecimalValue != null ? (decimal)prezzoOrV.DecimalValue : 0;
+
+            DataValidation.ValidationResult prezzoScV = DataValidation.ValidatePrezzo(prezzoSc);
+            Error += prezzoScV.Error;
+            this.prezzo_scontato = prezzoScV.DecimalValue != null ? (decimal)prezzoScV.DecimalValue : 0;
+
+            DataValidation.ValidationResult qtaV = DataValidation.ValidateQta(qta);
+            Error += qtaV.Error;
+            this.qta = qtaV.IntValue != null ? (int)qtaV.IntValue : 0;
+
+            DataValidation.ValidationResult delivery = DataValidation.ValidateDate(etaItem);
+            Error += delivery.Error;
+            this.eta = delivery.DateValue != null ? (DateTime)delivery.DateValue : DateTime.MinValue;
+
+            this.isNotOffer = !isOffer;
         }
     }
 }

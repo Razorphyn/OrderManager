@@ -145,8 +145,12 @@ namespace Razorphyn
             }
         }
 
-        internal static Answer AddObjToOrder(long idordine, long idiri, ValidationResult dataETAOrdValue, ValidationResult prezzo_originaleV, ValidationResult prezzo_scontatoV,
+        /*internal static Answer AddObjToOrder(long idordine, long idiri, ValidationResult dataETAOrdValue, ValidationResult prezzo_originaleV, ValidationResult prezzo_scontatoV,
                                                   ValidationResult qtaP, bool CheckBoxOrdOggCheckAddNotOffer, bool CheckBoxOrdOggSconto, long idoggOff = 0)
+        */
+        internal static Answer AddObjToOrder(long id_ordine, long id_ricambio, DateTime eta_ordine, decimal prezzo_originale, decimal prezzo_scontato,
+                                                  int qta, bool oggetto_non_in_offerta, bool applica_sconto, long idoggOff = 0)
+
         {
             Answer answer = new Answer();
 
@@ -164,12 +168,12 @@ namespace Razorphyn
 										WHERE Id = @idord LIMIT 1;
 							";
 
-            if (!CheckBoxOrdOggCheckAddNotOffer)
+            if (!oggetto_non_in_offerta)
             {
                 commandText += @" UPDATE OR ROLLBACK " + ProgramParameters.schemadb + @"[offerte_pezzi] SET aggiunto=1 WHERE Id=@idoggoff LIMIT 1;";
             }
 
-            if (CheckBoxOrdOggSconto)
+            if (applica_sconto)
             {
                 commandText += @" UPDATE OR ROLLBACK " + ProgramParameters.schemadb + @"[ordini_elenco] 
 									SET prezzo_finale = IFNULL(totale_ordine*(1-sconto/100),0) 
@@ -182,13 +186,13 @@ namespace Razorphyn
                 try
                 {
                     cmd.CommandText = commandText;
-                    cmd.Parameters.AddWithValue("@idord", idordine);
-                    cmd.Parameters.AddWithValue("@idri", idiri);
-                    cmd.Parameters.AddWithValue("@por", prezzo_originaleV.DecimalValue);
-                    cmd.Parameters.AddWithValue("@pos", prezzo_scontatoV.DecimalValue);
-                    cmd.Parameters.AddWithValue("@pezzi", qtaP.IntValue);
-                    cmd.Parameters.AddWithValue("@eta", dataETAOrdValue.DateValue);
-                    cmd.Parameters.AddWithValue("@Outside_Offer", (CheckBoxOrdOggCheckAddNotOffer == true) ? 1 : 0);
+                    cmd.Parameters.AddWithValue("@idord", id_ordine);
+                    cmd.Parameters.AddWithValue("@idri", id_ricambio);
+                    cmd.Parameters.AddWithValue("@por", prezzo_originale);
+                    cmd.Parameters.AddWithValue("@pos", prezzo_scontato);
+                    cmd.Parameters.AddWithValue("@pezzi", qta);
+                    cmd.Parameters.AddWithValue("@eta", eta_ordine);
+                    cmd.Parameters.AddWithValue("@Outside_Offer", (oggetto_non_in_offerta == true) ? 1 : 0);
                     cmd.Parameters.AddWithValue("@idoggoff", idoggOff);
 
                     cmd.ExecuteNonQuery();
