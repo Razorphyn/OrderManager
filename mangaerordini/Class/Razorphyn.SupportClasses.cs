@@ -48,7 +48,7 @@ namespace Razorphyn
 
         }
 
-        internal class Offerte
+        internal class OfferteCSV
         {
             [Index(0)]
             [Name("Numero Offerta")]
@@ -107,7 +107,7 @@ namespace Razorphyn
             public string PzzAggOfferta { get; set; }
         }
 
-        internal class Ordini
+        internal class OrdiniCSV
         {
             [Index(0)]
             [Name("Numero Ordine")]

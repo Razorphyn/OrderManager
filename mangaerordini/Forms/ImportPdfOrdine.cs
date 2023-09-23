@@ -59,7 +59,7 @@ namespace ManagerOrdini.Forms
             this.orderInfo = Form1_offerInfo;
             this.Items = Form1_Items;
             this.filePath = filePath;
-            this.offerID = (String.IsNullOrEmpty(orderInfo["numeroOff"])) ? -1 : GetResource.GetOfferIdFromCodice(orderInfo["numeroOff"]);
+            this.offerID = (String.IsNullOrEmpty(orderInfo["numeroOff"])) ? -1 : Offerte.GetResources.GetOfferIdFromCodice(orderInfo["numeroOff"]);
 
             FieldOrdNOrdine.Text = orderInfo["numero"];
             FieldOrdData.Text = orderInfo["data"];
@@ -93,221 +93,6 @@ namespace ManagerOrdini.Forms
             ComboBoxOrdSede.SelectedIndexChanged += ComboBoxOrdSede_SelectedIndexChanged;
             ComboBoxOrdOfferta.SelectedIndexChanged += ComboBoxOrdOfferta_SelectedIndexChanged;
         }
-
-        /*private void BtCreaOrdine_Click(object sender, EventArgs e)
-        {
-
-            string commandText;
-
-            long id_offerta = (CheckBoxOrdOffertaNonPresente.Checked == false) ? Convert.ToInt64(ComboBoxOrdOfferta.SelectedValue.ToString()) : -1;
-
-            long? id_cl = (CheckBoxOrdOffertaNonPresente.Checked == true) ? Convert.ToInt64(ComboBoxOrdCliente.SelectedValue.ToString()) : null;
-            long id_contatto = (CheckBoxOrdOffertaNonPresente.Checked == true && Convert.ToInt64(ComboBoxOrdContatto.SelectedValue.ToString()) > 0) ? Convert.ToInt64(ComboBoxOrdContatto.SelectedValue.ToString()) : -1;
-
-            long idsd = Convert.ToInt64(ComboBoxOrdSede.SelectedValue.ToString());
-
-            string n_ordine = FieldOrdNOrdine.Text.Trim();
-
-            string dataOrdString = FieldOrdData.Text.Trim();
-            string dataETAString = FieldOrdETA.Text.Trim();
-
-            string spedizioni = FieldOrdSped.Text.Trim();
-            int gestSP = Convert.ToInt32(FieldOrdSpedGestione.SelectedValue.ToString());
-
-            int stato_ordine = Convert.ToInt32(FieldOrdStato.SelectedValue.ToString());
-            stato_ordine = (stato_ordine < 0) ? 0 : stato_ordine;
-
-            DataValidation.ValidationResult answer;
-            DataValidation.ValidationResult prezzoSpedizione = new();
-            DataValidation.ValidationResult dataOrdValue;
-            DataValidation.ValidationResult dataETAOrdValue;
-            DataValidation.ValidationResult tot_ordineV = new();
-            DataValidation.ValidationResult prezzo_finaleV = new();
-            DataValidation.ValidationResult scontoV = new() { DecimalValue = 0 };
-
-            string er_list = "";
-
-            if (CheckBoxOrdOffertaNonPresente.Checked)
-            {
-                answer = DataValidation.ValidateCliente((int)id_cl);
-                if (!answer.Success)
-                {
-                    OnTopMessage.Alert(answer.Error);
-                    return;
-                }
-                er_list += answer.Error;
-            }
-
-            if (string.IsNullOrEmpty(n_ordine) || !Regex.IsMatch(n_ordine, @"^\d+$"))
-            {
-                er_list += "Numero Ordine non valido o vuoto" + Environment.NewLine;
-            }
-
-            dataOrdValue = DataValidation.ValidateDate(dataOrdString);
-            er_list += dataOrdValue.Error;
-
-            dataETAOrdValue = DataValidation.ValidateDate(dataETAString);
-            er_list += dataETAOrdValue.Error;
-
-            if (DateTime.Compare(dataOrdValue.DateValue, dataETAOrdValue.DateValue) > 0)
-            {
-                er_list += "Data di Arrivo(ETA) antecedente a quella di creazione dell'ordine" + Environment.NewLine;
-            }
-
-            if (!string.IsNullOrEmpty(spedizioni))
-            {
-                if (!string.IsNullOrEmpty(spedizioni))
-                {
-                    prezzoSpedizione = DataValidation.ValidateSpedizione(spedizioni, gestSP);
-                    er_list += prezzoSpedizione.Error;
-                }
-            }
-
-            tot_ordineV.DecimalValue = 0;
-            prezzo_finaleV.DecimalValue = 0;
-
-            if (CheckBoxOrdOffertaNonPresente.Checked == false)
-            {
-                commandText = "SELECT COUNT(*) FROM " + ProgramParameters.schemadb + @"[offerte_elenco] WHERE ([Id] = @id_offerta) LIMIT 1;";
-                int UserExist = 0;
-
-                using (SQLiteCommand cmd = new(commandText, ProgramParameters.connection))
-                {
-                    try
-                    {
-                        cmd.CommandText = commandText;
-                        cmd.Parameters.AddWithValue("@id_offerta", id_offerta);
-
-                        UserExist = Convert.ToInt32(cmd.ExecuteScalar());
-                        if (UserExist < 1)
-                        {
-                            er_list += "Offerta non valida" + Environment.NewLine;
-                        }
-                    }
-                    catch (SQLiteException ex)
-                    {
-                        OnTopMessage.Error("Errore durante verifica ID Offerta. Codice: " + DbTools.ReturnErorrCode(ex));
-                        return;
-                    }
-                }
-            }
-
-            if (er_list != "")
-            {
-                OnTopMessage.Alert(er_list);
-                return;
-            }
-
-
-            GestioneOrdini.Answer esito = GestioneOrdini.CreateOrder(n_ordine, id_offerta, idsd, id_contatto, dataOrdValue, dataETAOrdValue,
-                                                                     tot_ordineV, scontoV, prezzo_finaleV, stato_ordine, prezzoSpedizione, gestSP,
-                                                                     CheckBoxOrdOffertaNonPresente.Checked, false);
-
-            if (esito.Success)
-            {
-                OnTopMessage.Information("Ordine Creato.");
-
-                orderID = esito.Id;
-                if (orderID > 0)
-                {
-                    int netAdded = 0;
-
-                    CheckBox[] CheckBoxImport = TabItem.Controls.OfType<CheckBox>().Where(i => i.Name.StartsWith("import")).ToArray();
-                    ComboBox[] comboBoxesPezzi = TabItem.Controls.OfType<ComboBox>().Where(i => i.Name.StartsWith("pezzo")).ToArray();
-                    CheckBox[] CheckBoxInOff = TabItem.Controls.OfType<CheckBox>().Where(i => i.Name.StartsWith("isOffer")).ToArray();
-                    TextBox[] comboBoxesPrezziOff = TabItem.Controls.OfType<TextBox>().Where(i => i.Name.StartsWith("prez_of")).ToArray();
-                    TextBox[] comboBoxesPrezziFin = TabItem.Controls.OfType<TextBox>().Where(i => i.Name.StartsWith("prez_fin")).ToArray();
-                    TextBox[] comboBoxesQta = TabItem.Controls.OfType<TextBox>().Where(i => i.Name.StartsWith("qta")).ToArray();
-                    DateTimePicker[] etaPicker = TabItem.Controls.OfType<DateTimePicker>().Where(i => i.Name.StartsWith("eta")).ToArray();
-
-                    int c = comboBoxesPezzi.Count();
-
-                    List<int> Rows2BeDel = new();
-
-                    for (int i = 0; i < c; i++)
-                    {
-                        if (!CheckBoxImport[i].Checked)
-                        {
-                            continue;
-                        }
-                        netAdded++;
-
-                        string prezzoOr = comboBoxesPrezziOff[i].Text.Trim();
-                        string prezzoSc = comboBoxesPrezziFin[i].Text.Trim();
-                        bool isOffer = CheckBoxInOff[i].Checked;
-                        string qta = comboBoxesQta[i].Text.Trim();
-                        string etaItem = etaPicker[i].Text.Trim();
-
-                        long idir = Convert.ToInt32(comboBoxesPezzi[i].SelectedValue.ToString());
-
-                        er_list = "";
-
-                        if (idir < 1)
-                        {
-                            er_list += "Il ricambio non esiste nel database.";
-                        }
-
-                        DataValidation.ValidationResult prezzoOrV = DataValidation.ValidatePrezzo(prezzoOr);
-                        er_list += prezzoOrV.Error;
-
-                        DataValidation.ValidationResult prezzoScV = DataValidation.ValidatePrezzo(prezzoSc);
-                        er_list += prezzoScV.Error;
-
-                        DataValidation.ValidationResult qtaV = DataValidation.ValidateQta(qta);
-                        er_list += qtaV.Error;
-
-                        DataValidation.ValidationResult eta = DataValidation.ValidateDate(etaItem);
-                        er_list += qtaV.Error;
-
-                        if (DateTime.Compare(eta.DateValue, dataETAOrdValue.DateValue) < 0)
-                        {
-                            er_list += "La data di arrivo del ricambio è antecendente all'arrivo dell'ordine " + Environment.NewLine;
-                        }
-
-                        if (er_list != "")
-                        {
-                            er_list = "Il ricambio " + Items[i]["codice"] + " presenta errori:" + Environment.NewLine + er_list;
-
-                            er_list += Environment.NewLine + "L'elemento rimarrà in tabella per essere modificato.";
-
-                            OnTopMessage.Alert(er_list);
-
-                            continue;
-                        }
-
-                        long idoggric = 0;
-                        if (isOffer)
-                        {
-                            idoggric = Convert.ToInt64(GetResource.GetIdRicambioInOffferta(id_offerta, idir).LongValue);
-                        }
-
-                        GestioneOrdini.Answer esitoOgg = GestioneOrdini.AddObjToOrder(orderID, idir, eta.DateValue, (decimal)prezzoOrV.DecimalValue, (decimal)prezzoScV.DecimalValue, (int)qtaV.IntValue,
-                                                                                        isOffer, false, idoggric);
-
-                        if (!esitoOgg.Success)
-                        {
-                            OnTopMessage.Error(esito.Error);
-                        }
-                        else
-                        {
-                            netAdded--;
-                            Rows2BeDel.Add(i + 1);
-                        }
-                    }
-
-                    if (netAdded == 0)
-                        this.Close();
-                    else
-                        ImportPDFSupport.DeleteRows(TabItem, Rows2BeDel);
-                }
-            }
-            else
-            {
-                OnTopMessage.Error(esito.Error);
-            }
-
-            return;
-        }*/
 
         private void BtCreaOrdine_Click(object sender, EventArgs e)
         {
@@ -416,7 +201,7 @@ namespace ManagerOrdini.Forms
                 }
 
 
-                GestioneOrdini.Answer esito = GestioneOrdini.CreateOrder(n_ordine, id_offerta, idsd, id_contatto, dataOrdValue, dataETAOrdValue,
+                Ordini.GestioneOrdini.Answer esito = Ordini.GestioneOrdini.CreateOrder(n_ordine, id_offerta, idsd, id_contatto, dataOrdValue, dataETAOrdValue,
                                                                          tot_ordineV, scontoV, prezzo_finaleV, stato_ordine, prezzoSpedizione, gestSP,
                                                                          CheckBoxOrdOffertaNonPresente.Checked, false);
 
@@ -463,7 +248,7 @@ namespace ManagerOrdini.Forms
                         idoggric = Convert.ToInt64(GetResource.GetIdRicambioInOffferta(offerID, items[i].id).LongValue);
                     }
 
-                    GestioneOrdini.Answer esitoOgg = GestioneOrdini.AddObjToOrder(orderID, items[i].id, items[i].eta, items[i].prezzo, items[i].prezzo_scontato, items[i].qta,
+                    Ordini.GestioneOrdini.Answer esitoOgg = Ordini.GestioneOrdini.AddObjToOrder(orderID, items[i].id, items[i].eta, items[i].prezzo, items[i].prezzo_scontato, items[i].qta,
                                                                                     items[i].isNotOffer, false, idoggric);
 
                     if (!esitoOgg.Success)
@@ -612,7 +397,7 @@ namespace ManagerOrdini.Forms
 
         private void Populate_ricambi()
         {
-            DataValidation.ValidationResult AnswerRicambiOfferta = GetResource.CollezioneIdRicambiOfferta(this.offerID);
+            DataValidation.ValidationResult AnswerRicambiOfferta = Offerte.GetResources.CollezioneIdRicambiOfferta(this.offerID);
 
             if (!String.IsNullOrEmpty(AnswerRicambiOfferta.Error))
             {

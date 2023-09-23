@@ -445,7 +445,7 @@ namespace mangaerordini
                                 using (var writer = new StreamWriter(folderPath + @"\" + "OFFERTE_" + iden + ".csv", true, Encoding.UTF8))
                                 using (var csv = new CsvWriter(writer, ProgramParameters.provider))
                                 {
-                                    csv.WriteHeader<SupportClasses.Offerte>();
+                                    csv.WriteHeader<SupportClasses.OfferteCSV>();
                                     csv.NextRecord();
 
                                     foreach (DataRow row in ds.Rows)
@@ -548,7 +548,7 @@ namespace mangaerordini
                                 using (var writer = new StreamWriter(folderPath + @"\" + "ORDINI_" + iden + ".csv", true, Encoding.UTF8))
                                 using (var csv = new CsvWriter(writer, ProgramParameters.provider))
                                 {
-                                    csv.WriteHeader<SupportClasses.Ordini>();
+                                    csv.WriteHeader<SupportClasses.OrdiniCSV>();
                                     csv.NextRecord();
 
                                     foreach (DataRow row in ds.Rows)
@@ -3058,7 +3058,7 @@ namespace mangaerordini
                 return;
             }
 
-            GestioneOfferte.Answer esito = GestioneOfferte.CreateOffer(dataoffValue.DateValue, numeroOff, idsd, stato, idpref, prezzoSpedizione.DecimalValue, gestSP);
+            Offerte.GestioneOfferte.Answer esito = Offerte.GestioneOfferte.CreateOffer(dataoffValue.DateValue, numeroOff, idsd, stato, idpref, prezzoSpedizione.DecimalValue, gestSP);
 
             if (esito.Success)
             {
@@ -3157,7 +3157,6 @@ namespace mangaerordini
 									OE.Id AS ID,
 									CE.Id || ' - ' || CE.nome AS Cliente,
 									CS.Id || ' - ' ||  CS.stato || '/' || CS.provincia || '/' || CS.citta AS Sede,
-									IIF(OE.ID_riferimento>0, CR.Id  || ' - ' || CR.nome,'') AS Pref,
 									OE.codice_offerta        AS cod,
 									strftime('%d/%m/%Y',OE.data_offerta) AS dat,
 									REPLACE( printf('%.2f',OE.tot_offerta ),'.',',') AS totoff,
@@ -3550,7 +3549,7 @@ namespace mangaerordini
                 return;
             }
 
-            GestioneOfferte.Answer esito = GestioneOfferte.AddObjToOffer(idof, idir, prezzoOrV.DecimalValue, prezzoScV.DecimalValue, qtaV.IntValue);
+            Offerte.GestioneOfferte.Answer esito = Offerte.GestioneOfferte.AddObjToOffer(idof, idir, prezzoOrV.DecimalValue, prezzoScV.DecimalValue, qtaV.IntValue);
 
             if (esito.Success)
             {
@@ -3583,7 +3582,6 @@ namespace mangaerordini
                     string id = row.Cells[i].Value.ToString(); i++;
                     string cliente = row.Cells[i].Value.ToString(); i++;
                     string sede = row.Cells[i].Value.ToString(); i++;
-                    string pref = row.Cells[i].Value.ToString(); i++;
                     string nord = row.Cells[i].Value.ToString(); i++;
                     string dataoffString = row.Cells[i].Value.ToString(); i++;
                     string totOf = row.Cells[i].Value.ToString(); i++;
@@ -3593,6 +3591,15 @@ namespace mangaerordini
 
                     long id_cliente = Convert.ToInt64(cliente.Split('-')[0]);
                     long id_sede = Convert.ToInt64(sede.Split('-')[0]);
+
+                    DataValidation.ValidationResult answer = Offerte.GetResources.GetContatto(Convert.ToInt64(id));
+                    if (!String.IsNullOrEmpty(answer.Error))
+                    {
+                        OnTopMessage.Error(answer.Error);
+                        return;
+                    }
+                    long id_contatto = (long)answer.LongValue;
+
 
                     AddOffCreaId.Text = id;
                     AddOffCreaSpedizione.Text = spedizione;
@@ -3608,8 +3615,7 @@ namespace mangaerordini
 
                     Populate_combobox_pref(AddOffCreaPRef, id_cliente, id_sede);
 
-                    index = AddOffCreaPRef.FindString(pref);
-                    AddOffCreaPRef.SelectedIndex = index;
+                    AddOffCreaPRef.SelectedIndex = Utility.FindIndexFromValue(AddOffCreaPRef, id_contatto);
 
                     AddOffCreaNOff.Text = nord;
                     AddOffCreaData.Text = dataoffString;
@@ -4295,7 +4301,6 @@ namespace mangaerordini
                             var recursiveXYCut = new RecursiveXYCut(new RecursiveXYCut.RecursiveXYCutOptions()
                             {
                                 MinimumWidth = page.Width / 1.7
-
                             });
 
                             var blocks = RecursiveXYCut.Instance.GetBlocks(words);
@@ -4888,7 +4893,6 @@ namespace mangaerordini
 									OFE.Id || ' - ' || OFE.codice_offerta AS IDoff,
                                     CE.Id || ' - ' || CE.nome AS Cliente,
                                     CS.Id || ' - ' ||  CS.stato || ' - ' || CS.provincia || ' - ' || CS.citta AS Sede,
-                                    IIF(OFE.ID_riferimento>0 OR OE.ID_riferimento IS NOT NULL,   (CR.Id || ' - ' || CR.nome),'') AS Pref,
 									strftime('%d/%m/%Y',OE.data_ordine) AS datOr,
 									strftime('%d/%m/%Y',OE.data_ETA) AS datEta,
 									REPLACE( printf('%.2f',OE.totale_ordine),'.',',')  AS totord,
@@ -5120,7 +5124,7 @@ namespace mangaerordini
                 UpdateFields("OCR", "A", true);
                 return;
             }
-            GestioneOrdini.Answer esito = GestioneOrdini.CreateOrder(n_ordine, id_offerta, idsd, id_contatto, dataOrdValue, dataETAOrdValue,
+            Ordini.GestioneOrdini.Answer esito = Ordini.GestioneOrdini.CreateOrder(n_ordine, id_offerta, idsd, id_contatto, dataOrdValue, dataETAOrdValue,
                                                                      tot_ordineV, scontoV, prezzo_finaleV, stato_ordine, prezzoSpedizione, gestSP,
                                                                      CheckBoxOrdOffertaNonPresente.Checked, CheckBoxCopiaOffertainOrdine.Checked);
 
@@ -5367,7 +5371,6 @@ namespace mangaerordini
                     string offerta = Convert.ToString(row.Cells[i].Value.ToString().Trim()); i++;
                     string cliente = row.Cells[i].Value.ToString(); i++;
                     string sede = row.Cells[i].Value.ToString(); i++;
-                    string contatto = row.Cells[i].Value.ToString(); i++;
                     string datOrd = row.Cells[i].Value.ToString(); i++;
                     string datETA = row.Cells[i].Value.ToString(); i++;
                     string totOrd = row.Cells[i].Value.ToString(); i++;
@@ -5387,11 +5390,20 @@ namespace mangaerordini
                     long cliente_id = Convert.ToInt64(cliente.Split('-')[0]);
                     long sede_id = Convert.ToInt64(sede.Split('-')[0]);
 
+                    DataValidation.ValidationResult answer = Ordini.GetResources.GetContatto(Convert.ToInt64(id));
+
+                    if (!String.IsNullOrEmpty(answer.Error))
+                    {
+                        OnTopMessage.Error(answer.Error);
+                        return;
+                    }
+                    long id_contatto = (long)answer.LongValue;
+
                     ComboBoxOrdCliente.SelectedIndex = Utility.FindIndexFromValue(ComboBoxOrdCliente, cliente_id);
                     ComboBoxOrdSede.SelectedIndex = Utility.FindIndexFromValue(ComboBoxOrdSede, sede_id);
                     ComboBoxOrdSede.Enabled = false;
 
-                    ComboBoxOrdContatto.SelectedIndex = ComboBoxOrdContatto.FindString(contatto);
+                    ComboBoxOrdContatto.SelectedIndex = Utility.FindIndexFromValue(ComboBoxOrdContatto, id_contatto);
 
                     string ID_offerta_str = offerta.Split('-')[0].Trim();
                     if (int.TryParse(ID_offerta_str, out int ID_offerta))
@@ -5741,7 +5753,7 @@ namespace mangaerordini
                 return;
             }
 
-            GestioneOrdini.Answer esito = GestioneOrdini.AddObjToOrder(idordine, idiri, dataETAOrdValue.DateValue, (decimal)prezzo_originaleV.DecimalValue, (decimal)prezzo_scontatoV.DecimalValue, (int)qtaP.IntValue,
+            Ordini.GestioneOrdini.Answer esito = Ordini.GestioneOrdini.AddObjToOrder(idordine, idiri, dataETAOrdValue.DateValue, (decimal)prezzo_originaleV.DecimalValue, (decimal)prezzo_scontatoV.DecimalValue, (int)qtaP.IntValue,
                                                                         CheckBoxOrdOggCheckAddNotOffer.Checked, CheckBoxOrdOggSconto.Checked, idoggOff);
 
             if (esito.Success)
@@ -5750,7 +5762,7 @@ namespace mangaerordini
                 {
                     Outlook.Application OlApp = new();
                     Outlook.Folder personalCalendar = CalendarManager.FindCalendar(OlApp, UserSettings.settings["calendario"]["nomeCalendario"]);
-                    GestioneOrdini.UpdateCalendarOnObj(idordine, personalCalendar);
+                    Ordini.GestioneOrdini.UpdateCalendarOnObj(idordine, personalCalendar);
                 }
 
                 long currentOrd = Convert.ToInt64(ComboSelOrd.SelectedValue.ToString());
@@ -7314,7 +7326,7 @@ namespace mangaerordini
                             }
                         }
 
-                        GestioneOfferte.Answer checkOfferta = new GestioneOfferte.Answer();
+                        Offerte.GestioneOfferte.Answer checkOfferta = new Offerte.GestioneOfferte.Answer();
 
                         if (checkOfferta.Success && checkOfferta.IntValue > 0 && !checkOfferta.Bool)
                         {
@@ -7419,7 +7431,6 @@ namespace mangaerordini
                                 (OFE.Id || ' - ' || OFE.codice_offerta) AS IDoff,
                                 (CE.Id || ' - ' || CE.nome ) AS Cliente,
                                 (CS.Id || ' -' ||  CS.stato || ' - ' || CS.provincia || ' - ' || CS.citta) AS Sede,
-                                IIF(OFE.ID_riferimento>0,   (CR.Id || ' - ' || CR.nome),'') AS Pref,
                                 strftime('%d/%m/%Y',OE.data_ordine) AS datOr,
                                 strftime('%d/%m/%Y',OE.data_ETA) AS datEta,
                                 REPLACE( printf('%.2f',OE.totale_ordine ),'.',',')  AS totord,
@@ -7451,7 +7462,6 @@ namespace mangaerordini
 									'' AS IDoff,
 									(CE.Id || ' - ' || CE.nome ) AS Cliente,
                                     (CS.Id || ' -' ||  CS.stato || ' - ' || CS.provincia || ' - ' || CS.citta) AS Sede,
-									IIF(OE.ID_riferimento>0,   (CR.Id || ' - ' || CR.nome),'') AS Pref,
 									strftime('%d/%m/%Y',OE.data_ordine) AS datOr,
 									strftime('%d/%m/%Y',OE.data_ETA) AS datEta,
 									REPLACE( printf('%.2f',OE.totale_ordine ),'.',',')  AS totord,
@@ -9607,5 +9617,19 @@ namespace mangaerordini
             grid.Columns[grid.Columns.Count - 1].AutoSizeMode = DataGridViewAutoSizeColumnMode.Fill;
         }
 
+        private void dddddddddd(object sender, DataGridViewCellEventArgs e)
+        {
+
+        }
+
+        private void ddddddddddddddddddddddddddd(object sender, DataGridViewCellEventArgs e)
+        {
+
+        }
+
+        private void dddd(object sender, EventArgs e)
+        {
+
+        }
     }
 }

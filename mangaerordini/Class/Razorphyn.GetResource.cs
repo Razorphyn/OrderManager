@@ -72,45 +72,6 @@ namespace Razorphyn
             return answer;
         }
 
-        internal static ValidationResult CollezioneIdRicambiOfferta(long id)
-        {
-
-            string commandText = @"SELECT
-                                        ID_ricambio AS ID 
-                                    FROM " + ProgramParameters.schemadb + @"[offerte_pezzi] 
-                                    WHERE Id_offerta = @id ;";
-
-            ValidationResult answer = new();
-
-            var dataSource = new List<long>();
-
-            using (SQLiteCommand cmd = new(commandText, ProgramParameters.connection))
-            {
-                try
-                {
-                    cmd.CommandText = commandText;
-                    cmd.Parameters.AddWithValue("@id", id);
-
-
-                    SQLiteDataReader reader = cmd.ExecuteReader();
-
-                    answer.Success = true;
-
-                    while (reader != null && reader.Read())
-                        dataSource.Add(Convert.ToInt64(reader["ID"]));
-
-                    answer.General = JsonConvert.SerializeObject(dataSource);
-                }
-                catch (SQLiteException ex)
-                {
-                    answer.Success = false;
-                    answer.Error = "Errore durante estrazione ID pezzi di ricmabio nell'offerta. Codice: " + DbTools.ReturnErorrCode(ex);
-                }
-            }
-
-            return answer;
-        }
-
         internal static (long, long) GetClientIdFromNumero(string numero)
         {
             long idsd = -1;
@@ -144,38 +105,6 @@ namespace Razorphyn
             }
 
             return (idcl, idsd);
-        }
-
-        internal static long GetOfferIdFromCodice(string codice)
-        {
-            long id = -1;
-
-            string commandText = @"SELECT
-                                    Id
-                                    FROM " + ProgramParameters.schemadb + @"[offerte_elenco] 
-                                    WHERE codice_offerta = @codice LIMIT 1 ;";
-
-            using (SQLiteCommand cmd = new(commandText, ProgramParameters.connection))
-            {
-                try
-                {
-                    cmd.CommandText = commandText;
-                    cmd.Parameters.AddWithValue("@codice", codice);
-
-                    SQLiteDataReader reader = cmd.ExecuteReader();
-
-                    while (reader != null && reader.Read())
-                    {
-                        long.TryParse(Convert.ToString(reader["Id"]), out id);
-                    }
-                }
-                catch (SQLiteException ex)
-                {
-                    OnTopMessage.Error("Errore durante recupero Id offerta da codice. Codice: " + DbTools.ReturnErorrCode(ex));
-                }
-            }
-
-            return id;
         }
 
         internal static ValidationResult GetIdRicambioInOffferta(long idOfferta, long idRicambio)
@@ -216,4 +145,6 @@ namespace Razorphyn
             return answer;
         }
     }
+
+
 }

@@ -7,16 +7,16 @@
 	CREATE TABLE IF NOT EXISTS [fornitori] (
 		[Id]        	INTEGER			PRIMARY KEY	AUTOINCREMENT NOT NULL,
 		[nome] 			VARCHAR (255) 	NOT NULL,
-		[deleted]		SMALLINT		NOT NULL DEFAULT 0,
+		[deleted]		INT				NOT NULL DEFAULT 0,
 		[uniqueness]	SMALLINT		NULL,
 		UNIQUE ([nome] , [uniqueness])
 	);
 
 
 	CREATE TABLE IF NOT EXISTS [clienti_elenco] (
-		[Id]        	INTEGER			PRIMARY KEY	AUTOINCREMENT NOT NULL,
+		[Id]        	INTEGER	PRIMARY KEY	AUTOINCREMENT NOT NULL,
 		[nome]      	VARCHAR (255) 	NOT NULL,
-		[deleted]		SMALLINT		NOT NULL DEFAULT 0,
+		[deleted]		INT				NOT NULL DEFAULT 0,
 		[uniqueness]	SMALLINT		NULL,
 		CONSTRAINT [ui_clienti_elenco_nome_uniqueness] UNIQUE ([nome], [uniqueness])
 	);
@@ -29,7 +29,7 @@
 		[stato]     	VARCHAR (255) 	NOT NULL,
 		[provincia] 	VARCHAR (255) 	NOT NULL,
 		[citta]     	VARCHAR (255) 	NOT NULL,
-		[deleted]		SMALLINT		NOT NULL DEFAULT 0,
+		[deleted]		INT				NOT NULL DEFAULT 0,
 		[uniqueness]	SMALLINT		NULL,
 		CONSTRAINT [ui_clienti_sedi_ID_clienti_numero_uniqueness] UNIQUE ([numero], [uniqueness]),
 		CONSTRAINT [FK_clienti_sedi_To_clienti_elenco] FOREIGN KEY ([ID_cliente]) REFERENCES [clienti_elenco] ([Id])
@@ -39,12 +39,12 @@
 	
 	CREATE TABLE IF NOT EXISTS [clienti_riferimenti] (
 		[Id]			INTEGER	PRIMARY KEY	AUTOINCREMENT NOT NULL,
-		[ID_cliente]	INT           	NOT NULL,
-		[ID_sede] 		INT          	NULL,
-		[nome]			VARCHAR (255) 	NOT NULL,
-		[mail]			VARCHAR (255) 	NOT NULL,
-		[telefono]		VARCHAR (255) 	NOT NULL,
-		[deleted]		SMALLINT		NOT NULL DEFAULT 0,
+		[ID_cliente]	INT           NOT NULL,
+		[ID_sede] 		INT           NULL,
+		[nome]			VARCHAR (255) NOT NULL,
+		[mail]			VARCHAR (255) NOT NULL,
+		[telefono]		VARCHAR (255) NOT NULL,
+		[deleted]		INT				NOT NULL DEFAULT 0,
 		[uniqueness]	SMALLINT		NULL,
 		UNIQUE ([ID_cliente], [nome], [uniqueness]),
 		CONSTRAINT [FK_clienti_riferimenti_To_clienti_elenco] FOREIGN KEY ([ID_cliente]) REFERENCES [clienti_elenco] ([Id]),
@@ -65,7 +65,7 @@
 		CONSTRAINT [FK_clienti_macchine_To_clienti_elenco] FOREIGN KEY ([ID_cliente]) REFERENCES [clienti_elenco] ([Id]),
 		CONSTRAINT [FK_clienti_macchine_To_clienti_elenco] FOREIGN KEY ([ID_Sede]) REFERENCES [clienti_sedi] ([Id])
 	);
-	CREATE INDEX search_clienti_macchine_ID_cliente ON clienti_macchine (ID_cliente,ID_Sede);
+	CREATE INDEX search_clienti_macchine_ID_cliente ON clienti_macchine (Id, ID_cliente,ID_Sede);
 
 	CREATE TABLE IF NOT EXISTS [pezzi_ricambi] (
 		[Id]        	INTEGER	PRIMARY KEY AUTOINCREMENT NOT NULL,
@@ -77,11 +77,11 @@
 		[ID_macchina]	INT             NULL,
 		[deleted]		SMALLINT		NOT NULL DEFAULT 0,
 		[uniqueness]	SMALLINT		NULL,
-		CONSTRAINT [ui_pezzi_ricambi] UNIQUE ([nome], [codice], [uniqueness]),
+		CONSTRAINT [ui_pezzi_ricambi_nome_codice_uniqueness] UNIQUE ([nome], [codice], [uniqueness]),
 		CONSTRAINT [FK_pezzi_ricambi_To_fornitori] FOREIGN KEY ([ID_fornitore]) REFERENCES [fornitori] ([Id]),
 		CONSTRAINT [FK_pezzi_ricambi_To_clienti_macchine] FOREIGN KEY ([ID_macchina]) REFERENCES [clienti_macchine] ([Id])
 	);
-	CREATE INDEX search_pezzi_ricambi ON pezzi_ricambi (Id, ID_macchina, ID_fornitore);
+	CREATE INDEX search_pezzi_ricambi ON pezzi_ricambi (ID_macchina, ID_fornitore);
 
 	CREATE TABLE IF NOT EXISTS [offerte_elenco] (
 		[Id]					INTEGER	PRIMARY KEY	AUTOINCREMENT NOT NULL,

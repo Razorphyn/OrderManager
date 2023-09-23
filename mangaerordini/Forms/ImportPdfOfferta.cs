@@ -122,6 +122,7 @@ namespace ManagerOrdini
             int gestSP = Convert.ToInt16(AddOffCreaSpedizioneGest.SelectedValue.ToString());
 
             long idcl = Convert.ToInt64(AddOffCreaCliente.SelectedValue.ToString());
+            long idsd = Convert.ToInt64(AddOffCreaSede.SelectedValue.ToString());
             long idpref = Convert.ToInt64(AddOffCreaPRef.SelectedValue.ToString());
 
             int stato = Convert.ToInt16(AddOffCreaStato.SelectedValue.ToString());
@@ -129,7 +130,7 @@ namespace ManagerOrdini
             stato = (stato < 0) ? 0 : stato;
 
             DataValidation.ValidationResult prezzoSpedizione = new();
-            GestioneOfferte.Answer esito = new();
+            Offerte.GestioneOfferte.Answer esito = new();
 
             string er_list = "";
 
@@ -141,7 +142,7 @@ namespace ManagerOrdini
                 DataValidation.ValidationResult dataoffValue = DataValidation.ValidateDate(dataoffString);
                 er_list += dataoffValue.Error;
 
-                DataValidation.ValidationResult answer = DataValidation.ValidateCliente(idcl);
+                DataValidation.ValidationResult answer = DataValidation.ValidateSede(idcl, idsd);
                 if (!answer.Success)
                 {
                     OnTopMessage.Alert(answer.Error);
@@ -173,7 +174,7 @@ namespace ManagerOrdini
                     return;
                 }
 
-                esito = GestioneOfferte.CreateOffer(dataoffValue.DateValue, numeroOff, idcl, stato, idpref, prezzoSpedizione.DecimalValue, gestSP);
+                esito = Offerte.GestioneOfferte.CreateOffer(dataoffValue.DateValue, numeroOff, idsd, stato, idpref, prezzoSpedizione.DecimalValue, gestSP);
 
                 if (esito.Success)
                     offerID = esito.IntValue;
@@ -234,7 +235,7 @@ namespace ManagerOrdini
                         continue;
                     }
 
-                    GestioneOfferte.Answer esitoOgg = GestioneOfferte.AddObjToOffer(offerID, idir, prezzoOrV.DecimalValue, prezzoScV.DecimalValue, qtaV.IntValue);
+                    Offerte.GestioneOfferte.Answer esitoOgg = Offerte.GestioneOfferte.AddObjToOffer(offerID, idir, prezzoOrV.DecimalValue, prezzoScV.DecimalValue, qtaV.IntValue);
 
                     if (!esitoOgg.Success)
                     {
