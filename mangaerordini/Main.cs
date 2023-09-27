@@ -419,7 +419,7 @@ namespace mangaerordini
                                     OP.pezzi AS QtaOfferta,
                                     REPLACE( printf('%.2f',OP.prezzo_unitario_originale),'.',',')  AS PrezOrOfferta,
                                     REPLACE( printf('%.2f',OP.prezzo_unitario_sconto),'.',',')  AS PrezzoOfferta,
-                                    CASE OP.pezzi_aggiunti WHEN 0 THEN 'No'  WHEN 1 THEN 'Sì' END AS PzzAggOfferta
+                                    IIF( OP.pezzi_aggiunti = 0 , 'No' , 'Sì' ) AS PzzAggOfferta
 
 								   FROM " + ProgramParameters.schemadb + @"[offerte_elenco] AS OE
 								   LEFT JOIN " + ProgramParameters.schemadb + @"[clienti_sedi] AS CS
@@ -1150,6 +1150,10 @@ namespace mangaerordini
                     OnTopMessage.Error("Errore durante popolamento tabella Componenti. Codice: " + DbTools.ReturnErorrCode(ex));
                     return;
                 }
+                finally
+                {
+                    DrawingControl.ResumeDrawing(data_grid);
+                }
             }
             return;
         }
@@ -1427,34 +1431,22 @@ namespace mangaerordini
                     cmd.SelectCommand.Parameters.AddWithValue("@recordperpage", recordsPerPage);
 
                     cmd.Fill(ds);
-                    data_grid.DataSource = null;
-                    data_grid.Rows.Clear();
-                    if (data_grid.InvokeRequired)
-                        data_grid.Invoke(new MethodInvoker(() => data_grid.DataSource = ds));
-                    else
-                        data_grid.DataSource = ds;
 
                     Dictionary<string, string> columnNames = new()
                     {
                         { "Id", "ID" },
                         { "nome", "Nome" }
                     };
-                    int colCount = data_grid.ColumnCount;
-                    for (int i = 0; i < colCount; i++)
-                    {
-                        if (columnNames.ContainsKey(data_grid.Columns[i].HeaderText))
-                            data_grid.Columns[i].HeaderText = columnNames[data_grid.Columns[i].HeaderText];
 
-                        data_grid.Columns[i].AutoSizeMode = DataGridViewAutoSizeColumnMode.DisplayedCells;
-
-                        int colw = data_grid.Columns[i].Width;
-                        data_grid.Columns[i].AutoSizeMode = DataGridViewAutoSizeColumnMode.None;
-                        data_grid.Columns[i].Width = colw;
-                    }
+                    Utility.DataSourceToDataView(data_grid, ds, columnNames);
                 }
                 catch (SQLiteException ex)
                 {
                     OnTopMessage.Error("Errore durante popolamento tabella Clienti. Codice: " + DbTools.ReturnErorrCode(ex));
+                }
+                finally
+                {
+                    DrawingControl.ResumeDrawing(data_grid);
                 }
             }
             return;
@@ -1797,12 +1789,6 @@ namespace mangaerordini
                     cmd.SelectCommand.Parameters.AddWithValue("@idcl", idcl);
 
                     cmd.Fill(ds);
-                    data_grid.DataSource = null;
-                    data_grid.Rows.Clear();
-                    if (data_grid.InvokeRequired)
-                        data_grid.Invoke(new MethodInvoker(() => data_grid.DataSource = ds));
-                    else
-                        data_grid.DataSource = ds;
 
                     Dictionary<string, string> columnNames = new()
                     {
@@ -1813,18 +1799,8 @@ namespace mangaerordini
                         { "citta", "Città" },
                         { "provincia", "Provincia" }
                     };
-                    int colCount = data_grid.ColumnCount;
-                    for (int i = 0; i < colCount; i++)
-                    {
-                        if (columnNames.ContainsKey(data_grid.Columns[i].HeaderText))
-                            data_grid.Columns[i].HeaderText = columnNames[data_grid.Columns[i].HeaderText];
 
-                        data_grid.Columns[i].AutoSizeMode = DataGridViewAutoSizeColumnMode.DisplayedCells;
-
-                        int colw = data_grid.Columns[i].Width;
-                        data_grid.Columns[i].AutoSizeMode = DataGridViewAutoSizeColumnMode.None;
-                        data_grid.Columns[i].Width = colw;
-                    }
+                    Utility.DataSourceToDataView(data_grid, ds, columnNames);
                 }
                 catch (SQLiteException ex)
                 {
@@ -2143,6 +2119,8 @@ namespace mangaerordini
             {
                 try
                 {
+                    DrawingControl.SuspendDrawing(data_grid);
+
                     data_grid.RowHeadersVisible = false;
                     DataSet ds = new();
                     cmd.SelectCommand.Parameters.AddWithValue("@startingrecord", (page) * recordsPerPage);
@@ -2164,7 +2142,6 @@ namespace mangaerordini
 
                     for (int i = 0; i < colCount; i++)
                     {
-
                         if (columnNames.ContainsKey(data_grid.Columns[i].HeaderText))
                             data_grid.Columns[i].HeaderText = columnNames[data_grid.Columns[i].HeaderText];
 
@@ -2179,6 +2156,10 @@ namespace mangaerordini
                 catch (SQLiteException ex)
                 {
                     OnTopMessage.Error("Errore durante popolamento Riferimenti. Codice: " + DbTools.ReturnErorrCode(ex));
+                }
+                finally
+                {
+                    DrawingControl.ResumeDrawing(data_grid);
                 }
             }
             return;
@@ -2476,25 +2457,14 @@ namespace mangaerordini
                     cmd.SelectCommand.Parameters.AddWithValue("@recordperpage", recordsPerPage);
 
                     cmd.Fill(ds);
-                    data_grid.DataSource = ds;
 
                     Dictionary<string, string> columnNames = new()
                     {
                         { "Id", "ID" },
                         { "nome", "Nome" }
                     };
-                    int colCount = data_grid.ColumnCount;
-                    for (int i = 0; i < colCount; i++)
-                    {
-                        if (columnNames.ContainsKey(data_grid.Columns[i].HeaderText))
-                            data_grid.Columns[i].HeaderText = columnNames[data_grid.Columns[i].HeaderText];
+                    Utility.DataSourceToDataView(data_grid, ds, columnNames);
 
-                        data_grid.Columns[i].AutoSizeMode = DataGridViewAutoSizeColumnMode.DisplayedCells;
-
-                        int colw = data_grid.Columns[i].Width;
-                        data_grid.Columns[i].AutoSizeMode = DataGridViewAutoSizeColumnMode.None;
-                        data_grid.Columns[i].Width = colw;
-                    }
                 }
                 catch (SQLiteException ex)
                 {
@@ -4905,11 +4875,7 @@ namespace mangaerordini
 
                     cmd.Fill(ds);
 
-                    for (int i = 0; i < data_grid.Length; i++)
-                    {
-                        data_grid[i].DataSource = ds;
-
-                        Dictionary<string, string> columnNames = new()
+                    Dictionary<string, string> columnNames = new()
                         {
                         { "ID", "ID" },
                         { "codOrd", "Codice Ordine" },
@@ -4925,18 +4891,10 @@ namespace mangaerordini
                         { "prezfinale", "Prezzo Finale (Incl. Sconto, Excl. Sped.)" },
                         { "Stato", "Stato" }
                     };
-                        int colCount = data_grid[i].ColumnCount;
-                        for (int j = 0; j < colCount; j++)
-                        {
-                            if (columnNames.ContainsKey(data_grid[i].Columns[j].HeaderText))
-                                data_grid[i].Columns[j].HeaderText = columnNames[data_grid[i].Columns[j].HeaderText];
 
-                            data_grid[i].Columns[i].AutoSizeMode = DataGridViewAutoSizeColumnMode.DisplayedCells;
-
-                            int colw = data_grid[i].Columns[j].Width;
-                            data_grid[i].Columns[j].AutoSizeMode = DataGridViewAutoSizeColumnMode.None;
-                            data_grid[i].Columns[j].Width = colw;
-                        }
+                    for (int i = 0; i < data_grid.Length; i++)
+                    {
+                        Utility.DataSourceToDataView(data_grid[i], ds, columnNames);
                     }
                 }
                 catch (SQLiteException ex)
@@ -5226,6 +5184,7 @@ namespace mangaerordini
                     DataTable ds = new();
                     cmd.Fill(ds);
 
+                    DataGridView data_grid = DataGridViewOrdOffOgg;
 
                     IdsInOfferOrder = new List<long>();
 
@@ -5237,9 +5196,8 @@ namespace mangaerordini
                                 IdsInOfferOrder.Add(Convert.ToInt64(id_ric));
                         }
                     }
-
                     ds.Columns.Remove("ID_ricambio");
-                    DataGridViewOrdOffOgg.DataSource = ds;
+
 
                     Dictionary<string, string> columnNames = new()
                     {
@@ -5253,19 +5211,8 @@ namespace mangaerordini
                         { "code_pezzo", "Codice Pezzo" },
                         { "descrizione", "Descrizione" }
                     };
-                    int colCount = DataGridViewOrdOffOgg.ColumnCount;
-                    for (int j = 0; j < colCount; j++)
-                    {
-                        if (columnNames.ContainsKey(DataGridViewOrdOffOgg.Columns[j].HeaderText))
-                            DataGridViewOrdOffOgg.Columns[j].HeaderText = columnNames[DataGridViewOrdOffOgg.Columns[j].HeaderText];
 
-                        DataGridViewOrdOffOgg.Columns[j].AutoSizeMode = DataGridViewAutoSizeColumnMode.AllCells;
-
-
-                        int colw = DataGridViewOrdOffOgg.Columns[j].Width;
-                        DataGridViewOrdOffOgg.Columns[j].AutoSizeMode = DataGridViewAutoSizeColumnMode.None;
-                        DataGridViewOrdOffOgg.Columns[j].Width = colw;
-                    }
+                    Utility.DataSourceToDataView(data_grid, ds, columnNames);
                 }
                 catch (SQLiteException ex)
                 {
@@ -5302,7 +5249,7 @@ namespace mangaerordini
                     cmd.SelectCommand.Parameters.AddWithValue("@idofferta", id_ordine);
                     DataTable ds = new();
                     cmd.Fill(ds);
-                    DataGridViewOrdOgg.DataSource = ds;
+                    DataGridView data_grid = DataGridViewOrdOgg;
 
                     Dictionary<string, string> columnNames = new()
                     {
@@ -5316,26 +5263,12 @@ namespace mangaerordini
                         { "descrizione", "Descrizione" },
                         { "ETA", "Data Arrivo" }
                     };
-                    int colCount = DataGridViewOrdOgg.ColumnCount;
-                    for (int j = 0; j < colCount; j++)
-                    {
-                        if (columnNames.ContainsKey(DataGridViewOrdOgg.Columns[j].HeaderText))
-                            DataGridViewOrdOgg.Columns[j].HeaderText = columnNames[DataGridViewOrdOgg.Columns[j].HeaderText];
 
-                        DataGridViewOrdOgg.Columns[j].AutoSizeMode = DataGridViewAutoSizeColumnMode.AllCells;
-
-                        int colw = DataGridViewOrdOgg.Columns[j].Width;
-                        DataGridViewOrdOgg.Columns[j].AutoSizeMode = DataGridViewAutoSizeColumnMode.None;
-                        DataGridViewOrdOgg.Columns[j].Width = colw;
-                    }
-
-
+                    Utility.DataSourceToDataView(data_grid, ds, columnNames);
                 }
                 catch (SQLiteException ex)
                 {
                     OnTopMessage.Error("Errore durante oggetti ordini. Codice: " + DbTools.ReturnErorrCode(ex));
-
-
                     return;
                 }
             }
@@ -7398,11 +7331,8 @@ namespace mangaerordini
                     cmd.SelectCommand.Parameters.AddWithValue("@recordperpage", recordsPerPage);
 
                     cmd.Fill(ds);
-                    for (int i = 0; i < data_grid.Length; i++)
-                    {
-                        data_grid[i].DataSource = ds;
 
-                        Dictionary<string, string> columnNames = new()
+                    Dictionary<string, string> columnNames = new()
                         {
                         { "ID", "ID" },
                         { "codOrd", "Codice Ordine" },
@@ -7418,18 +7348,10 @@ namespace mangaerordini
                         { "spedg", "Gestione Costo Spedizione" },
                         { "Stato", "Stato" }
                     };
-                        int colCount = data_grid[i].ColumnCount;
-                        for (int j = 0; j < colCount; j++)
-                        {
-                            if (columnNames.ContainsKey(data_grid[i].Columns[j].HeaderText))
-                                data_grid[i].Columns[j].HeaderText = columnNames[data_grid[i].Columns[j].HeaderText];
 
-                            data_grid[i].Columns[i].AutoSizeMode = DataGridViewAutoSizeColumnMode.DisplayedCells;
-
-                            int colw = data_grid[i].Columns[j].Width;
-                            data_grid[i].Columns[j].AutoSizeMode = DataGridViewAutoSizeColumnMode.None;
-                            data_grid[i].Columns[j].Width = colw;
-                        }
+                    for (int i = 0; i < data_grid.Length; i++)
+                    {
+                        Utility.DataSourceToDataView(data_grid[i], ds, columnNames);
                     }
                 }
                 catch (SQLiteException ex)
@@ -7472,12 +7394,10 @@ namespace mangaerordini
             {
                 try
                 {
-
                     DataTable ds = new();
                     cmd.SelectCommand.Parameters.AddWithValue("@idord", id_ordine);
 
                     cmd.Fill(ds);
-                    data_grid.DataSource = ds;
 
                     Dictionary<string, string> columnNames = new()
                     {
@@ -7491,19 +7411,7 @@ namespace mangaerordini
                         { "ETA", "Data Arrivo" },
                         { "descrizione", "Descrizione" },
                     };
-                    int colCount = data_grid.ColumnCount;
-                    for (int i = 0; i < colCount; i++)
-                    {
-                        if (columnNames.ContainsKey(data_grid.Columns[i].HeaderText))
-                            data_grid.Columns[i].HeaderText = columnNames[data_grid.Columns[i].HeaderText];
-
-                        data_grid.Columns[i].AutoSizeMode = DataGridViewAutoSizeColumnMode.DisplayedCells;
-
-                        int colw = data_grid.Columns[i].Width;
-                        data_grid.Columns[i].AutoSizeMode = DataGridViewAutoSizeColumnMode.None;
-                        data_grid.Columns[i].Width = colw;
-                    }
-
+                    Utility.DataSourceToDataView(data_grid, ds, columnNames);
                 }
                 catch (SQLiteException ex)
                 {

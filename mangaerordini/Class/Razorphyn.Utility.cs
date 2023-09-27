@@ -6,6 +6,7 @@ using System.Runtime.InteropServices;
 using System.Windows.Forms;
 using static Razorphyn.SupportClasses;
 using static Razorphyn.ProgramParameters;
+using System.Data;
 
 namespace Razorphyn
 {
@@ -110,25 +111,16 @@ namespace Razorphyn
         {
             DateTime jan1 = new DateTime(year, 1, 1);
             int daysOffset = DayOfWeek.Thursday - jan1.DayOfWeek;
-
-            // Use first Thursday in January to get first week of the year as
-            // it will never be in Week 52/53
             DateTime firstThursday = jan1.AddDays(daysOffset);
             int firstWeek = calendarCulture.GetWeekOfYear(firstThursday, CalendarWeekRule.FirstFourDayWeek, DayOfWeek.Monday);
 
             var weekNum = weekOfYear;
-            // As we're adding days to a date in Week 1,
-            // we need to subtract 1 in order to get the right date for week #1
             if (firstWeek == 1)
             {
                 weekNum -= 1;
             }
-
-            // Using the first Thursday as starting week ensures that we are starting in the right year
-            // then we add number of weeks multiplied with days
             var result = firstThursday.AddDays(weekNum * 7);
 
-            // Subtract 3 days from Thursday to get Monday, which is the first weekday in ISO8601
             return result.AddDays(-3);
         }
 
@@ -147,6 +139,32 @@ namespace Razorphyn
         internal static void OpenPDF(string filePath)
         {
             System.Diagnostics.Process.Start(filePath);
+        }
+
+        internal static void DataSourceToDataView(DataGridView data_grid, DataTable dataSource, Dictionary<string, string> columnNames) {
+            DrawingControl.SuspendDrawing(data_grid);
+
+            data_grid.DataSource = null;
+            data_grid.Rows.Clear();
+            if (data_grid.InvokeRequired)
+                data_grid.Invoke(new MethodInvoker(() => data_grid.DataSource = dataSource));
+            else
+                data_grid.DataSource = dataSource;
+
+            int colCount = data_grid.ColumnCount;
+            for (int i = 0; i < colCount; i++)
+            {
+                if (columnNames.ContainsKey(data_grid.Columns[i].HeaderText))
+                    data_grid.Columns[i].HeaderText = columnNames[data_grid.Columns[i].HeaderText];
+
+                data_grid.Columns[i].AutoSizeMode = DataGridViewAutoSizeColumnMode.DisplayedCells;
+
+                int colw = data_grid.Columns[i].Width;
+                data_grid.Columns[i].AutoSizeMode = DataGridViewAutoSizeColumnMode.None;
+                data_grid.Columns[i].Width = colw;
+            }
+
+            DrawingControl.ResumeDrawing(data_grid);
         }
     }
 
@@ -226,4 +244,5 @@ namespace Razorphyn
             parent.Refresh();
         }
     }
+
 }
