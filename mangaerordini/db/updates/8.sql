@@ -15,7 +15,6 @@
 		[prezzo_unitario_originale] DECIMAL (19, 4) DEFAULT ((0)) NOT NULL,
 		[prezzo_unitario_sconto]    DECIMAL (19, 4) DEFAULT ((0)) NOT NULL,
 		[pezzi]                     REAL            DEFAULT ((0)) NOT NULL,
-		[aggiunto]                  SMALLINT        DEFAULT ((0)) NOT NULL,
 		[pezzi_aggiunti]			INT        		DEFAULT ((0)) NOT NULL,
 		CONSTRAINT [ui_offerte_pezzi] UNIQUE ([ID_offerta], [ID_ricambio]),
 		CONSTRAINT [FK_offerte_pezzi_To_offerte_elenco] FOREIGN KEY ([ID_offerta]) REFERENCES [offerte_elenco] ([Id]),
@@ -30,8 +29,7 @@
 			ID_ricambio,
 			prezzo_unitario_originale,
 			prezzo_unitario_sconto,
-			pezzi,
-			aggiunto
+			pezzi
 		)
 	SELECT
 			Id,
@@ -39,16 +37,19 @@
 			ID_ricambio,
 			prezzo_unitario_originale,
 			prezzo_unitario_sconto,
-			pezzi,
-			aggiunto
+			pezzi
 	FROM temp_table;
 	
 	UPDATE  [offerte_pezzi] 
 		SET [pezzi_aggiunti] = 
 				(SELECT 
-						SUM([ordine_pezzi].[pezzi]) 
+						IIF(SUM([ordine_pezzi].[pezzi]) IS NULL, 0, SUM([ordine_pezzi].[pezzi]))
 					FROM [ordine_pezzi] 
-					WHERE [ordine_pezzi].[ID_ricambio] = [offerte_pezzi].[ID_ricambio] AND [ordine_pezzi].[ID_ricambio] = [offerte_pezzi].[ID_ricambio]
+					JOIN [ordini_elenco] ON
+						[ordini_elenco].[Id] = [ordine_pezzi].[ID_ordine]
+					WHERE 	[ordini_elenco].[ID_offerta] IS NOT NULL 
+							AND [ordini_elenco].[ID_offerta] = [offerte_pezzi].[ID_offerta]
+							AND [ordine_pezzi].[ID_ricambio] = [offerte_pezzi].[ID_ricambio]
 				);
 	
 	DROP TABLE IF EXISTS temp_table;

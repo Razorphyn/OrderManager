@@ -1,8 +1,8 @@
 	CREATE TABLE IF NOT EXISTS [informazioni] (
 		[Id]        INTEGER	PRIMARY KEY	NOT NULL,
-		[versione]  DECIMAL DEFAULT ((6)) NOT NULL
+		[versione]  DECIMAL DEFAULT ((8)) NOT NULL
 	);
-	INSERT INTO [informazioni] ([Id] ,[versione]) VALUES (1 ,7); 
+	INSERT INTO [informazioni] ([Id] ,[versione]) VALUES (1 ,8); 
 
 	CREATE TABLE IF NOT EXISTS [fornitori] (
 		[Id]        	INTEGER			PRIMARY KEY	AUTOINCREMENT NOT NULL,
@@ -108,7 +108,7 @@
 		[prezzo_unitario_originale] DECIMAL (19, 4) DEFAULT ((0)) NOT NULL,
 		[prezzo_unitario_sconto]    DECIMAL (19, 4) DEFAULT ((0)) NOT NULL,
 		[pezzi]                     REAL            DEFAULT ((0)) NOT NULL,
-		[aggiunto]                  SMALLINT        DEFAULT ((0)) NOT NULL,
+		[pezzi_aggiunti]			INT        		DEFAULT ((0)) NOT NULL,
 		CONSTRAINT [ui_offerte_pezzi] UNIQUE ([ID_offerta], [ID_ricambio]),
 		CONSTRAINT [FK_offerte_pezzi_To_offerte_elenco] FOREIGN KEY ([ID_offerta]) REFERENCES [offerte_elenco] ([Id]),
 		CONSTRAINT [FK_offerte_pezzi_To_pezzi_ricambi] FOREIGN KEY ([ID_ricambio]) REFERENCES [pezzi_ricambi] ([Id])
@@ -148,7 +148,7 @@
 		[pezzi]                     REAL            DEFAULT ((0)) NOT NULL,
 		[ETA]                       DATE            NOT NULL,
 		[Outside_Offer] 			BOOLEAN 		DEFAULT ((0)) NOT NULL,
-		CONSTRAINT [ui_ordine_pezzi] UNIQUE ([ID_ordine], [ID_ricambio]),
+		CONSTRAINT [ui_ordine_pezzi] UNIQUE ([ID_ordine], [ID_ricambio], [ETA]),
 		CONSTRAINT [FK_ordine_pezzi_To_pezzi_ricambi] FOREIGN KEY ([ID_ricambio]) REFERENCES [pezzi_ricambi] ([Id]),
 		CONSTRAINT [FK_ordine_pezzi_To_ordini_elenco] FOREIGN KEY ([ID_ordine]) REFERENCES [ordini_elenco] ([Id])
 	);

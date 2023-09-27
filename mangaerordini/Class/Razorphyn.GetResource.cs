@@ -2,6 +2,7 @@
 using System;
 using System.Collections.Generic;
 using System.Data.SQLite;
+using System.Windows.Forms;
 using static Razorphyn.DataValidation;
 using static Razorphyn.SupportClasses;
 
@@ -23,7 +24,7 @@ namespace Razorphyn
                                         FROM " + ProgramParameters.schemadb + @"[pezzi_ricambi] AS pr
                                             LEFT JOIN " + ProgramParameters.schemadb + @"[clienti_macchine]  AS cm
                                                 ON pr.ID_macchina= cm.Id
-                                        WHERE pr.codice = @codice " + cond + " ;";
+                                        WHERE pr.codice = @codice AND pr.deleted = 0 " + cond + " ;";
 
             ValidationResult answer = new();
 
@@ -143,6 +144,18 @@ namespace Razorphyn
             }
 
             return answer;
+        }
+    
+        internal static List<long> GetIdFromDataTable(DataGridView table)
+        {
+            List<long> ids = new List<long>();
+
+            foreach (DataGridViewRow row in table.Rows)
+            {
+                ids.Add(Convert.ToInt64(row.Cells[0].Value));
+            }
+
+            return ids;
         }
     }
 

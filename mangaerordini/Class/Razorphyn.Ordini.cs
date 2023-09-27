@@ -18,9 +18,9 @@ namespace Razorphyn
                 public long Id { get; set; } = 0;
             }
 
-            internal static Answer CreateOrder(string n_ordine, long id_offerta, long idsd, long id_contatto, ValidationResult dataOrdValue, ValidationResult dataETAOrdValue,
-                                                ValidationResult tot_ordineV, ValidationResult scontoV, ValidationResult prezzo_finaleV, int stato_ordine, ValidationResult prezzoSpedizione,
-                                                int gestSP, bool CheckBoxOrdOffertaNonPresente, bool CheckBoxCopiaOffertainOrdine)
+            internal static Answer CreateOrder(string n_ordine, long id_offerta, long id_sede, long id_contatto, ValidationResult OrderDate, ValidationResult OrderETADate,
+                                                ValidationResult tot_ordine, ValidationResult sconto, ValidationResult prezzo_finale, int stato_ordine, ValidationResult prezzoSpedizione,
+                                                int gestSP, bool OrderNotFromOffer, bool CopyItemFromOfferToOrder)
             {
                 string commandText = @"INSERT INTO " + ProgramParameters.schemadb + @"[ordini_elenco]
                             (codice_ordine, ID_offerta, ID_sede, ID_riferimento, data_ordine, data_ETA, totale_ordine,sconto,prezzo_finale,stato,costo_spedizione,gestione_spedizione)
@@ -38,13 +38,13 @@ namespace Razorphyn
                         cmd.CommandText = commandText;
                         cmd.Parameters.AddWithValue("@codo", n_ordine);
                         cmd.Parameters.AddWithValue("@idoof", (id_offerta > 0) ? id_offerta : DBNull.Value);
-                        cmd.Parameters.AddWithValue("@idsd", idsd);
+                        cmd.Parameters.AddWithValue("@idsd", id_sede);
                         cmd.Parameters.AddWithValue("@idcont", (id_contatto > 0) ? id_contatto : DBNull.Value);
-                        cmd.Parameters.AddWithValue("@dataord", dataOrdValue.DateValue);
-                        cmd.Parameters.AddWithValue("@dataeta", dataETAOrdValue.DateValue);
-                        cmd.Parameters.AddWithValue("@totord", tot_ordineV.DecimalValue);
-                        cmd.Parameters.AddWithValue("@sconto", scontoV.DecimalValue);
-                        cmd.Parameters.AddWithValue("@prezzoF", prezzo_finaleV.DecimalValue);
+                        cmd.Parameters.AddWithValue("@dataord", OrderDate.DateValue);
+                        cmd.Parameters.AddWithValue("@dataeta", OrderETADate.DateValue);
+                        cmd.Parameters.AddWithValue("@totord", tot_ordine.DecimalValue);
+                        cmd.Parameters.AddWithValue("@sconto", sconto.DecimalValue);
+                        cmd.Parameters.AddWithValue("@prezzoF", prezzo_finale.DecimalValue);
                         cmd.Parameters.AddWithValue("@stato", stato_ordine);
                         if (prezzoSpedizione.DecimalValue.HasValue)
                         {
@@ -61,7 +61,7 @@ namespace Razorphyn
                         answer.Success = true;
                         answer.Id = lastinsertedid;
 
-                        if (CheckBoxOrdOffertaNonPresente == false)
+                        if (OrderNotFromOffer == false)
                         {
                             commandText = "UPDATE " + ProgramParameters.schemadb + @"[offerte_elenco] SET trasformato_ordine=1 WHERE Id=@idoff LIMIT 1;";
                             using (SQLiteCommand cmd2 = new(commandText, ProgramParameters.connection))
@@ -78,7 +78,7 @@ namespace Razorphyn
                                 }
                             }
 
-                            if (CheckBoxCopiaOffertainOrdine)
+                            if (CopyItemFromOfferToOrder)
                             {
                                 if (lastinsertedid > 0)
                                 {
@@ -99,7 +99,9 @@ namespace Razorphyn
                                                 query = @" BEGIN TRANSACTION;
                                                     INSERT OR ROLLBACK INTO " + ProgramParameters.schemadb + @"[ordine_pezzi](ID_ordine,ID_ricambio,prezzo_unitario_originale,prezzo_unitario_sconto,pezzi,ETA) 
 													    VALUES (@idord,@idogg,@prezor,@prezsco,@qta,@dataeta);
-                                                    UPDATE OR ROLLBACK " + ProgramParameters.schemadb + @"[offerte_pezzi] SET aggiunto=1 WHERE Id=@idoffogg LIMIT 1;
+
+                                                    UPDATE OR ROLLBACK " + ProgramParameters.schemadb + @"[offerte_pezzi] SET pezzi_aggiunti = pezzi WHERE Id=@idoffogg LIMIT 1;
+                                                    
                                                     COMMIT;";
 
                                                 using (SQLiteCommand cmd3 = new(query, ProgramParameters.connection))
@@ -112,7 +114,7 @@ namespace Razorphyn
                                                         cmd3.Parameters.AddWithValue("@prezor", reader["prezzo_unitario_originale"]);
                                                         cmd3.Parameters.AddWithValue("@prezsco", reader["prezzo_unitario_sconto"]);
                                                         cmd3.Parameters.AddWithValue("@qta", reader["pezzi"]);
-                                                        cmd3.Parameters.AddWithValue("@dataeta", dataETAOrdValue.DateValue);
+                                                        cmd3.Parameters.AddWithValue("@dataeta", OrderETADate.DateValue);
                                                         cmd3.Parameters.AddWithValue("@idoffogg", reader["Id"]);
 
                                                         cmd3.ExecuteNonQuery();
@@ -148,12 +150,9 @@ namespace Razorphyn
                 }
             }
 
-            /*internal static Answer AddObjToOrder(long idordine, long idiri, ValidationResult dataETAOrdValue, ValidationResult prezzo_originaleV, ValidationResult prezzo_scontatoV,
-                                                      ValidationResult qtaP, bool CheckBoxOrdOggCheckAddNotOffer, bool CheckBoxOrdOggSconto, long idoggOff = 0)
-            */
+
             internal static Answer AddObjToOrder(long id_ordine, long id_ricambio, DateTime eta_ordine, decimal prezzo_originale, decimal prezzo_scontato,
                                                       int qta, bool oggetto_non_in_offerta, bool applica_sconto, long idoggOff = 0)
-
             {
                 Answer answer = new Answer();
 
@@ -173,7 +172,7 @@ namespace Razorphyn
 
                 if (!oggetto_non_in_offerta)
                 {
-                    commandText += @" UPDATE OR ROLLBACK " + ProgramParameters.schemadb + @"[offerte_pezzi] SET aggiunto=1 WHERE Id=@idoggoff LIMIT 1;";
+                    commandText += @" UPDATE OR ROLLBACK " + ProgramParameters.schemadb + @"[offerte_pezzi] SET pezzi_aggiunti = pezzi_aggiunti + @pezzi WHERE Id=@idoggoff LIMIT 1;";
                 }
 
                 if (applica_sconto)

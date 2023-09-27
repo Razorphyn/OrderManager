@@ -177,7 +177,7 @@ namespace ManagerOrdini
                 esito = Offerte.GestioneOfferte.CreateOffer(dataoffValue.DateValue, numeroOff, idsd, stato, idpref, prezzoSpedizione.DecimalValue, gestSP);
 
                 if (esito.Success)
-                    offerID = esito.IntValue;
+                    offerID = esito.LongValue;
             }
 
             if (offerID > 0)

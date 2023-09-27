@@ -13,7 +13,7 @@ namespace Razorphyn
             public class Answer
             {
                 public bool Success { get; set; } = false;
-                public long IntValue { get; set; } = 0;
+                public long LongValue { get; set; } = 0;
                 public bool Bool { get; set; }
                 public string Error { get; set; } = null;
             }
@@ -55,7 +55,7 @@ namespace Razorphyn
                             cmd.Parameters.AddWithValue("@gestsp", DBNull.Value);
                         }
 
-                        esito.IntValue = Convert.ToInt64(cmd.ExecuteScalar());
+                        esito.LongValue = Convert.ToInt64(cmd.ExecuteScalar());
 
                         string temp_info = "";
                         if (stato == 1)
@@ -119,7 +119,7 @@ namespace Razorphyn
                                         Id AS id, 
                                         trasformato_ordine AS transf 
                                     FROM " + ProgramParameters.schemadb + @"[offerte_elenco] 
-                                        WHERE codice = @codice
+                                        WHERE codice_offerta = @codice
                                     LIMIT 1;";
 
                 using (SQLiteCommand cmd = new(commandText, ProgramParameters.connection))
@@ -134,12 +134,12 @@ namespace Razorphyn
                         {
                             if (reader["transf"] == null || reader["id"] == DBNull.Value)
                             {
-                                answer.IntValue = -1;
+                                answer.LongValue = -1;
                                 break;
                             }
 
                             answer.Bool = Convert.ToInt16(reader["transf"]) != 0;
-                            answer.IntValue = Convert.ToInt64(reader["id"]);
+                            answer.LongValue = Convert.ToInt64(reader["id"]);
                         }
 
                         reader.Close();
@@ -147,13 +147,14 @@ namespace Razorphyn
                     }
                     catch (SQLiteException ex)
                     {
-                        OnTopMessage.Error("Errore populate_combobox_ordini_crea. Codice: " + DbTools.ReturnErorrCode(ex));
+                        OnTopMessage.Error("Errore check se offerta convertita. Codice: " + DbTools.ReturnErorrCode(ex));
                         answer.Success = false;
                     }
                 }
 
                 return answer;
             }
+        
         }
 
         internal static class GetResources

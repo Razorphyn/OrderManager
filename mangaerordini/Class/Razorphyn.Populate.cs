@@ -218,15 +218,6 @@ namespace Razorphyn
                 new ComboBoxList() { Name = "", Value = -1 }
             };
 
-            /*if (nomi_ctrs == null)
-                nomi_ctrs = new ComboBox[] { };
-
-            else if (nome_ctr != null)
-                nomi_ctrs.Append(nome_ctr);
-
-            foreach (ComboBox ctr in nomi_ctrs)
-                Utility.DataSourceToComboBox(ctr, dataSource);*/
-
             if (nomi_ctrs != null)
             {
                 foreach (ComboBox ctr in nomi_ctrs)

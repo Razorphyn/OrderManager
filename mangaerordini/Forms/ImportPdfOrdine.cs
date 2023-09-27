@@ -468,17 +468,17 @@ namespace ManagerOrdini.Forms
             {
                 for (int j = i + 1; j < c; j++)
                 {
-                    if (items[i].id == items[j].id)
+                    if (items[i].id == items[j].id && DateTime.Compare(items[i].eta, items[j].eta) == 0)
                     {
                         string input = "";
                         while (input != "1" && input != "2")
-                            input = Interaction.InputBox("Selezionare (1 o 2) tra i due seguenti oggetti quale tenere(si potranno fare modifiche in seguito):" + Environment.NewLine +
+                            input = Interaction.InputBox("Selezionare (1 o 2) tra i due seguenti oggetti quale tenere. Le quantità veranno sommate." + Environment.NewLine +
                                                         "1)\t ETA: " + items[i].eta.Date + "; QTA:" + items[i].qta + Environment.NewLine +
                                                         "\t\t PREZZO: " + items[i].prezzo + "; PREZZO Scontato: " + items[i].prezzo_scontato + Environment.NewLine +
                                                         Environment.NewLine +
-                                                        "2)\t ETA;" + items[j].eta.Date + "; QTA:" + items[j].qta + Environment.NewLine + 
+                                                        "2)\t ETA:" + items[j].eta.Date + "; QTA:" + items[j].qta + Environment.NewLine +
                                                         "\t\t PREZZO: " + items[j].prezzo + "; PREZZO: " + items[j].prezzo_scontato
-                                                        , "Selezionare Oggetto").Trim();
+                                                        , "Selezionare Oggetto Duplicato").Trim();
 
                         int index = Convert.ToInt32(input);
 
@@ -703,7 +703,7 @@ namespace ManagerOrdini.Forms
                 DateTimePicker eta = new()
                 {
                     Dock = DockStyle.Fill,
-                    Text = orderInfo["ETA"],
+                    Text = (String.IsNullOrEmpty(Items[i]["eta"])) ? orderInfo["ETA"] : Items[i]["eta"],
                     Anchor = AnchorStyles.None,
                     Format = DateTimePickerFormat.Custom,
                     CustomFormat = "dd/MM/yyyy",
