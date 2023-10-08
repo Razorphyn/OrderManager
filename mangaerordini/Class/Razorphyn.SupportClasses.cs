@@ -13,6 +13,13 @@ namespace Razorphyn
             public string Descrizione { get; set; } = null;
         }
 
+        internal class Word
+        {
+            public string Value { get; set; }
+            public int x { get; set; }
+            public int y { get; set; }
+        }
+
         public class FilterTextBox : TextBox
         {
 

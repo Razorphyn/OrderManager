@@ -24,6 +24,7 @@ using System.Text;
 using System.Text.RegularExpressions;
 using System.Windows.Forms;
 using UglyToad.PdfPig.DocumentLayoutAnalysis.PageSegmenter;
+using UglyToad.PdfPig.Graphics.Operations.SpecialGraphicsState;
 using static iText.StyledXmlParser.Jsoup.Select.Evaluator;
 using static Razorphyn.Populate;
 using static Razorphyn.SupportClasses;
@@ -4232,7 +4233,6 @@ namespace mangaerordini
 
                         List<Dictionary<string, string>> Items = new();
 
-
                         using (var document = UglyToad.PdfPig.PdfDocument.Open(filePath))
                         {
                             Dictionary<string, string> findStrLang = new()
@@ -4242,54 +4242,49 @@ namespace mangaerordini
                             };
 
                             var page = document.GetPage(1);
-                            var words = page.GetWords();
+                            var wordsCollection = page.GetWords();
 
-                            var recursiveXYCut = new RecursiveXYCut(new RecursiveXYCut.RecursiveXYCutOptions()
-                            {
-                                MinimumWidth = page.Width / 1.7
-                            });
-
-                            var blocks = RecursiveXYCut.Instance.GetBlocks(words);
-                            string line = "";
+                            List<Word> words = new List<Word>();
 
                             Dictionary<string, Dictionary<string, string>> findStrField = GetDictionarySDSS("offerta");
 
-                            foreach (var block in blocks)
+                            foreach (var word in wordsCollection)
                             {
-                                line = block.Text.Trim();
-                                if (String.IsNullOrEmpty(line))
-                                    continue;
-
-                                if (Offerlang == "" && findStrLang.ContainsKey(line))
+                                words.Add(new Word
                                 {
-                                    Offerlang = findStrLang[line];
+                                    Value = word.Text,
+                                    x = Convert.ToInt32(word.BoundingBox.BottomLeft.X),
+                                    y = Convert.ToInt32(word.BoundingBox.BottomLeft.Y)
+                                });
+                            }
+
+                            words = words.OrderBy(a => a.x).ThenBy(a => a.y).ToList();
+                            int WordsCount = words.Count();
+                            int pos;
+
+                            for (int i = 0; i < WordsCount; i++)
+                            {
+
+                                if (Offerlang == "" && findStrLang.ContainsKey(words[i].Value))
+                                {
+                                    Offerlang = findStrLang[words[i].Value];
+                                    i = 0;
                                 }
                                 else if (Offerlang != "")
                                 {
-                                    int pos = 0;
-                                    foreach (KeyValuePair<string, string> searchstr in findStrField[Offerlang])
+                                    pos = BuildStringH(words, words[i].x, words[i].y).IndexOf(findStrField[Offerlang]["numero"]);
+
+                                    if (pos == 0)
                                     {
-                                        if (offerInfo[searchstr.Key] != "")
-                                        {
-                                            continue;
-                                        }
+                                        offerInfo["numero"] = words[i - 1].Value;
 
-                                        pos = line.IndexOf(searchstr.Value);
+                                        offerInfo["data"] = RemoveNotIntLeft(BuildStringH(words, words[i - 1].x, words[i - 1].y)).Split('/')[1];
+                                    }
 
-                                        if (pos > -1)
-                                        {
-                                            string bkline = line.Remove(0, pos);
-
-                                            string[] subs = bkline.Split('\n');
-
-                                            pos = searchstr.Value.IndexOf('/');
-                                            if (pos == 0)
-                                                offerInfo[searchstr.Key] = subs[1].Split('/')[1].Trim();
-                                            else if (pos > 1)
-                                                offerInfo[searchstr.Key] = subs[1].Split('/')[0].Trim();
-                                            else
-                                                offerInfo[searchstr.Key] = subs[1].Trim();
-                                        }
+                                    pos = BuildStringH(words, words[i].x, words[i].y).IndexOf(findStrField[Offerlang]["cliente"]);
+                                    if (pos == 0)
+                                    {
+                                        offerInfo["cliente"] = words[i - 1].Value;
                                     }
                                 }
                             }
@@ -4407,6 +4402,56 @@ namespace mangaerordini
             }
         }
 
+        private String BuildStringH(List<Word> words, int x, int y)
+        {
+            string builder = "";
+
+            foreach (Word w in words)
+            {
+                if (w.y == y && w.x >= x)
+                {
+                    builder += w.Value;
+                }
+            }
+
+            return builder;
+        }
+
+        private String BuildStringV(List<Word> words, int x, int y)
+        {
+            string builder = "";
+
+            foreach (Word w in words)
+            {
+                if (w.y <= y && w.x == x)
+                {
+                    builder += w.Value;
+                }
+            }
+
+            return builder;
+        }
+
+        private string RemoveNotIntLeft(string builder)
+        {
+            bool isInt = false;
+
+            while (!isInt && builder.Length > 0)
+            {
+                if (!int.TryParse(builder.Substring(0, 1), out _))
+                {
+                    builder = builder.Remove(0, 1);
+
+                }
+                else
+                {
+                    isInt = true;
+                }
+            }
+
+            return builder;
+        }
+
         private string ExtractBodyPDF(string filePath)
         {
             string text = "";
@@ -4467,12 +4512,11 @@ namespace mangaerordini
             {
                 case "offerta":
 
+                    findStrField["ita"].Add("numero", "OrdineNo./Data/");
+                    findStrField["eng"].Add("numero", "Number/Date");
 
-                    findStrField["ita"].Add("numero", "Ordine No./");
-                    findStrField["eng"].Add("numero", "Quotation No./");
-
-                    findStrField["ita"].Add("cliente", "No. cliente");
-                    findStrField["eng"].Add("cliente", "Cust. No.");
+                    findStrField["ita"].Add("cliente", "No.cliente");
+                    findStrField["eng"].Add("cliente", "Cust.No.");
 
                     findStrField["ita"].Add("data", "/Data");
                     findStrField["eng"].Add("data", "/Date");

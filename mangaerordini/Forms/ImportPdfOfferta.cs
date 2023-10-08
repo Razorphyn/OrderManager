@@ -46,7 +46,8 @@ namespace ManagerOrdini
             this.filePath = filePath;
 
             AddOffCreaNOff.Text = offerInfo["numero"];
-            AddOffCreaData.Text = offerInfo["data"];
+            if (DataValidation.ValidateDateTime(offerInfo["data"]).Success)
+                AddOffCreaData.Text = offerInfo["data"];
 
             Populate_combobox_clienti(new ComboBox[] { AddOffCreaCliente });
             Populate_combobox_statoOfferte(new ComboBox[] { AddOffCreaStato });

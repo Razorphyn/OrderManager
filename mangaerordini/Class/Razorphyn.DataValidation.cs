@@ -156,7 +156,6 @@ namespace Razorphyn
 
         public static string ValidateCodiceRicambio(string codice)
         {
-            //Regex rgx = new(@"^[a-zA-Z]{1}\d{1,}[-]\d{1,}$");
             Regex rgx = new(@"^[a-zA-Z]{1,}\d{1,}[-]\d{1,}$");
 
             if (string.IsNullOrEmpty(codice) || !rgx.IsMatch(codice))
@@ -376,6 +375,7 @@ namespace Razorphyn
             else
             {
                 answer.DateValue = dataOrdValue;
+                answer.Success = true;
             }
 
             return answer;
@@ -392,6 +392,7 @@ namespace Razorphyn
             else
             {
                 answer.DateValue = dataOrdValue;
+                answer.Success = true;
             }
 
             return answer;
