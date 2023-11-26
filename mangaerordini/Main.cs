@@ -2,8 +2,6 @@ using CsvHelper;
 using iText.Kernel.Pdf;
 using iText.Kernel.Pdf.Canvas.Parser;
 using iText.Kernel.Pdf.Canvas.Parser.Listener;
-using iText.Kernel.Pdf.Function;
-using iText.Layout.Element;
 using ManagerOrdini;
 using ManagerOrdini.Forms;
 using Microsoft.VisualBasic;
@@ -14,7 +12,6 @@ using System.ComponentModel.DataAnnotations;
 using System.Data;
 using System.Data.SQLite;
 using System.Diagnostics;
-using System.Diagnostics.Eventing.Reader;
 using System.Globalization;
 using System.IO;
 using System.Linq;
@@ -24,7 +21,6 @@ using System.Text;
 using System.Text.RegularExpressions;
 using System.Windows.Forms;
 using UglyToad.PdfPig.DocumentLayoutAnalysis.PageSegmenter;
-using UglyToad.PdfPig.Graphics.Operations.SpecialGraphicsState;
 using static iText.StyledXmlParser.Jsoup.Select.Evaluator;
 using static Razorphyn.Populate;
 using static Razorphyn.SupportClasses;
@@ -600,7 +596,6 @@ namespace mangaerordini
             string descrizione = AddDatiCompDesc.Text.Trim();
             string prezzo = AddDatiCompPrice.Text.Trim();
             long fornitoreId = Convert.ToInt64(AddDatiCompSupplier.SelectedValue.ToString());
-            //long sedeId = Convert.ToInt32(AddDatiCompSede.SelectedValue.ToString());
             long macchinaId = Convert.ToInt64(AddDatiCompMachine.SelectedValue.ToString());
 
             string er_list = "";
@@ -633,7 +628,7 @@ namespace mangaerordini
                 return;
             }
 
-            string commandText = "INSERT INTO " + ProgramParameters.schemadb + @"[pezzi_ricambi](nome, codice, descrizione, prezzo, ID_fornitore, ID_macchina, uniqueness) VALUES (@nome, @codice, @desc, @prezzo, @idif, @idma , 1);";
+            string commandText = "INSERT INTO " + ProgramParameters.schemadb + @"[pezzi_ricambi](nome, codice, descrizione, prezzo, ID_fornitore, ID_macchina, active) VALUES (@nome, @codice, @desc, @prezzo, @idif, @idma , 1);";
 
             using (SQLiteCommand cmd = new(commandText, ProgramParameters.connection))
             {
@@ -814,7 +809,7 @@ namespace mangaerordini
             }
 
             //string commandText = "DELETE FROM " + ProgramParameters.schemadb + @"[pezzi_ricambi] WHERE Id=@idq LIMIT 1;";
-            string commandText = "UPDATE " + ProgramParameters.schemadb + @"[pezzi_ricambi] SET uniqueness = null , deleted = 1 WHERE Id=@idq LIMIT 1;";
+            string commandText = "UPDATE " + ProgramParameters.schemadb + @"[pezzi_ricambi] SET active = null , deleted = 1 WHERE Id=@idq LIMIT 1;";
 
 
             using (SQLiteCommand cmd = new(commandText, ProgramParameters.connection))
@@ -1191,7 +1186,7 @@ namespace mangaerordini
                 return;
             }
 
-            string commandText = "INSERT INTO " + ProgramParameters.schemadb + @"[clienti_elenco] (nome, uniqueness) VALUES (@nome, 1);";
+            string commandText = "INSERT INTO " + ProgramParameters.schemadb + @"[clienti_elenco] (nome, active) VALUES (@nome, 1);";
 
 
             using (SQLiteCommand cmd = new(commandText, ProgramParameters.connection))
@@ -1327,8 +1322,8 @@ namespace mangaerordini
 
             //string commandText = "DELETE FROM " + ProgramParameters.schemadb + @"[clienti_elenco] WHERE Id=@idq LIMIT 1;";
             string commandText = @" BEGIN TRANSACTION;
-                                    UPDATE OR ROLLBACK " + ProgramParameters.schemadb + @"[clienti_elenco]  SET deleted = 1, uniqueness = NULL WHERE Id=@idq LIMIT 1;
-                                    UPDATE OR ROLLBACK " + ProgramParameters.schemadb + @"[clienti_sedi]    SET deleted = 1, uniqueness = NULL WHERE ID_cliente=@idq AND deleted = 0;
+                                    UPDATE OR ROLLBACK " + ProgramParameters.schemadb + @"[clienti_elenco]  SET deleted = 1, active = NULL WHERE Id=@idq LIMIT 1;
+                                    UPDATE OR ROLLBACK " + ProgramParameters.schemadb + @"[clienti_sedi]    SET deleted = 1, active = NULL WHERE ID_cliente=@idq AND deleted = 0;
                                     COMMIT;";
 
             using (SQLiteCommand cmd = new(commandText, ProgramParameters.connection))
@@ -1497,7 +1492,7 @@ namespace mangaerordini
                 return;
             }
 
-            string commandText = "INSERT INTO " + ProgramParameters.schemadb + @"[clienti_sedi](ID_cliente, numero, stato, citta, provincia, uniqueness) VALUES (@idcl, @numero,@stato,@citta,@prov, 1);";
+            string commandText = "INSERT INTO " + ProgramParameters.schemadb + @"[clienti_sedi](ID_cliente, numero, stato, citta, provincia, active) VALUES (@idcl, @numero,@stato,@citta,@prov, 1);";
 
 
             using (SQLiteCommand cmd = new(commandText, ProgramParameters.connection))
@@ -1650,7 +1645,7 @@ namespace mangaerordini
             }
 
             //string commandText = "DELETE FROM " + ProgramParameters.schemadb + @"[clienti_sedi] WHERE Id=@idq LIMIT 1;";
-            string commandText = "UPDATE " + ProgramParameters.schemadb + @"[clienti_sedi] SET deleted = 1, uniqueness = NULL WHERE Id=@idq LIMIT 1;";
+            string commandText = "UPDATE " + ProgramParameters.schemadb + @"[clienti_sedi] SET deleted = 1, active = NULL WHERE Id=@idq LIMIT 1;";
 
 
             using (SQLiteCommand cmd = new(commandText, ProgramParameters.connection))
@@ -1845,7 +1840,7 @@ namespace mangaerordini
                 return;
             }
 
-            string commandText = "INSERT INTO " + ProgramParameters.schemadb + @"[clienti_riferimenti](nome, ID_cliente, ID_sede, mail, telefono, uniqueness) VALUES (@nome,@idcl,@idsd,@mail,@tel, 1);";
+            string commandText = "INSERT INTO " + ProgramParameters.schemadb + @"[clienti_riferimenti](nome, ID_cliente, ID_sede, mail, telefono, active) VALUES (@nome,@idcl,@idsd,@mail,@tel, 1);";
 
             using (SQLiteCommand cmd = new(commandText, ProgramParameters.connection))
             {
@@ -1857,7 +1852,6 @@ namespace mangaerordini
                     cmd.Parameters.AddWithValue("@idsd", (idsd < 1) ? DBNull.Value : idsd);
                     cmd.Parameters.AddWithValue("@mail", mail);
                     cmd.Parameters.AddWithValue("@tel", tel);
-
 
                     cmd.ExecuteNonQuery();
                     OnTopMessage.Information("Persona di riferimento aggiunta al database");
@@ -1992,7 +1986,7 @@ namespace mangaerordini
 
 
             //string commandText = "DELETE FROM " + ProgramParameters.schemadb + @"[clienti_riferimenti] WHERE Id=@idq LIMIT 1;";
-            string commandText = "UPDATE " + ProgramParameters.schemadb + @"[clienti_riferimenti] SET deleted = 1, uniqueness = NULL WHERE Id=@idq LIMIT 1;";
+            string commandText = "UPDATE " + ProgramParameters.schemadb + @"[clienti_riferimenti] SET deleted = 1, active = NULL WHERE Id=@idq LIMIT 1;";
 
 
             using (SQLiteCommand cmd = new(commandText, ProgramParameters.connection))
@@ -2231,7 +2225,7 @@ namespace mangaerordini
             }
 
 
-            string commandText = "INSERT INTO " + ProgramParameters.schemadb + @"[fornitori](nome, uniqueness) VALUES (@nome, 1);";
+            string commandText = "INSERT INTO " + ProgramParameters.schemadb + @"[fornitori](nome, active) VALUES (@nome, 1);";
 
 
             using (SQLiteCommand cmd = new(commandText, ProgramParameters.connection))
@@ -2359,7 +2353,7 @@ namespace mangaerordini
             }
 
             //string commandText = "DELETE FROM " + ProgramParameters.schemadb + @"[fornitori] WHERE Id=@idq LIMIT 1;";
-            string commandText = "UPDATE " + ProgramParameters.schemadb + @"[fornitori] SET deleted = 1, uniqueness = NULL WHERE Id=@idq LIMIT 1;";
+            string commandText = "UPDATE " + ProgramParameters.schemadb + @"[fornitori] SET deleted = 1, active = NULL WHERE Id=@idq LIMIT 1;";
 
             using (SQLiteCommand cmd = new(commandText, ProgramParameters.connection))
             {
@@ -2506,7 +2500,7 @@ namespace mangaerordini
                 return;
             }
 
-            string commandText = "INSERT INTO " + ProgramParameters.schemadb + @"[clienti_macchine](modello, ID_cliente, ID_sede, seriale, codice, uniqueness) VALUES (@modello, @idcl, @idsd, @seriale, @code, 1);";
+            string commandText = "INSERT INTO " + ProgramParameters.schemadb + @"[clienti_macchine](modello, ID_cliente, ID_sede, seriale, codice, active) VALUES (@modello, @idcl, @idsd, @seriale, @code, 1);";
 
             using (SQLiteCommand cmd = new(commandText, ProgramParameters.connection))
             {
@@ -2650,7 +2644,7 @@ namespace mangaerordini
 
 
             //string commandText = "DELETE FROM " + ProgramParameters.schemadb + @"[clienti_macchine] WHERE Id=@idq LIMIT 1;";
-            string commandText = "UPDATE " + ProgramParameters.schemadb + @"[clienti_macchine] SET deleted = 1, uniqueness = NULL WHERE Id=@idq LIMIT 1;";
+            string commandText = "UPDATE " + ProgramParameters.schemadb + @"[clienti_macchine] SET deleted = 1, active = NULL WHERE Id=@idq LIMIT 1;";
 
 
             using (SQLiteCommand cmd = new(commandText, ProgramParameters.connection))
@@ -4017,58 +4011,38 @@ namespace mangaerordini
                 return;
             }
 
+            Offerte.GestioneOfferte.Answer esito = Offerte.GestioneOfferte.DeleteItemFromOffer(idof, (long)idQ.LongValue);
 
-            string commandText = @"DELETE FROM " + ProgramParameters.schemadb + @"[offerte_pezzi] WHERE Id=@idq LIMIT 1;
-                                   UPDATE " + ProgramParameters.schemadb + @"[offerte_elenco]
-                                        SET tot_offerta = ifnull((SELECT SUM(OP.pezzi * OP.prezzo_unitario_sconto) FROM " + ProgramParameters.schemadb + @"[offerte_pezzi] AS OP WHERE OP.ID_offerta=@idof),0)
-                                        WHERE Id=@idof LIMIT 1;";
-
-
-            using (var transaction = ProgramParameters.connection.BeginTransaction())
-            using (SQLiteCommand cmd = new(commandText, ProgramParameters.connection, transaction))
+            if (esito.Success)
             {
-                try
+                OnTopMessage.Information("Oggetto rimosso.");
+                LoadOfferteCreaTable();
+
+                UpdateOfferteCrea(0, false);
+                LoadOfferteOggettiCreaTable(idof);
+
+                //DISABILITA CAMPI & BOTTONI
+                UpdateFields("OAO", "CA", true);
+                UpdateFields("OAO", "E", false);
+                UpdateFields("OAO", "A", true);
+
+                ComboSelOrd_SelectedIndexChanged(this, System.EventArgs.Empty);
+                SelOffCrea_SelectedIndexChanged(this, System.EventArgs.Empty);
+
+                if (selClIndex > 0)
                 {
-                    cmd.CommandText = commandText;
-                    cmd.Parameters.AddWithValue("@idq", idQ.LongValue);
-                    cmd.Parameters.AddWithValue("@idof", idof);
-
-                    cmd.ExecuteNonQuery();
-
-                    transaction.Commit();
-
-                    LoadOfferteCreaTable();
-
-                    UpdateOfferteCrea(0, false);
-                    LoadOfferteOggettiCreaTable(idof);
-
-                    //DISABILITA CAMPI & BOTTONI
-                    UpdateFields("OAO", "CA", true);
-                    UpdateFields("OAO", "E", false);
-                    UpdateFields("OAO", "A", true);
-
-                    ComboSelOrd_SelectedIndexChanged(this, System.EventArgs.Empty);
-                    SelOffCrea_SelectedIndexChanged(this, System.EventArgs.Empty);
-
-                    if (selClIndex > 0)
-                    {
-                        SelOffCreaCl.SelectedIndex = Utility.FindIndexFromValue(SelOffCreaCl, selClIndex);
-                        if (selSedeIndex > 0)
-                            SelOffCreaSede.SelectedIndex = Utility.FindIndexFromValue(SelOffCreaSede, selSedeIndex);
-                    }
-
-                    SelOffCrea.SelectedIndex = Utility.FindIndexFromValue(SelOffCrea, selOfIndex);
-
-                    OnTopMessage.Information("Oggetto rimosso.");
+                    SelOffCreaCl.SelectedIndex = Utility.FindIndexFromValue(SelOffCreaCl, selClIndex);
+                    if (selSedeIndex > 0)
+                        SelOffCreaSede.SelectedIndex = Utility.FindIndexFromValue(SelOffCreaSede, selSedeIndex);
                 }
-                catch (SQLiteException ex)
-                {
-                    transaction.Rollback();
-                    OnTopMessage.Error("Errore durante eliminazione dell'ogetto. Codice: " + DbTools.ReturnErorrCode(ex));
-                    //ABILITA CAMPI & BOTTONI
-                    UpdateFields("OAO", "A", true);
-                    UpdateFields("OAO", "E", true);
-                }
+
+                SelOffCrea.SelectedIndex = Utility.FindIndexFromValue(SelOffCrea, selOfIndex);
+            }
+            else
+            {
+                //ABILITA CAMPI & BOTTONI
+                UpdateFields("OAO", "A", true);
+                UpdateFields("OAO", "E", true);
             }
             return;
         }
@@ -4107,48 +4081,28 @@ namespace mangaerordini
                 return;
             }
 
+            Offerte.GestioneOfferte.Answer esito =
+                Offerte.GestioneOfferte.UpdateItemFromOffer(idof, (long)idOggToOff, (decimal)prezzoOrV.DecimalValue, (decimal)prezzoScV.DecimalValue, (int)qtaV.IntValue);
 
-            string commandText = @" BEGIN TRANSACTION;
-                                    UPDATE OR ROLLBACK " + ProgramParameters.schemadb + @"[offerte_pezzi] 
-                                        SET prezzo_unitario_originale=@por, prezzo_unitario_sconto=@pos,pezzi=@pezzi 
-                                        WHERE Id=@idOggToOff LIMIT 1;
-                                    UPDATE OR ROLLBACK " + ProgramParameters.schemadb + @"[offerte_elenco] 
-									    SET tot_offerta = IFNULL((SELECT SUM(OP.pezzi * OP.prezzo_unitario_sconto) FROM " + ProgramParameters.schemadb + @"[offerte_pezzi] AS OP WHERE OP.ID_offerta=@idof),0)
-									    WHERE Id = @idof LIMIT 1;
-                                    COMMIT;";
-
-            using (SQLiteCommand cmd = new(commandText, ProgramParameters.connection))
+            if (esito.Success)
             {
-                try
-                {
-                    cmd.CommandText = commandText;
-                    cmd.Parameters.AddWithValue("@por", prezzoOrV.DecimalValue);
-                    cmd.Parameters.AddWithValue("@pos", prezzoScV.DecimalValue);
-                    cmd.Parameters.AddWithValue("@pezzi", qtaV.IntValue);
-                    cmd.Parameters.AddWithValue("@idOggToOff", idOggToOff);
-                    cmd.Parameters.AddWithValue("@idof", idof);
-                    cmd.ExecuteNonQuery();
+                OnTopMessage.Information("Modfiche salvate");
+                LoadOfferteCreaTable();
 
-                    LoadOfferteCreaTable();
+                LoadOfferteOggettiCreaTable(idof);
+                ComboSelOrd_SelectedIndexChanged(this, System.EventArgs.Empty);
 
-                    LoadOfferteOggettiCreaTable(idof);
-                    ComboSelOrd_SelectedIndexChanged(this, System.EventArgs.Empty);
+                UpdateFields("OAO", "CA", false);
+                UpdateFields("OAO", "A", false);
 
-                    UpdateFields("OAO", "CA", false);
-                    UpdateFields("OAO", "A", false);
+                BtCancChangesOffOgg_Click(this, EventArgs.Empty);
 
-                    BtCancChangesOffOgg_Click(this, EventArgs.Empty);
-
-                    AddOffCreaOggettoRica.Enabled = true;
-
-                    OnTopMessage.Information("Modfiche salvate");
-                }
-                catch (SQLiteException ex)
-                {
-                    OnTopMessage.Error("Errore durante aggiunta al database. Codice: " + DbTools.ReturnErorrCode(ex));
-                    UpdateFields("OAO", "A", true);
-                    AddOffCreaOggettoRica.Enabled = false;
-                }
+                AddOffCreaOggettoRica.Enabled = true;
+            }
+            else
+            {
+                UpdateFields("OAO", "A", true);
+                AddOffCreaOggettoRica.Enabled = false;
             }
             return;
         }
@@ -4225,21 +4179,21 @@ namespace mangaerordini
                         string Offerlang = "";
 
                         Dictionary<string, string> offerInfo = new()
-                        {
-                            { "numero", "" },
-                            { "cliente", "" },
-                            { "data", "" }
-                        };
+                {
+                    { "numero", "" },
+                    { "cliente", "" },
+                    { "data", "" }
+                };
 
                         List<Dictionary<string, string>> Items = new();
 
                         using (var document = UglyToad.PdfPig.PdfDocument.Open(filePath))
                         {
                             Dictionary<string, string> findStrLang = new()
-                            {
-                                { "Offerta", "ita" },
-                                { "Quotation", "eng" }
-                            };
+                                {
+                                    { "Offerta", "ita" },
+                                    { "Quotation", "eng" }
+                                };
 
                             var page = document.GetPage(1);
                             var wordsCollection = page.GetWords();
@@ -4319,7 +4273,7 @@ namespace mangaerordini
                         string text = ExtractBodyPDF(filePath);
 
                         string[] lines = text.Split('\n');
-                        string patterCode = @"^[0-9]+[ ]{1}([a-zA-Z]{1}\d{1,}[-]\d{1,})\s+([0-9]+)\s+[PZ|SZ|PCE]{1,3}(\s+([0-9,.]+)\s+([0-9,.]+))?$";
+                        string patterCode = @"^[0-9]+[ ]{1}([a-zA-Z]{1,}\d{1,}[-]\d{1,})\s+([0-9]+)\s+[PZ|SZ|PCE]{1,3}(\s+([0-9,.]+)\s+([0-9,.]+))?$";
 
                         int c = lines.Length;
 
@@ -4328,15 +4282,15 @@ namespace mangaerordini
                             string currentLine = lines[i].Trim();
 
                             Dictionary<string, string> itemInfo = new()
-                                {
-                                    { "codice", "" },
-                                    { "qta", "" },
-                                    { "descrizione", "" },
-                                    { "prezzo_uni", "" },
-                                    { "prezzo_totale", "" },
-                                    { "prezzo_uni_scontato", "" },
-                                    { "prezzo_totale_scontato", "" }
-                                };
+                        {
+                            { "codice", "" },
+                            { "qta", "" },
+                            { "descrizione", "" },
+                            { "prezzo_uni", "" },
+                            { "prezzo_totale", "" },
+                            { "prezzo_uni_scontato", "" },
+                            { "prezzo_totale_scontato", "" }
+                        };
 
                             Match code = Regex.Match(currentLine, patterCode, RegexOptions.IgnoreCase);
                             if (code.Success)
@@ -4417,21 +4371,6 @@ namespace mangaerordini
             return builder;
         }
 
-        private String BuildStringV(List<Word> words, int x, int y)
-        {
-            string builder = "";
-
-            foreach (Word w in words)
-            {
-                if (w.y <= y && w.x == x)
-                {
-                    builder += w.Value;
-                }
-            }
-
-            return builder;
-        }
-
         private string RemoveNotIntLeft(string builder)
         {
             bool isInt = false;
@@ -4453,30 +4392,6 @@ namespace mangaerordini
         }
 
         private string ExtractBodyPDF(string filePath)
-        {
-            string text = "";
-            using (iText.Kernel.Pdf.PdfDocument pdfDoc = new(new PdfReader(filePath)))
-            {
-                int c = pdfDoc.GetNumberOfPages();
-
-                for (int i = 1; i < c; i++)
-                {
-                    LocationTextExtractionStrategy strategy = new();
-
-                    PdfCanvasProcessor parser = new(strategy);
-                    parser.ProcessPageContent(pdfDoc.GetPage(i));
-
-                    text += strategy.GetResultantText() + Environment.NewLine;
-
-                    parser.Reset();
-                }
-                pdfDoc.Close();
-            }
-
-            return text;
-        }
-
-        private string ExtractHeadertPDF(string filePath)
         {
             string text = "";
             using (iText.Kernel.Pdf.PdfDocument pdfDoc = new(new PdfReader(filePath)))
@@ -6048,146 +5963,48 @@ namespace mangaerordini
 
             long idordine = Convert.ToInt64(ComboSelOrd.SelectedValue.ToString());
 
+            Ordini.GestioneOrdini.Answer esito = Ordini.GestioneOrdini.DeleteObjFromOrder(idordine, (long)idQ.LongValue, updateFprice, updateFpriceSconto);
 
-            string commandText = @"
-									UPDATE " + ProgramParameters.schemadb + @"[offerte_pezzi]
-                                        SET 
-                                            pezzi_aggiunti = pezzi_aggiunti - (SELECT 
-                                                        OP.pezzi
-						                            FROM " + ProgramParameters.schemadb + @"[ordine_pezzi] AS OP 
-                                                    INNER JOIN " + ProgramParameters.schemadb + @"[ordini_elenco] AS OE 
-											            ON OE.Id = OP.ID_ordine 
-										            INNER JOIN " + ProgramParameters.schemadb + @" [offerte_pezzi] AS OFP 
-											            ON OFP.ID_ricambio = OP.ID_ricambio AND OFP.ID_offerta=OE.ID_offerta
-                                                    WHERE
-                                                        OP.Id=@IdOggOrd
-                                                    LIMIT 1)
-                                        WHERE 
-	                                        Id IN (
-						                            SELECT 
-                                                        OFP.Id
-						                            FROM " + ProgramParameters.schemadb + @"[ordine_pezzi] AS OP 
-                                                    INNER JOIN " + ProgramParameters.schemadb + @"[ordini_elenco] AS OE 
-											            ON OE.Id = OP.ID_ordine 
-										            INNER JOIN " + ProgramParameters.schemadb + @" [offerte_pezzi] AS OFP 
-											            ON OFP.ID_ricambio = OP.ID_ricambio AND OFP.ID_offerta=OE.ID_offerta
-                                                    WHERE
-                                                        OP.Id=@IdOggOrd
-                                                    LIMIT 1
-					                            )
-                                        LIMIT 1;
-
-                                    DELETE FROM " + ProgramParameters.schemadb + @"[ordine_pezzi] WHERE Id=@IdOggOrd LIMIT 1;
-
-                                    UPDATE " + ProgramParameters.schemadb + @"[ordini_elenco]
-                                        SET totale_ordine = IFNULL((SELECT SUM(OP.pezzi * OP.prezzo_unitario_sconto) FROM " + ProgramParameters.schemadb + @"[ordine_pezzi] AS OP WHERE OP.ID_ordine = @idord),0)
-                                        WHERE Id = @idord 
-                                        LIMIT 1; 
-                                    ";
-
-            if (updateFprice)
+            if (esito.Success)
             {
-                commandText += @"UPDATE " + ProgramParameters.schemadb + @"[ordini_elenco]
-												SET 
-                                                    prezzo_finale = " + ((updateFpriceSconto) ? " (totale_ordine*(1-sconto/100)) " : " totale_ordine ") + @"
-												WHERE Id = @idord
-                                                LIMIT 1;";
+                if (Boolean.Parse(UserSettings.settings["calendario"]["aggiornaCalendario"]) == true)
+                {
+                    Outlook.Application OlApp = new();
+                    Outlook.Folder personalCalendar = CalendarManager.FindCalendar(OlApp, UserSettings.settings["calendario"]["nomeCalendario"]);
+                    Ordini.GestioneOrdini.UpdateCalendarOnObj(idordine, personalCalendar);
+                }
+
+                UpdateOrdini();
+                UpdateOrdiniOggettiOfferta(idordine);
+                UpdateOrdiniOggetti(idordine);
+
+                ComboSelOrdCl_SelectedIndexChanged(this, EventArgs.Empty);
+
+                UpdateFields("OCR", "CA", false);
+                UpdateFields("OCR", "A", false);
+
+                int i = 0;
+                foreach (ComboBoxList item in ComboSelOrd.Items)
+                {
+                    if (item.Value == idordine)
+                    {
+                        ComboSelOrd.SelectedIndex = i;
+                    }
+                    i++;
+                }
+
+                ComboBoxOrdOfferta_SelectedIndexChanged(this, System.EventArgs.Empty);
+
+                BtChiudiOrdOgg_Click(this, EventArgs.Empty);
+
+                OnTopMessage.Information("Oggetti eliminati dall'ordine.");
             }
-
-
-            using (var transaction = ProgramParameters.connection.BeginTransaction())
-            using (SQLiteCommand cmd = new(commandText, ProgramParameters.connection, transaction))
+            else
             {
-                try
-                {
-                    cmd.CommandText = commandText;
-                    cmd.Parameters.AddWithValue("@IdOggOrd", idQ.LongValue);
-                    cmd.Parameters.AddWithValue("@idord", idordine);
-                    cmd.ExecuteNonQuery();
-
-                    transaction.Commit();
-
-                    if (Boolean.Parse(UserSettings.settings["calendario"]["aggiornaCalendario"]) == true)
-                    {
-                        string ordinecode = "";
-                        DateTime eta = DateTime.MinValue;
-
-                        commandText = @"SELECT 
-                                            codice_ordine,
-                                            data_ETA
-                                        FROM " + ProgramParameters.schemadb + @"[ordini_elenco] 
-                                        WHERE Id=@idord LIMIT 1;";
-
-                        using (SQLiteCommand cmd3 = new(commandText, ProgramParameters.connection))
-                        {
-                            try
-                            {
-                                cmd3.CommandText = commandText;
-                                cmd3.Parameters.AddWithValue("@idord", idordine);
-
-                                SQLiteDataReader reader = cmd3.ExecuteReader();
-                                while (reader.Read())
-                                {
-                                    ordinecode = (string)reader["codice_ordine"];
-                                    eta = (DateTime)reader["data_ETA"];
-                                }
-                                eta = eta.Date;
-                            }
-                            catch (SQLiteException ex)
-                            {
-                                OnTopMessage.Error("Errore durante lettura dati ordine(dati calendario). Codice: " + DbTools.ReturnErorrCode(ex));
-                            }
-                        }
-
-                        Outlook.Application OlApp = new();
-                        Outlook.Folder personalCalendar = CalendarManager.FindCalendar(OlApp, UserSettings.settings["calendario"]["nomeCalendario"]);
-
-                        if (!String.IsNullOrEmpty(ordinecode) && CalendarManager.FindAppointment(personalCalendar, ordinecode))
-                        {
-                            dialogResult = OnTopMessage.Question("Vuoi aggiornare l'evento sul calendario con le nuove informazioni?", "Aggiornare Evento Ordine Calendario");
-                            if (dialogResult == DialogResult.Yes)
-                            {
-                                CalendarManager.UpdateCalendar(personalCalendar, ordinecode, ordinecode, idordine, eta, false);
-                            }
-                        }
-                    }
-
-                    UpdateOrdini();
-                    UpdateOrdiniOggettiOfferta(idordine);
-                    UpdateOrdiniOggetti(idordine);
-
-                    ComboSelOrdCl_SelectedIndexChanged(this, EventArgs.Empty);
-
-                    UpdateFields("OCR", "CA", false);
-                    UpdateFields("OCR", "A", false);
-
-                    int i = 0;
-                    foreach (ComboBoxList item in ComboSelOrd.Items)
-                    {
-                        if (item.Value == idordine)
-                        {
-                            ComboSelOrd.SelectedIndex = i;
-                        }
-                        i++;
-                    }
-
-                    ComboBoxOrdOfferta_SelectedIndexChanged(this, System.EventArgs.Empty);
-
-                    BtChiudiOrdOgg_Click(this, EventArgs.Empty);
-
-                    OnTopMessage.Information("Oggetti eliminati dall'ordine.");
-
-                }
-                catch (SQLiteException ex)
-                {
-                    transaction.Rollback();
-
-                    OnTopMessage.Error("Errore durante upate tot ordine (aggiornamento stato oggetto offerta). Codice: " + DbTools.ReturnErorrCode(ex));
-                    //ABILITA CAMPI & BOTTONI
-                    UpdateFields("OCR", "FE", true);
-                    UpdateFields("OCR", "E", true);
-                    return;
-                }
+                //ABILITA CAMPI & BOTTONI
+                UpdateFields("OCR", "FE", true);
+                UpdateFields("OCR", "E", true);
+                return;
             }
             return;
         }
@@ -6490,149 +6307,59 @@ namespace mangaerordini
                 BtChiudiOrdOgg.Enabled = true;
                 BtDelOrdOgg.Enabled = true;
                 BtSaveModOrdOgg.Enabled = true;
-
                 return;
             }
 
+            Ordini.GestioneOrdini.Answer esito = Ordini.GestioneOrdini.UpdateItemFromOrder(idordine, idoggOrd, (decimal)prezzo_originaleV.DecimalValue, (decimal)prezzo_scontatoV.DecimalValue, (int)qtaP.IntValue, dataETAOrdValue.DateValue, CheckBoxOrdOggSconto.Checked);
 
-            string commandText = @" BEGIN TRANSACTION;
-                                    
-                                    UPDATE OR ROLLBACK " + ProgramParameters.schemadb + @"[offerte_pezzi]
-									    SET
-										    pezzi_aggiunti = pezzi_aggiunti - (SELECT pezzi FROM " + ProgramParameters.schemadb + @"[ordine_pezzi] WHERE Id=@idoggOrd ) + @pezzi
-									    WHERE
-										    ID_ricambio = (SELECT ID_ricambio FROM " + ProgramParameters.schemadb + @"[ordine_pezzi] WHERE Id=@idoggOrd )
-                                            AND  ID_offerta = (SELECT 
-                                                                    OE.ID_offerta 
-                                                                FROM " + ProgramParameters.schemadb + @"[ordine_pezzi] AS OP 
-                                                                    JOIN [ordini_elenco] AS OE
-                                                                        ON OE.Id = OP.ID_ordine 
-                                                                WHERE OP.Id=@idoggOrd 
-                                                                )
-									    LIMIT 1;
-
-                                    UPDATE OR ROLLBACK " + ProgramParameters.schemadb + @"[ordine_pezzi]
-									    SET
-										    prezzo_unitario_originale=@por, prezzo_unitario_sconto=@pos,pezzi=@pezzi, ETA=@eta
-									    WHERE
-										    Id=@idoggOrd
-									    LIMIT 1;
-
-                                    UPDATE OR ROLLBACK " + ProgramParameters.schemadb + @"[ordini_elenco]
-									    SET totale_ordine = IFNULL((SELECT SUM(OP.pezzi * OP.prezzo_unitario_sconto) FROM " + ProgramParameters.schemadb + @"[ordine_pezzi] AS OP WHERE OP.ID_ordine = @idord),0)
-									    WHERE Id = @idord LIMIT 1;
-                                    ";
-
-            if (CheckBoxOrdOggSconto.Checked)
+            if (esito.Success)
             {
-                commandText += @"UPDATE OR ROLLBACK " + ProgramParameters.schemadb + @"[ordini_elenco] 
-									SET prezzo_finale = IFNULL(totale_ordine*(1-sconto/100),0)
-									WHERE Id=@idord LIMIT 1;";
+                if (Boolean.Parse(UserSettings.settings["calendario"]["aggiornaCalendario"]) == true)
+                {
+                    if (Convert.ToDecimal(old_prezzo_scontatoV.Text) != prezzo_scontatoV.DecimalValue || Convert.ToInt32(old_pezziV.Text) != qtaP.IntValue || DateTime.Compare(Convert.ToDateTime(old_dataETAOrdValue.Text).Date, dataETAOrdValue.DateValue) != 0)
+                    {
+                        Outlook.Application OlApp = new();
+                        Outlook.Folder personalCalendar = CalendarManager.FindCalendar(OlApp, UserSettings.settings["calendario"]["nomeCalendario"]);
+                        Ordini.GestioneOrdini.UpdateCalendarOnObj(idordine, personalCalendar);
+                    }
+                }
+
+                UpdateOrdini(OrdiniCurPage);
+                ComboSelOrdCl_SelectedIndexChanged(this, EventArgs.Empty);
+
+                if (FieldOrdId.Text.Trim() == Convert.ToString(idordine))
+                {
+                    UpdateFields("OCR", "CA", false);
+                    UpdateFields("OCR", "A", false);
+                }
+
+                UpdateFields("OCR", "CE", false);
+                UpdateFields("OCR", "E2", false);
+                UpdateFields("OCR", "E", false);
+                UpdateFields("OCR", "FE", false);
+
+                int i = 0;
+                foreach (ComboBoxList item in ComboSelOrd.Items)
+                {
+                    if (item.Value == idordine)
+                    {
+                        ComboSelOrd.SelectedIndex = i;
+                    }
+                    i++;
+                }
+
+
+                ComboBoxOrdOfferta_SelectedIndexChanged(this, System.EventArgs.Empty);
+                ComboSelOrd_SelectedIndexChanged(this, System.EventArgs.Empty);
+
+                CheckBoxOrdOggCheckAddNotOffer.Enabled = true;
+
+                OnTopMessage.Information("Oggetto aggiornato.");
             }
-            commandText += "COMMIT;";
-
-
-            using (SQLiteCommand cmd = new(commandText, ProgramParameters.connection))
+            else
             {
-                try
-                {
-                    cmd.CommandText = commandText;
-                    cmd.Parameters.AddWithValue("@por", prezzo_originaleV.DecimalValue);
-                    cmd.Parameters.AddWithValue("@pos", prezzo_scontatoV.DecimalValue);
-                    cmd.Parameters.AddWithValue("@pezzi", qtaP.IntValue);
-                    cmd.Parameters.AddWithValue("@eta", dataETAOrdValue.DateValue);
-                    cmd.Parameters.AddWithValue("@idoggOrd", idoggOrd);
-
-                    cmd.Parameters.AddWithValue("@idord", idordine);
-
-
-                    cmd.ExecuteNonQuery();
-
-                    if (Boolean.Parse(UserSettings.settings["calendario"]["aggiornaCalendario"]) == true)
-                    {
-                        if (Convert.ToDecimal(old_prezzo_scontatoV.Text) != prezzo_scontatoV.DecimalValue || Convert.ToInt32(old_pezziV.Text) != qtaP.IntValue || DateTime.Compare(Convert.ToDateTime(old_dataETAOrdValue.Text).Date, dataETAOrdValue.DateValue) != 0)
-                        {
-                            string ordinecode = "";
-                            DateTime eta = DateTime.MinValue;
-
-                            commandText = @"SELECT 
-                                                codice_ordine,
-                                                data_ETA
-                                            FROM " + ProgramParameters.schemadb + @"[ordini_elenco] 
-                                            WHERE Id=@idord LIMIT 1;";
-
-                            using (SQLiteCommand cmd3 = new(commandText, ProgramParameters.connection))
-                            {
-                                try
-                                {
-                                    cmd3.CommandText = commandText;
-                                    cmd3.Parameters.AddWithValue("@idord", idordine);
-
-                                    SQLiteDataReader reader = cmd3.ExecuteReader();
-                                    while (reader.Read())
-                                    {
-                                        ordinecode = (string)reader["codice_ordine"];
-                                        eta = (DateTime)reader["data_ETA"];
-                                    }
-                                    eta = eta.Date;
-                                }
-                                catch (SQLiteException ex)
-                                {
-                                    OnTopMessage.Error("Errore durante lettura dati ordine(dati calendario). Codice: " + DbTools.ReturnErorrCode(ex));
-                                }
-                            }
-
-                            Outlook.Application OlApp = new();
-                            Outlook.Folder personalCalendar = CalendarManager.FindCalendar(OlApp, UserSettings.settings["calendario"]["nomeCalendario"]);
-                            if (!String.IsNullOrEmpty(ordinecode) && CalendarManager.FindAppointment(personalCalendar, ordinecode))
-                            {
-                                DialogResult dialogResult = OnTopMessage.Question("Vuoi aggiornare l'evento sul calendario con le nuove informazioni?", "Aggiornare Evento Ordine Calendario");
-                                if (dialogResult == DialogResult.Yes)
-                                {
-                                    CalendarManager.UpdateCalendar(personalCalendar, ordinecode, ordinecode, idordine, eta, false);
-                                }
-                            }
-                        }
-                    }
-
-                    UpdateOrdini(OrdiniCurPage);
-                    ComboSelOrdCl_SelectedIndexChanged(this, EventArgs.Empty);
-
-                    if (FieldOrdId.Text.Trim() == Convert.ToString(idordine))
-                    {
-                        UpdateFields("OCR", "CA", false);
-                        UpdateFields("OCR", "A", false);
-                    }
-
-                    UpdateFields("OCR", "CE", false);
-                    UpdateFields("OCR", "E2", false);
-                    UpdateFields("OCR", "E", false);
-                    UpdateFields("OCR", "FE", false);
-
-                    int i = 0;
-                    foreach (ComboBoxList item in ComboSelOrd.Items)
-                    {
-                        if (item.Value == idordine)
-                        {
-                            ComboSelOrd.SelectedIndex = i;
-                        }
-                        i++;
-                    }
-
-
-                    ComboBoxOrdOfferta_SelectedIndexChanged(this, System.EventArgs.Empty);
-                    ComboSelOrd_SelectedIndexChanged(this, System.EventArgs.Empty);
-
-                    CheckBoxOrdOggCheckAddNotOffer.Enabled = true;
-
-                    OnTopMessage.Information("Oggetto aggiornato.");
-                }
-                catch (SQLiteException ex)
-                {
-                    OnTopMessage.Error("Errore durante aggiornamento oggetto. Codice: " + DbTools.ReturnErorrCode(ex));
-                    UpdateFields("OAO", "E", false);
-                    UpdateFields("OCR", "FE", true);
-                }
+                UpdateFields("OAO", "E", false);
+                UpdateFields("OCR", "FE", true);
             }
             return;
         }
@@ -9416,7 +9143,7 @@ namespace mangaerordini
 
         //CREDITI
 
-        private void github_LinkClicked(object sender, LinkLabelLinkClickedEventArgs e)
+        private void Github_LinkClicked(object sender, LinkLabelLinkClickedEventArgs e)
         {
             LinkLabel ctr = sender as LinkLabel;
             string name = ctr.Name;

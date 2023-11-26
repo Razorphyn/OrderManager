@@ -166,6 +166,23 @@ namespace Razorphyn
 
             DrawingControl.ResumeDrawing(data_grid);
         }
+
+        internal static void FixPanel(TableLayoutPanel panel)
+        {
+            typeof(TableLayoutPanel).InvokeMember(
+               "DoubleBuffered",
+               BindingFlags.NonPublic | BindingFlags.Instance | BindingFlags.SetProperty,
+               null,
+               panel,
+               new object[] { true }
+            );
+            panel.AutoScroll = false;
+            panel.AutoScroll = true;
+
+            panel.AutoSize = false;
+            panel.AutoScroll = true;
+
+        }
     }
 
     internal static class FixBuffer
@@ -245,4 +262,18 @@ namespace Razorphyn
         }
     }
 
+
+    internal static class TableLayoutPanel_Tools
+    {
+        internal static void ResizeRowFixed(TableLayoutPanel Table, int size)
+        {
+            TableLayoutRowStyleCollection styles = Table.RowStyles;
+
+            foreach (RowStyle style in styles)
+            {
+                style.SizeType = SizeType.Absolute;
+                style.Height = size;
+            }
+        }
+    }
 }

@@ -1,7 +1,9 @@
 ﻿using Newtonsoft.Json;
 using System;
 using System.Collections.Generic;
+using System.Data;
 using System.Data.SQLite;
+using static iText.StyledXmlParser.Jsoup.Select.Evaluator;
 using static Razorphyn.DataValidation;
 
 namespace Razorphyn
@@ -154,7 +156,79 @@ namespace Razorphyn
 
                 return answer;
             }
-        
+            
+            internal static Answer DeleteItemFromOffer(long id_offerta, long id_item_entry, SQLiteConnection connection = null) 
+            {
+                Answer esito = new();
+                connection ??= ProgramParameters.connection;
+
+                string commandText = @"
+                                            DELETE FROM " + ProgramParameters.schemadb + @"[offerte_pezzi] WHERE Id=@id_item_entry LIMIT 1;
+
+                                            UPDATE OR ROLLBACK " + ProgramParameters.schemadb + @"[offerte_elenco]
+                                                SET tot_offerta = ifnull((SELECT SUM(OP.pezzi * OP.prezzo_unitario_sconto) FROM " + ProgramParameters.schemadb + @"[offerte_pezzi] AS OP WHERE OP.ID_offerta=@id_offerta),0)
+                                                WHERE Id=@id_offerta LIMIT 1;";
+
+                using (var transaction = connection.BeginTransaction(IsolationLevel.ReadCommitted))
+                using (SQLiteCommand cmd = new(commandText, connection, transaction))
+                {
+                    try
+                    {
+                        cmd.CommandText = commandText;
+                        cmd.Parameters.AddWithValue("@id_item_entry", id_item_entry);
+                        cmd.Parameters.AddWithValue("@id_offerta", id_offerta);
+
+                        cmd.ExecuteNonQuery();
+                        transaction.Commit();
+
+                        esito.Success = true;
+                    }
+                    catch (SQLiteException ex)
+                    {
+                        transaction.Rollback();
+                        OnTopMessage.Error("Errore durante eliminazione dell'ogetto. Codice: " + DbTools.ReturnErorrCode(ex));
+                    }
+                    finally { transaction.Dispose(); }
+                }
+                return esito;
+            }
+
+            internal static Answer UpdateItemFromOffer(long id_offerta,  long id_item_entry, decimal prezzo, decimal prezzo_scontato, int quantita, SQLiteConnection connection = null)
+            {
+                Answer esito = new();
+                connection ??= ProgramParameters.connection;
+
+                string commandText = @"
+                                    UPDATE OR ROLLBACK " + ProgramParameters.schemadb + @"[offerte_pezzi] 
+                                        SET prezzo_unitario_originale=@por, prezzo_unitario_sconto=@pos,pezzi=@pezzi 
+                                        WHERE Id = @idOggToOff LIMIT 1;
+
+                                    UPDATE OR ROLLBACK " + ProgramParameters.schemadb + @"[offerte_elenco] 
+									    SET tot_offerta = IFNULL((SELECT SUM(OP.pezzi * OP.prezzo_unitario_sconto) FROM " + ProgramParameters.schemadb + @"[offerte_pezzi] AS OP WHERE OP.ID_offerta = @id_offerta),0)
+									    WHERE Id = @id_offerta LIMIT 1;
+                                    ";
+
+                using (SQLiteCommand cmd = new(commandText, connection))
+                {
+                    try
+                    {
+                        cmd.CommandText = commandText;
+                        cmd.Parameters.AddWithValue("@por", prezzo);
+                        cmd.Parameters.AddWithValue("@pos", prezzo_scontato);
+                        cmd.Parameters.AddWithValue("@pezzi", quantita);
+                        cmd.Parameters.AddWithValue("@idOggToOff", id_item_entry);
+                        cmd.Parameters.AddWithValue("@id_offerta", id_offerta);
+                        cmd.ExecuteNonQuery();
+
+                        esito.Success = true;
+                    }
+                    catch (SQLiteException ex)
+                    {
+                        OnTopMessage.Error("Errore durante aggiornamento oggetto nel database. Codice: " + DbTools.ReturnErorrCode(ex));
+                    }
+                }
+                return esito;
+            }
         }
 
         internal static class GetResources

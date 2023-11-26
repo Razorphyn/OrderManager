@@ -1,4 +1,6 @@
-﻿using System.Windows.Forms;
+﻿using Microsoft.VisualBasic;
+using System;
+using System.Windows.Forms;
 
 namespace Razorphyn
 {
@@ -78,5 +80,19 @@ namespace Razorphyn
                 return temp;
             }
         }
+
+        public static string InputBox(string body, string title = "", string defAnswer = "", MessageBoxButtons buttons = MessageBoxButtons.YesNo)
+        {
+            body += Environment.NewLine;
+
+            using (Form form = new()
+            { TopMost = true })
+            {
+                string retval = Interaction.InputBox(body, title, defAnswer);
+                form.Dispose();
+                return retval;
+            }
+        }
+
     }
 }

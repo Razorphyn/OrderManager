@@ -1,5 +1,8 @@
 ﻿using CsvHelper.Configuration.Attributes;
 using System;
+using System.Collections.Generic;
+using System.Data.SqlClient;
+using System.Data.SQLite;
 using System.Windows.Forms;
 
 namespace Razorphyn
@@ -19,6 +22,171 @@ namespace Razorphyn
             public int x { get; set; }
             public int y { get; set; }
         }
+
+        internal class U10_Ricambio
+        {
+            public bool Duplicate { get; set; } = false;
+
+            public bool Delete { get; set; } = false;
+
+            public long Id_ricambio { get; set; }
+
+            public long Id_db_entry { get; set; }
+
+            public string Codice { get; set; }
+
+            public string Nome { get; set; }
+
+            public int Qta { get; set; }
+
+            public decimal Prezzo { get; set; }
+
+            public decimal Prezzo_Sconto { get; set; }
+
+            public DateTime ETA { get; set; }
+
+            public long Id_Sostituto { get; set; }
+
+            public string Nuovo_Codice { get; set; }
+
+            public int Nuovo_Qta { get; set; }
+
+            public decimal Nuovo_Prezzo { get; set; }
+
+            public decimal Nuovo_Prezzo_Sconto { get; set; }
+
+            public DateTime Nuovo_ETA { get; set; }
+        }
+
+        internal class U10_Offerta_Ricambio: U10_Ricambio
+        {
+            internal static List<U10_Ricambio> Offerta_GetItemCollection(long id_offerta, List<string> list, SQLiteConnection temp_connection)
+            {
+                List<U10_Ricambio> itemsOffer = new List<U10_Ricambio>();
+                string commandText = @"SELECT 
+                                                    OP.[Id] as ID_offerte_pezzi,
+	                                                PR.[id] AS ID_ricambio,
+	                                                PR.[codice] AS Codice,
+	                                                PR.[nome] AS Nome,
+                                                    OP.[pezzi] AS qta,
+                                                    OP.[prezzo_unitario_originale] AS prezzo,
+                                                    OP.[prezzo_unitario_sconto] AS prezzo_sconto,
+                                                    IIF( PR.[codice] IN (@codici_ricambio), true, false) AS Duplicate
+
+	                                                FROM  " + ProgramParameters.schemadb + @"[offerte_elenco] AS OE
+	                                                LEFT JOIN " + ProgramParameters.schemadb + @"[offerte_pezzi] AS OP
+		                                                ON OP.ID_offerta = OE.Id 
+	                                                LEFT JOIN  " + ProgramParameters.schemadb + @"[pezzi_ricambi] AS PR
+		                                                ON PR.Id = OP.ID_ricambio
+
+	                                                WHERE OE.Id = @id_offerta;";
+
+                using (SQLiteCommand cmd_items = new(commandText, temp_connection))
+                {
+                    string idlist = String.Join("\",\"", list);
+
+                    cmd_items.Parameters.AddWithValue("@id_offerta", id_offerta);
+                    cmd_items.Parameters.AddWithValue("@codici_ricambio", idlist);
+                    try { 
+                    using (SQLiteDataReader reader = cmd_items.ExecuteReader())
+                    {
+                        while (reader.Read())
+                        {
+                            itemsOffer.Add(new U10_Ricambio()
+                            {
+                                Id_db_entry = Convert.ToInt64(reader["ID_offerte_pezzi"]),
+                                Id_ricambio = Convert.ToInt64(reader["ID_ricambio"]),
+                                Nome = Convert.ToString(reader["Nome"]),
+                                Codice = Convert.ToString(reader["Codice"]),
+                                Qta = Convert.ToInt32(reader["qta"]),
+                                Prezzo = Convert.ToDecimal(reader["prezzo"]),
+                                Prezzo_Sconto = Convert.ToDecimal(reader["prezzo_sconto"]),
+
+                                Nuovo_Codice = Convert.ToString(reader["Codice"]),
+                                Nuovo_Qta = Convert.ToInt32(reader["qta"]),
+                                Nuovo_Prezzo = Convert.ToDecimal(reader["prezzo"]),
+                                Nuovo_Prezzo_Sconto = Convert.ToDecimal(reader["prezzo_sconto"]),
+
+                                Duplicate = Convert.ToBoolean(reader["Duplicate"])
+                            });
+                        }
+                    }
+                    }catch (Exception ex)
+                    {
+                        OnTopMessage.Error("UPDATE 10: Errore durante collezioanemnto oggetti. Codice: " + ex.Message);
+                    }
+                }
+
+                return itemsOffer;
+            }
+        }
+
+        internal class U10_Ordine_Ricambio:U10_Ricambio
+        {
+            internal static List<U10_Ricambio> Ordine_GetItemCollection(long id_ordine, List<string> list, SQLiteConnection temp_connection)
+            {
+                List<U10_Ricambio> itemsOffer = new List<U10_Ricambio>();
+                string commandText = @"SELECT 
+	                                                PR.[id] AS ID_ricambio,
+	                                                PR.[codice] AS Codice,
+	                                                PR.[nome] AS Nome,
+                                                    OP.[pezzi] AS qta,
+                                                    OP.[prezzo_unitario_originale] AS prezzo,
+                                                    OP.[prezzo_unitario_sconto] AS prezzo_sconto,
+                                                    OP.[ETA] AS ETA,
+                                                    IIF( PR.[codice] IN (@codici_ricambio), true, false) AS Duplicate
+
+	                                                FROM  " + ProgramParameters.schemadb + @"[ordini_elenco] AS OE
+	                                                LEFT JOIN " + ProgramParameters.schemadb + @"[ordine_pezzi] AS OP
+		                                                ON OP.ID_ordine = OE.Id 
+	                                                LEFT JOIN  " + ProgramParameters.schemadb + @"[pezzi_ricambi] AS PR
+		                                                ON PR.Id = OP.ID_ricambio
+
+	                                                WHERE OE.Id = @id_ordine;";
+
+                using (SQLiteCommand cmd_items = new(commandText, temp_connection))
+                {
+                    string idlist = String.Join("\",\"", list);
+
+                    cmd_items.Parameters.AddWithValue("@id_ordine", id_ordine);
+                    cmd_items.Parameters.AddWithValue("@codici_ricambio", idlist);
+                    try
+                    {
+                        using (SQLiteDataReader reader = cmd_items.ExecuteReader())
+                        {
+                            while (reader.Read())
+                            {
+                                itemsOffer.Add(new U10_Ricambio()
+                                {
+                                    Id_db_entry = Convert.ToInt64(reader["ID_ricambio"]),
+                                    Nome = Convert.ToString(reader["Nome"]),
+                                    Codice = Convert.ToString(reader["Codice"]),
+                                    Qta = Convert.ToInt32(reader["qta"]),
+                                    Prezzo = Convert.ToDecimal(reader["prezzo"]),
+                                    Prezzo_Sconto = Convert.ToDecimal(reader["prezzo_sconto"]),
+                                    ETA = Convert.ToDateTime(reader["ETA"]),
+
+                                    Nuovo_Codice = Convert.ToString(reader["Codice"]),
+                                    Nuovo_Qta = Convert.ToInt32(reader["qta"]),
+                                    Nuovo_Prezzo = Convert.ToDecimal(reader["prezzo"]),
+                                    Nuovo_Prezzo_Sconto = Convert.ToDecimal(reader["prezzo_sconto"]),
+                                    Nuovo_ETA = Convert.ToDateTime(reader["ETA"]),
+
+                                    Duplicate = Convert.ToBoolean(reader["Duplicate"])
+                                });
+                            }
+                        }
+                    }
+                    catch (SQLiteException ex)
+                    {
+                        OnTopMessage.Error("UPDATE 10: Errore durante selezione collezione oggetti ordine. Codice: " + ex.Message);
+                    }
+                }
+
+                return itemsOffer;
+            }
+        }
+
 
         public class FilterTextBox : TextBox
         {

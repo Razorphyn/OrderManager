@@ -156,6 +156,7 @@
     </BootstrapperPackage>
   </ItemGroup>
   <ItemGroup>
+    <Compile Include="Class\FlexibleMessageBox.cs" />
     <Compile Include="Class\Razorphyn.Ordini.cs" />
     <Compile Include="Class\Razorphyn.GetResource.cs" />
     <Compile Include="Class\Razorphyn.SupportClasses.cs" />
@@ -175,16 +176,34 @@
     <Compile Include="Forms\ImportPdfOrdine.Designer.cs">
       <DependentUpon>ImportPdfOrdine.cs</DependentUpon>
     </Compile>
+    <Compile Include="Forms\Tables\pezzi_ricambi.cs">
+      <SubType>Form</SubType>
+    </Compile>
+    <Compile Include="Forms\Tables\pezzi_ricambi.Designer.cs">
+      <DependentUpon>pezzi_ricambi.cs</DependentUpon>
+    </Compile>
+    <Compile Include="Forms\Update\U10_Ordine.cs">
+      <SubType>Form</SubType>
+    </Compile>
+    <Compile Include="Forms\Update\U10_Ordine.Designer.cs">
+      <DependentUpon>U10_Ordine.cs</DependentUpon>
+    </Compile>
+    <Compile Include="Forms\Update\U10_Offerta.cs">
+      <SubType>Form</SubType>
+    </Compile>
+    <Compile Include="Forms\Update\U10_Offerta.Designer.cs">
+      <DependentUpon>U10_Offerta.cs</DependentUpon>
+    </Compile>
     <Compile Include="Main.cs">
       <SubType>Form</SubType>
     </Compile>
     <Compile Include="Main.Designer.cs">
       <DependentUpon>Main.cs</DependentUpon>
     </Compile>
-    <Compile Include="Forms\U6.cs">
+    <Compile Include="Forms\Update\U6.cs">
       <SubType>Form</SubType>
     </Compile>
-    <Compile Include="Forms\U6.Designer.cs">
+    <Compile Include="Forms\Update\U6.Designer.cs">
       <DependentUpon>U6.cs</DependentUpon>
     </Compile>
     <Compile Include="Forms\ImportPdfOfferta.cs">
@@ -205,7 +224,13 @@
     <EmbeddedResource Include="Forms\ImportPdfOrdine.resx">
       <DependentUpon>ImportPdfOrdine.cs</DependentUpon>
     </EmbeddedResource>
-    <EmbeddedResource Include="Forms\U6.resx">
+    <EmbeddedResource Include="Forms\Update\U10_Ordine.resx">
+      <DependentUpon>U10_Ordine.cs</DependentUpon>
+    </EmbeddedResource>
+    <EmbeddedResource Include="Forms\Update\U10_Offerta.resx">
+      <DependentUpon>U10_Offerta.cs</DependentUpon>
+    </EmbeddedResource>
+    <EmbeddedResource Include="Forms\Update\U6.resx">
       <DependentUpon>U6.cs</DependentUpon>
     </EmbeddedResource>
     <EmbeddedResource Include="Main.resx">
@@ -228,10 +253,10 @@
       <Version>30.0.1</Version>
     </PackageReference>
     <PackageReference Include="itext7">
-      <Version>8.0.1</Version>
+      <Version>8.0.2</Version>
     </PackageReference>
     <PackageReference Include="Microsoft.Bcl.AsyncInterfaces">
-      <Version>7.0.0</Version>
+      <Version>8.0.0</Version>
     </PackageReference>
     <PackageReference Include="Microsoft.Bcl.HashCode">
       <Version>1.1.1</Version>
@@ -263,9 +288,6 @@
     <PackageReference Include="PdfPig">
       <Version>0.1.8</Version>
     </PackageReference>
-    <PackageReference Include="PDFsharp">
-      <Version>1.50.5147</Version>
-    </PackageReference>
     <PackageReference Include="System.AppContext">
       <Version>4.3.0</Version>
     </PackageReference>
@@ -285,7 +307,7 @@
       <Version>4.3.0</Version>
     </PackageReference>
     <PackageReference Include="System.Diagnostics.DiagnosticSource">
-      <Version>7.0.2</Version>
+      <Version>8.0.0</Version>
     </PackageReference>
     <PackageReference Include="System.Diagnostics.Tools">
       <Version>4.3.0</Version>
@@ -402,6 +424,12 @@
     </None>
   </ItemGroup>
   <ItemGroup>
+    <Content Include="db\updates\10.1.sql">
+      <CopyToOutputDirectory>Always</CopyToOutputDirectory>
+    </Content>
+    <Content Include="db\updates\10.sql">
+      <CopyToOutputDirectory>Always</CopyToOutputDirectory>
+    </Content>
     <Content Include="db\updates\5.sql">
       <CopyToOutputDirectory>Always</CopyToOutputDirectory>
     </Content>
@@ -415,6 +443,9 @@
       <CopyToOutputDirectory>Always</CopyToOutputDirectory>
     </Content>
     <Content Include="db\updates\8.sql">
+      <CopyToOutputDirectory>Always</CopyToOutputDirectory>
+    </Content>
+    <Content Include="db\updates\9.sql">
       <CopyToOutputDirectory>Always</CopyToOutputDirectory>
     </Content>
     <Content Include="icon.ico" />

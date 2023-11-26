@@ -1,7 +1,5 @@
 ﻿using Microsoft.VisualBasic;
 using Newtonsoft.Json;
-using NodaTime.Calendars;
-using PdfSharp.Pdf.Content.Objects;
 using Razorphyn;
 using System;
 using System.Collections.Generic;
@@ -10,8 +8,6 @@ using System.Drawing;
 using System.Linq;
 using System.Text.RegularExpressions;
 using System.Windows.Forms;
-using Windows.Storage.Streams;
-using static iText.StyledXmlParser.Jsoup.Select.Evaluator;
 using static Razorphyn.Populate;
 using static Razorphyn.SupportClasses;
 

@@ -53,6 +53,7 @@ namespace Razorphyn
             else
             {
                 answer.LongValue = idV;
+                answer.Success = true;
             }
 
             return answer;
@@ -185,6 +186,8 @@ namespace Razorphyn
             }
 
             answer.DecimalValue = prezzoD;
+            answer.Success = true;
+
             return answer;
         }
 
@@ -398,7 +401,7 @@ namespace Razorphyn
             return answer;
         }
 
-        public static ValidationResult ValidateQta(string qta)
+        public static ValidationResult ValidateQta(string qta, bool IsGreaterThanZero = true)
         {
             ValidationResult answer = new();
 
@@ -408,8 +411,12 @@ namespace Razorphyn
             }
             else
             {
-                if (qtaV < 1)
+                if (IsGreaterThanZero && qtaV < 1)
                     answer.Error += "La quanità deve essere positiva, intera e maggiore di 0." + Environment.NewLine;
+                else if (!IsGreaterThanZero && qtaV < 0)
+                    answer.Error += "La quanità deve essere positiva e intera." + Environment.NewLine;
+                else
+                    answer.Success = true;
             }
 
             answer.IntValue = qtaV;

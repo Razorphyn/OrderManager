@@ -7,7 +7,7 @@ using System.Reflection;
 using System.Text.RegularExpressions;
 using System.Windows.Forms;
 
-namespace ManagerOrdini.Forms
+namespace ManagerOrdini.Forms.Update
 {
     public partial class U6 : Form
     {
@@ -26,7 +26,7 @@ namespace ManagerOrdini.Forms
 
             DrawingControl.SuspendDrawing(GestioneClientiTable);
             PopoluateItemsPanel(this.clienti);
-            FixPanel();
+            Utility.FixPanel(GestioneClientiTable);
             DrawingControl.ResumeDrawing(GestioneClientiTable);
 
             this.Activate();
@@ -173,23 +173,5 @@ namespace ManagerOrdini.Forms
             }
             return 0;
         }
-
-        private void FixPanel()
-        {
-            typeof(TableLayoutPanel).InvokeMember(
-               "DoubleBuffered",
-               BindingFlags.NonPublic | BindingFlags.Instance | BindingFlags.SetProperty,
-               null,
-               GestioneClientiTable,
-               new object[] { true }
-            );
-            GestioneClientiTable.AutoScroll = false;
-            GestioneClientiTable.AutoScroll = true;
-
-            GestioneClientiTable.AutoSize = false;
-            GestioneClientiTable.AutoScroll = true;
-
-        }
-
     }
 }

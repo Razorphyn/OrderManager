@@ -1,11 +1,12 @@
 ﻿using Newtonsoft.Json;
+using System;
 using System.Collections.Generic;
 using System.IO;
 
 namespace Razorphyn
 {
 
-    public class UserSettings
+    public class UserSettings : IDisposable
     {
         public Dictionary<string, Dictionary<string, string>> settings = new();
 
@@ -44,5 +45,9 @@ namespace Razorphyn
             }
         }
 
+        public void Dispose()
+        {
+            throw new NotImplementedException();
+        }
     }
 }

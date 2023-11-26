@@ -2,7 +2,9 @@
 using System.Collections.Generic;
 using System.Data.SQLite;
 using System.Windows.Forms;
+using static iText.StyledXmlParser.Jsoup.Select.Evaluator;
 using static Razorphyn.DataValidation;
+using static Razorphyn.SupportClasses;
 using Outlook = Microsoft.Office.Interop.Outlook;
 
 namespace Razorphyn
@@ -209,6 +211,149 @@ namespace Razorphyn
                 }
                 return answer;
             }
+
+
+            internal static Answer DeleteObjFromOrder(long idordine, long id_entry_ricambio_ordine, bool updateFprice, bool updateFpriceSconto, SQLiteConnection connection = null)
+            {
+                Answer answer = new Answer();
+                connection ??= ProgramParameters.connection;
+
+                string commandText = @"
+									UPDATE " + ProgramParameters.schemadb + @"[offerte_pezzi]
+                                        SET 
+                                            pezzi_aggiunti = pezzi_aggiunti - (SELECT 
+                                                        OP.pezzi
+						                            FROM " + ProgramParameters.schemadb + @"[ordine_pezzi] AS OP 
+                                                    INNER JOIN " + ProgramParameters.schemadb + @"[ordini_elenco] AS OE 
+											            ON OE.Id = OP.ID_ordine 
+										            INNER JOIN " + ProgramParameters.schemadb + @" [offerte_pezzi] AS OFP 
+											            ON OFP.ID_ricambio = OP.ID_ricambio AND OFP.ID_offerta=OE.ID_offerta
+                                                    WHERE
+                                                        OP.Id=@IdOggOrd
+                                                    LIMIT 1)
+                                        WHERE 
+	                                        Id IN (
+						                            SELECT 
+                                                        OFP.Id
+						                            FROM " + ProgramParameters.schemadb + @"[ordine_pezzi] AS OP 
+                                                    INNER JOIN " + ProgramParameters.schemadb + @"[ordini_elenco] AS OE 
+											            ON OE.Id = OP.ID_ordine 
+										            INNER JOIN " + ProgramParameters.schemadb + @" [offerte_pezzi] AS OFP 
+											            ON OFP.ID_ricambio = OP.ID_ricambio AND OFP.ID_offerta=OE.ID_offerta
+                                                    WHERE
+                                                        OP.Id=@IdOggOrd
+                                                    LIMIT 1
+					                            )
+                                        LIMIT 1;
+
+                                    DELETE FROM " + ProgramParameters.schemadb + @"[ordine_pezzi] WHERE Id=@IdOggOrd LIMIT 1;
+
+                                    UPDATE " + ProgramParameters.schemadb + @"[ordini_elenco]
+                                        SET totale_ordine = IFNULL((SELECT SUM(OP.pezzi * OP.prezzo_unitario_sconto) FROM " + ProgramParameters.schemadb + @"[ordine_pezzi] AS OP WHERE OP.ID_ordine = @idord),0)
+                                        WHERE Id = @idord 
+                                        LIMIT 1; 
+                                    ";
+
+                if (updateFprice)
+                {
+                    commandText += @"UPDATE " + ProgramParameters.schemadb + @"[ordini_elenco]
+												SET 
+                                                    prezzo_finale = " + ((updateFpriceSconto) ? " (totale_ordine*(1-sconto/100)) " : " totale_ordine ") + @"
+												WHERE Id = @idord
+                                                LIMIT 1;";
+                }
+
+                using (var transaction = connection.BeginTransaction())
+                using (SQLiteCommand cmd = new(commandText, connection, transaction))
+                {
+                    try
+                    {
+                        cmd.CommandText = commandText;
+                        cmd.Parameters.AddWithValue("@IdOggOrd", id_entry_ricambio_ordine);
+                        cmd.Parameters.AddWithValue("@idord", idordine);
+                        cmd.ExecuteNonQuery();
+
+                        transaction.Commit();
+                        answer.Success = true;
+                    }
+                    catch (SQLiteException ex)
+                    {
+                        transaction.Rollback();
+                        OnTopMessage.Error("Errore durante upate tot ordine (aggiornamento stato oggetto offerta). Codice: " + DbTools.ReturnErorrCode(ex));
+                    }
+                    return answer;
+                }
+            }
+
+
+            internal static Answer UpdateItemFromOrder(long idordine, long id_entry_ricambio_ordine, decimal prezzo, decimal prezzo_sconto, int quantita, DateTime ETA, bool applyDiscount, SQLiteConnection connection = null)
+            {
+
+                Answer answer = new Answer();
+                connection ??= ProgramParameters.connection;
+
+                string commandText = @" BEGIN TRANSACTION;
+                                    
+                                    UPDATE OR ROLLBACK " + ProgramParameters.schemadb + @"[offerte_pezzi]
+									    SET
+										    pezzi_aggiunti = pezzi_aggiunti - (SELECT pezzi FROM " + ProgramParameters.schemadb + @"[ordine_pezzi] WHERE Id=@idoggOrd ) + @pezzi
+									    WHERE
+										    ID_ricambio = (SELECT ID_ricambio FROM " + ProgramParameters.schemadb + @"[ordine_pezzi] WHERE Id=@idoggOrd )
+                                            AND  ID_offerta = (SELECT 
+                                                                    OE.ID_offerta 
+                                                                FROM " + ProgramParameters.schemadb + @"[ordine_pezzi] AS OP 
+                                                                    JOIN [ordini_elenco] AS OE
+                                                                        ON OE.Id = OP.ID_ordine 
+                                                                WHERE OP.Id=@idoggOrd 
+                                                                )
+									    LIMIT 1;
+
+                                    UPDATE OR ROLLBACK " + ProgramParameters.schemadb + @"[ordine_pezzi]
+									    SET
+										    prezzo_unitario_originale=@por, prezzo_unitario_sconto=@pos,pezzi=@pezzi, ETA=@eta
+									    WHERE
+										    Id=@idoggOrd
+									    LIMIT 1;
+
+                                    UPDATE OR ROLLBACK " + ProgramParameters.schemadb + @"[ordini_elenco]
+									    SET totale_ordine = IFNULL((SELECT SUM(OP.pezzi * OP.prezzo_unitario_sconto) FROM " + ProgramParameters.schemadb + @"[ordine_pezzi] AS OP WHERE OP.ID_ordine = @idord),0)
+									    WHERE Id = @idord LIMIT 1;
+                                    ";
+
+                if (applyDiscount)
+                {
+                    commandText += @"UPDATE OR ROLLBACK " + ProgramParameters.schemadb + @"[ordini_elenco] 
+									SET prezzo_finale = IFNULL(totale_ordine*(1-sconto/100),0)
+									WHERE Id=@idord LIMIT 1;";
+                }
+                commandText += "COMMIT;";
+
+                using (SQLiteCommand cmd = new(commandText, connection))
+                {
+                    try
+                    {
+                        cmd.CommandText = commandText;
+
+                        cmd.Parameters.AddWithValue("@idord", idordine);
+                        cmd.Parameters.AddWithValue("@idoggOrd", id_entry_ricambio_ordine);
+                        cmd.Parameters.AddWithValue("@por", prezzo);
+                        cmd.Parameters.AddWithValue("@pos", prezzo_sconto);
+                        cmd.Parameters.AddWithValue("@pezzi", quantita);
+                        cmd.Parameters.AddWithValue("@eta", ETA);
+
+                        cmd.ExecuteNonQuery();
+
+                        answer.Success = true;
+                    }
+                    catch (SQLiteException ex)
+                    {
+                        OnTopMessage.Error("Errore durante aggiornamento oggetto. Codice: " + DbTools.ReturnErorrCode(ex));
+                    }
+
+                    return answer;
+                }
+            }
+
 
             internal static void UpdateCalendarOnObj(long idordine, Outlook.Folder personalCalendar)
             {
