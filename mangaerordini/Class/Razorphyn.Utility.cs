@@ -1,12 +1,12 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.Data;
 using System.Globalization;
 using System.Reflection;
 using System.Runtime.InteropServices;
 using System.Windows.Forms;
-using static Razorphyn.SupportClasses;
 using static Razorphyn.ProgramParameters;
-using System.Data;
+using static Razorphyn.SupportClasses;
 
 namespace Razorphyn
 {
@@ -141,7 +141,8 @@ namespace Razorphyn
             System.Diagnostics.Process.Start(filePath);
         }
 
-        internal static void DataSourceToDataView(DataGridView data_grid, DataTable dataSource, Dictionary<string, string> columnNames) {
+        internal static void DataSourceToDataView(DataGridView data_grid, DataTable dataSource, Dictionary<string, string> columnNames)
+        {
             DrawingControl.SuspendDrawing(data_grid);
 
             data_grid.DataSource = null;
@@ -199,7 +200,6 @@ namespace Razorphyn
             obj.AutoScroll = true;
         }
 
-
     }
 
     internal static class ImportPDFSupport
@@ -227,7 +227,7 @@ namespace Razorphyn
             }
             DrawingControl.ResumeDrawing(obj);
         }
-    
+
         internal static void DeleteControls(TableLayoutPanel ItemTable)
         {
             while (ItemTable.Controls.Count > 0)

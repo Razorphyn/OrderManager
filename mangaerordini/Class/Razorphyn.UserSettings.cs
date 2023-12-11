@@ -6,7 +6,7 @@ using System.IO;
 namespace Razorphyn
 {
 
-    public class UserSettings : IDisposable
+    public class UserSettings
     {
         public Dictionary<string, Dictionary<string, string>> settings = new();
 
@@ -43,11 +43,6 @@ namespace Razorphyn
                     settings[rootKv.Key][childKv.Key] = dict[rootKv.Key][childKv.Key];
                 }
             }
-        }
-
-        public void Dispose()
-        {
-            throw new NotImplementedException();
         }
     }
 }

@@ -1,3 +1,10 @@
+UPDATE [ordine_pezzi]
+		SET [ETA] = OE.data_ETA
+		FROM (SELECT [data_ETA], [id] FROM [ordini_elenco] ) as OE
+		WHERE 
+			[ordine_pezzi].Id IN( SELECT [Id] FROM [ordine_pezzi] where [ETA] LIKE "Razorphyn%" ) 
+			AND OE.Id = [ID_ordine];
+
 /*fornitori*/
 	DROP TABLE IF EXISTS temp_table;
 	CREATE TEMPORARY TABLE temp_table AS

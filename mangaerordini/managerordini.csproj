@@ -156,6 +156,7 @@
     </BootstrapperPackage>
   </ItemGroup>
   <ItemGroup>
+    <Compile Include="Class\Razorphyn.Ricambi.cs" />
     <Compile Include="Class\FlexibleMessageBox.cs" />
     <Compile Include="Class\Razorphyn.Ordini.cs" />
     <Compile Include="Class\Razorphyn.GetResource.cs" />

@@ -21,7 +21,6 @@ using System.Text;
 using System.Text.RegularExpressions;
 using System.Windows.Forms;
 using UglyToad.PdfPig.DocumentLayoutAnalysis.PageSegmenter;
-using static iText.StyledXmlParser.Jsoup.Select.Evaluator;
 using static Razorphyn.Populate;
 using static Razorphyn.SupportClasses;
 using Application = System.Windows.Forms.Application;
@@ -201,7 +200,6 @@ namespace mangaerordini
         {
             UpdateFields("DB", "E", false);
 
-
             using (OpenFileDialog openFileDialog = new())
             {
                 string filePath = null;
@@ -341,16 +339,12 @@ namespace mangaerordini
 
         private void RunSQLiteOptimize(int entry = 150)
         {
-
             string commandText = "PRAGMA analysis_limit  = " + entry + ";  PRAGMA optimize;";
-
 
             using (SQLiteCommand cmd = new(commandText, ProgramParameters.connection))
             {
                 try
                 {
-
-
                     cmd.CommandText = commandText;
                     cmd.ExecuteNonQuery();
 
@@ -621,7 +615,7 @@ namespace mangaerordini
                 er_list += "ID Fornitore non valido o vuoto" + Environment.NewLine;
             }
 
-            if (er_list != "")
+            if (!string.IsNullOrEmpty(er_list))
             {
                 OnTopMessage.Alert(er_list);
                 UpdateFields("R", "A", true);
@@ -683,21 +677,9 @@ namespace mangaerordini
             er_list += DataValidation.ValidateName(nome, "Componente").Error;
 
             DataValidation.ValidationResult answer = DataValidation.ValidateMacchina(macchinaId);
-
-
-            if (!answer.Success)
-            {
-                OnTopMessage.Alert(answer.Error);
-                return;
-            }
             er_list += answer.Error;
 
             answer = DataValidation.ValidateFornitore(fornitoreId);
-            if (!answer.Success)
-            {
-                OnTopMessage.Alert(answer.Error);
-                return;
-            }
             er_list += answer.Error;
 
             er_list += DataValidation.ValidateCodiceRicambio(codice);
@@ -708,7 +690,7 @@ namespace mangaerordini
             DataValidation.ValidationResult prezzod = DataValidation.ValidatePrezzo(prezzo);
             er_list += prezzod.Error;
 
-            if (er_list != "")
+            if (!string.IsNullOrEmpty(er_list))
             {
                 OnTopMessage.Alert(er_list);
 
@@ -746,7 +728,6 @@ namespace mangaerordini
                         cmd.Parameters.AddWithValue("@idma", DBNull.Value);
                     else
                         cmd.Parameters.AddWithValue("@idma", macchinaId);
-
 
                     cmd.ExecuteNonQuery();
 
@@ -792,7 +773,7 @@ namespace mangaerordini
             DataValidation.ValidationResult idQ = DataValidation.ValidateId(idF);
             er_list += idQ.Error;
 
-            if (er_list != "")
+            if (!string.IsNullOrEmpty(er_list))
             {
                 OnTopMessage.Alert(er_list);
                 //ABILITA CAMPI & BOTTONI
@@ -808,7 +789,6 @@ namespace mangaerordini
                 return;
             }
 
-            //string commandText = "DELETE FROM " + ProgramParameters.schemadb + @"[pezzi_ricambi] WHERE Id=@idq LIMIT 1;";
             string commandText = "UPDATE " + ProgramParameters.schemadb + @"[pezzi_ricambi] SET active = null , deleted = 1 WHERE Id=@idq LIMIT 1;";
 
 
@@ -818,7 +798,6 @@ namespace mangaerordini
                 {
                     cmd.CommandText = commandText;
                     cmd.Parameters.AddWithValue("@idq", idQ.LongValue);
-
 
                     cmd.ExecuteNonQuery();
 
@@ -847,7 +826,6 @@ namespace mangaerordini
 
         private void DataGridViewComp_CellDoubleClick(object sender, DataGridViewCellEventArgs e)
         {
-
             if (sender is not DataGridView dgv)
             {
                 return;
@@ -875,8 +853,8 @@ namespace mangaerordini
                     string commandText = @"SELECT 
 												PR.descrizione AS descrizione, 
 												CM.Id AS Id,
-												CM.ID_cliente AS Cliente,
-												CM.ID_sede AS Sede 
+												CM.ID_cliente AS ID_cliente,
+												CM.ID_sede AS ID_sede 
 											FROM [pezzi_ricambi] AS PR
 											LEFT JOIN " + ProgramParameters.schemadb + @"[clienti_macchine]  AS CM
 												ON CM.Id = PR.ID_macchina 
@@ -892,11 +870,11 @@ namespace mangaerordini
                             {
                                 descrizione = Convert.ToString(reader["descrizione"]);
 
-                                if (!string.IsNullOrEmpty(Convert.ToString(reader["Cliente"])))
-                                    idcl = Convert.ToInt64(reader["Cliente"]);
+                                if (!string.IsNullOrEmpty(Convert.ToString(reader["ID_cliente"])))
+                                    idcl = Convert.ToInt64(reader["ID_cliente"]);
 
-                                if (!string.IsNullOrEmpty(Convert.ToString(reader["Sede"])))
-                                    idsd = Convert.ToInt64(reader["Sede"]);
+                                if (!string.IsNullOrEmpty(Convert.ToString(reader["ID_sede"])))
+                                    idsd = Convert.ToInt64(reader["ID_sede"]);
 
                                 if (!string.IsNullOrEmpty(Convert.ToString(reader["Id"])))
                                     idmc = Convert.ToInt64(reader["Id"]);
@@ -922,9 +900,6 @@ namespace mangaerordini
                     ChangeDatiCompMachine.SelectedIndex = Utility.FindIndexFromValue(ChangeDatiCompMachine, idmc);
 
                     UpdateFields("R", "E", true);
-
-                    //ChangeDatiCompMachine.Enabled = false;
-                    //ChangeDatiCompCliente.Enabled = false;
                 }
             }
         }
@@ -1033,7 +1008,6 @@ namespace mangaerordini
                 ChangeDatiCompMachine.Enabled = true;
             }
 
-            //long idmc = (string.IsNullOrEmpty(ChangeDatiCompIdMachine.Text.ToString())) ? 0 : Convert.ToInt64(ChangeDatiCompIdMachine.Text);
             ChangeDatiCompMachine.SelectedIndex = Utility.FindIndexFromValue(ChangeDatiCompMachine, idmc);
 
             return;
@@ -1060,7 +1034,6 @@ namespace mangaerordini
 
             using (SQLiteCommand cmdCount = new(commandText, ProgramParameters.connection))
             {
-
                 cmdCount.Parameters.AddWithValue("@codiceRicambioFilter", "%" + codiceRicambioFilter + "%");
                 count = Convert.ToInt32(cmdCount.ExecuteScalar());
                 count = (count - 1) / recordsPerPage + 1;
@@ -1082,44 +1055,11 @@ namespace mangaerordini
                 DataCompCurPage.Text = Convert.ToString(page);
             }
 
+            (Ricambi.Answer esito, DataTable ds) = Ricambi.GetResources.GetCollection(page--, recordsPerPage, addInfo, codiceRicambioFilter);
 
-            commandText = @"SELECT 
-									PR.Id AS ID,
-									IIF(CM.Id IS NULL, 
-                                        '',
-										(CM.Id || ' - ' || CM.modello  || ' (' ||  CM.seriale || ')')
-										) AS Macchina,
-									IIF(F.Id IS NULL,
-                                        '',
-										(F.Id || ' - ' || F.nome)
-										) AS Fornitore,
-									 PR.nome AS Nome,
-									 PR.codice AS Codice,
-                                    REPLACE(printf('%.2f', PR.prezzo),'.',',')  AS Prezzo
-                                    FROM " + ProgramParameters.schemadb + @"[pezzi_ricambi] AS PR
-                                    LEFT JOIN " + ProgramParameters.schemadb + @"[clienti_macchine] AS CM
-                                        ON CM.Id =  PR.ID_macchina
-                                    LEFT JOIN " + ProgramParameters.schemadb + @"[fornitori] AS F
-									    ON F.Id =  PR.ID_fornitore 
-                                    WHERE PR.deleted = 0 " + addInfo + @" ORDER BY  PR.Id ASC LIMIT @recordperpage OFFSET @startingrecord;";
-
-            page--;
-
-
-            using (SQLiteDataAdapter cmd = new(commandText, ProgramParameters.connection))
+            if (esito.Success)
             {
-                try
-                {
-
-                    DataSet ds = new();
-                    cmd.SelectCommand.Parameters.AddWithValue("@startingrecord", (page) * recordsPerPage);
-                    cmd.SelectCommand.Parameters.AddWithValue("@recordperpage", recordsPerPage);
-                    cmd.SelectCommand.Parameters.AddWithValue("@codiceRicambioFilter", "%" + codiceRicambioFilter + "%");
-
-                    cmd.Fill(ds, "Ricambi");
-                    data_grid.DataSource = ds.Tables["Ricambi"].DefaultView;
-
-                    Dictionary<string, string> columnNames = new()
+                Dictionary<string, string> columnNames = new()
                     {
                         { "ID", "ID" },
                         { "Nome", "Nome" },
@@ -1128,28 +1068,7 @@ namespace mangaerordini
                         { "Codice", "Codice" },
                         { "Prezzo", "Prezzo" }
                     };
-                    int colCount = data_grid.ColumnCount;
-                    for (int i = 0; i < colCount; i++)
-                    {
-                        if (columnNames.ContainsKey(data_grid.Columns[i].HeaderText))
-                            data_grid.Columns[i].HeaderText = columnNames[data_grid.Columns[i].HeaderText];
-
-                        data_grid.Columns[i].AutoSizeMode = DataGridViewAutoSizeColumnMode.DisplayedCells;
-
-                        int colw = data_grid.Columns[i].Width;
-                        data_grid.Columns[i].AutoSizeMode = DataGridViewAutoSizeColumnMode.None;
-                        data_grid.Columns[i].Width = colw;
-                    }
-                }
-                catch (SQLiteException ex)
-                {
-                    OnTopMessage.Error("Errore durante popolamento tabella Componenti. Codice: " + DbTools.ReturnErorrCode(ex));
-                    return;
-                }
-                finally
-                {
-                    DrawingControl.ResumeDrawing(data_grid);
-                }
+                Utility.DataSourceToDataView(data_grid, ds, columnNames);
             }
             return;
         }
@@ -1173,12 +1092,11 @@ namespace mangaerordini
             UpdateFields("C", "A", false);
 
             string nome = AddDatiClienteNome.Text.Trim();
-
             string er_list = "";
 
             er_list += DataValidation.ValidateName(nome, "Cliente").Error;
 
-            if (er_list != "")
+            if (!string.IsNullOrEmpty(er_list))
             {
                 OnTopMessage.Alert(er_list);
                 //ABILITA CAMPI & BOTTONI
@@ -1187,7 +1105,6 @@ namespace mangaerordini
             }
 
             string commandText = "INSERT INTO " + ProgramParameters.schemadb + @"[clienti_elenco] (nome, active) VALUES (@nome, 1);";
-
 
             using (SQLiteCommand cmd = new(commandText, ProgramParameters.connection))
             {
@@ -1228,7 +1145,7 @@ namespace mangaerordini
             DataValidation.ValidationResult idQ = DataValidation.ValidateId(idF);
             er_list += idQ.Error;
 
-            if (er_list != "")
+            if (!string.IsNullOrEmpty(er_list))
             {
                 OnTopMessage.Alert(er_list);
 
@@ -1304,7 +1221,7 @@ namespace mangaerordini
             DataValidation.ValidationResult idQ = DataValidation.ValidateId(idF);
             er_list += idQ.Error;
 
-            if (er_list != "")
+            if (!string.IsNullOrEmpty(er_list))
             {
                 OnTopMessage.Alert(er_list);
                 //ABILITA CAMPI & BOTTONI
@@ -1320,7 +1237,6 @@ namespace mangaerordini
                 return;
             }
 
-            //string commandText = "DELETE FROM " + ProgramParameters.schemadb + @"[clienti_elenco] WHERE Id=@idq LIMIT 1;";
             string commandText = @" BEGIN TRANSACTION;
                                     UPDATE OR ROLLBACK " + ProgramParameters.schemadb + @"[clienti_elenco]  SET deleted = 1, active = NULL WHERE Id=@idq LIMIT 1;
                                     UPDATE OR ROLLBACK " + ProgramParameters.schemadb + @"[clienti_sedi]    SET deleted = 1, active = NULL WHERE ID_cliente=@idq AND deleted = 0;
@@ -1356,7 +1272,6 @@ namespace mangaerordini
 
         private void BtCloseChangesClienti_Click(object sender, EventArgs e)
         {
-
             UpdateFields("C", "CE", false);
             UpdateFields("C", "E", false);
         }
@@ -1484,7 +1399,7 @@ namespace mangaerordini
                 er_list += "Città non valida o vuota" + Environment.NewLine;
             }
 
-            if (er_list != "")
+            if (!string.IsNullOrEmpty(er_list))
             {
                 OnTopMessage.Alert(er_list);
                 //ABILITA CAMPI & BOTTONI
@@ -1493,7 +1408,6 @@ namespace mangaerordini
             }
 
             string commandText = "INSERT INTO " + ProgramParameters.schemadb + @"[clienti_sedi](ID_cliente, numero, stato, citta, provincia, active) VALUES (@idcl, @numero,@stato,@citta,@prov, 1);";
-
 
             using (SQLiteCommand cmd = new(commandText, ProgramParameters.connection))
             {
@@ -1557,7 +1471,7 @@ namespace mangaerordini
             DataValidation.ValidationResult idQ = DataValidation.ValidateId(idF);
             er_list += idQ.Error;
 
-            if (er_list != "")
+            if (!string.IsNullOrEmpty(er_list))
             {
                 OnTopMessage.Alert(er_list);
 
@@ -1628,7 +1542,7 @@ namespace mangaerordini
             DataValidation.ValidationResult idQ = DataValidation.ValidateId(idF);
             er_list += idQ.Error;
 
-            if (er_list != "")
+            if (!string.IsNullOrEmpty(er_list))
             {
                 OnTopMessage.Alert(er_list);
                 //ABILITA CAMPI & BOTTONI
@@ -1644,7 +1558,6 @@ namespace mangaerordini
                 return;
             }
 
-            //string commandText = "DELETE FROM " + ProgramParameters.schemadb + @"[clienti_sedi] WHERE Id=@idq LIMIT 1;";
             string commandText = "UPDATE " + ProgramParameters.schemadb + @"[clienti_sedi] SET deleted = 1, active = NULL WHERE Id=@idq LIMIT 1;";
 
 
@@ -1710,7 +1623,6 @@ namespace mangaerordini
                     ChangeDatiClientiSediStato.SelectedItem = stato;
                     ChangeDatiClientiSediProvincia.Text = provincia;
                     ChangeDatiClientSediCitta.Text = citta;
-
 
                     //ABILITA CAMPI & BOTTONI
                     UpdateFields("C", "SE", true);
@@ -1833,7 +1745,7 @@ namespace mangaerordini
                 er_list += "Cliente non valido o vuoto" + Environment.NewLine;
             }
 
-            if (er_list != "")
+            if (!string.IsNullOrEmpty(er_list))
             {
                 OnTopMessage.Alert(er_list);
                 UpdateFields("P", "A", true);
@@ -1858,7 +1770,6 @@ namespace mangaerordini
 
                     UpdateFields("P", "CA", true);
                     UpdateFields("P", "A", true);
-
 
                     UpdatePRef();
                 }
@@ -1900,7 +1811,7 @@ namespace mangaerordini
             DataValidation.ValidationResult idQ = DataValidation.ValidateId(idF);
             er_list += idQ.Error;
 
-            if (er_list != "")
+            if (!string.IsNullOrEmpty(er_list))
             {
                 OnTopMessage.Alert(er_list);
 
@@ -1968,7 +1879,7 @@ namespace mangaerordini
             DataValidation.ValidationResult idQ = DataValidation.ValidateId(idF);
             er_list += idQ.Error;
 
-            if (er_list != "")
+            if (!string.IsNullOrEmpty(er_list))
             {
                 OnTopMessage.Alert(er_list);
                 //ABILITA CAMPI & BOTTONI
@@ -1984,10 +1895,7 @@ namespace mangaerordini
                 return;
             }
 
-
-            //string commandText = "DELETE FROM " + ProgramParameters.schemadb + @"[clienti_riferimenti] WHERE Id=@idq LIMIT 1;";
             string commandText = "UPDATE " + ProgramParameters.schemadb + @"[clienti_riferimenti] SET deleted = 1, active = NULL WHERE Id=@idq LIMIT 1;";
-
 
             using (SQLiteCommand cmd = new(commandText, ProgramParameters.connection))
             {
@@ -1995,7 +1903,6 @@ namespace mangaerordini
                 {
                     cmd.CommandText = commandText;
                     cmd.Parameters.AddWithValue("@idq", idQ.LongValue);
-
 
                     cmd.ExecuteNonQuery();
 
@@ -2021,8 +1928,6 @@ namespace mangaerordini
             //DISABILITA CAMPI & BOTTONI
             UpdateFields("P", "CE", false);
             UpdateFields("P", "E", false);
-
-            //ChangeDatiPRefClienti.Enabled = true;
         }
 
         private void DataGridViewPref_CellDoubleClick(object sender, DataGridViewCellEventArgs e)
@@ -2117,12 +2022,11 @@ namespace mangaerordini
                     DrawingControl.SuspendDrawing(data_grid);
 
                     data_grid.RowHeadersVisible = false;
-                    DataSet ds = new();
+                    DataTable ds = new();
                     cmd.SelectCommand.Parameters.AddWithValue("@startingrecord", (page) * recordsPerPage);
                     cmd.SelectCommand.Parameters.AddWithValue("@recordperpage", recordsPerPage);
 
-                    cmd.Fill(ds, "Riferimenti");
-                    data_grid.DataSource = ds.Tables["Riferimenti"].DefaultView;
+                    cmd.Fill(ds);
 
                     Dictionary<string, string> columnNames = new()
                     {
@@ -2133,20 +2037,8 @@ namespace mangaerordini
                         { "Mail", "Mail" },
                         { "Telefono", "Telefono" }
                     };
-                    int colCount = data_grid.ColumnCount;
 
-                    for (int i = 0; i < colCount; i++)
-                    {
-                        if (columnNames.ContainsKey(data_grid.Columns[i].HeaderText))
-                            data_grid.Columns[i].HeaderText = columnNames[data_grid.Columns[i].HeaderText];
-
-                        data_grid.Columns[i].AutoSizeMode = DataGridViewAutoSizeColumnMode.DisplayedCells;
-
-                        int colw = data_grid.Columns[i].Width;
-                        data_grid.Columns[i].AutoSizeMode = DataGridViewAutoSizeColumnMode.None;
-                        data_grid.Columns[i].Width = colw;
-                    }
-                    data_grid.RowHeadersVisible = true;
+                    Utility.DataSourceToDataView(data_grid, ds, columnNames);
                 }
                 catch (SQLiteException ex)
                 {
@@ -2214,7 +2106,7 @@ namespace mangaerordini
 
             er_list += DataValidation.ValidateName(nome, "Fornitore").Error;
 
-            if (er_list != "")
+            if (!string.IsNullOrEmpty(er_list))
             {
                 OnTopMessage.Alert(er_list);
 
@@ -2224,9 +2116,7 @@ namespace mangaerordini
                 return;
             }
 
-
             string commandText = "INSERT INTO " + ProgramParameters.schemadb + @"[fornitori](nome, active) VALUES (@nome, 1);";
-
 
             using (SQLiteCommand cmd = new(commandText, ProgramParameters.connection))
             {
@@ -2234,7 +2124,6 @@ namespace mangaerordini
                 {
                     cmd.CommandText = commandText;
                     cmd.Parameters.AddWithValue("@nome", nome);
-
 
                     cmd.ExecuteNonQuery();
 
@@ -2269,7 +2158,7 @@ namespace mangaerordini
             DataValidation.ValidationResult idQ = DataValidation.ValidateId(idF);
             er_list += idQ.Error;
 
-            if (er_list != "")
+            if (!string.IsNullOrEmpty(er_list))
             {
                 OnTopMessage.Alert(er_list);
 
@@ -2298,7 +2187,6 @@ namespace mangaerordini
                     cmd.CommandText = commandText;
                     cmd.Parameters.AddWithValue("@nome", nome);
                     cmd.Parameters.AddWithValue("@idq", idQ.LongValue);
-
 
                     cmd.ExecuteNonQuery();
 
@@ -2336,7 +2224,7 @@ namespace mangaerordini
             er_list += idQ.Error;
 
 
-            if (er_list != "")
+            if (!string.IsNullOrEmpty(er_list))
             {
                 OnTopMessage.Alert(er_list);
                 //ABILITA CAMPI & BOTTONI
@@ -2352,7 +2240,6 @@ namespace mangaerordini
                 return;
             }
 
-            //string commandText = "DELETE FROM " + ProgramParameters.schemadb + @"[fornitori] WHERE Id=@idq LIMIT 1;";
             string commandText = "UPDATE " + ProgramParameters.schemadb + @"[fornitori] SET deleted = 1, active = NULL WHERE Id=@idq LIMIT 1;";
 
             using (SQLiteCommand cmd = new(commandText, ProgramParameters.connection))
@@ -2493,7 +2380,7 @@ namespace mangaerordini
             }
             er_list += answer.Error;
 
-            if (er_list != "")
+            if (!string.IsNullOrEmpty(er_list))
             {
                 OnTopMessage.Alert(er_list);
                 UpdateFields("M", "A", true);
@@ -2556,12 +2443,11 @@ namespace mangaerordini
                 OnTopMessage.Alert(answer.Error);
                 return;
             }
-            er_list += answer.Error;
 
             DataValidation.ValidationResult idQ = DataValidation.ValidateId(idF);
             er_list += idQ.Error;
 
-            if (er_list != "")
+            if (!string.IsNullOrEmpty(er_list))
             {
                 OnTopMessage.Alert(er_list);
                 UpdateFields("M", "E", true);
@@ -2627,7 +2513,7 @@ namespace mangaerordini
             DataValidation.ValidationResult idQ = DataValidation.ValidateId(idF);
             er_list += idQ.Error;
 
-            if (er_list != "")
+            if (!string.IsNullOrEmpty(er_list))
             {
                 OnTopMessage.Alert(er_list);
                 UpdateFields("M", "E", true);
@@ -2642,10 +2528,7 @@ namespace mangaerordini
                 return;
             }
 
-
-            //string commandText = "DELETE FROM " + ProgramParameters.schemadb + @"[clienti_macchine] WHERE Id=@idq LIMIT 1;";
             string commandText = "UPDATE " + ProgramParameters.schemadb + @"[clienti_macchine] SET deleted = 1, active = NULL WHERE Id=@idq LIMIT 1;";
-
 
             using (SQLiteCommand cmd = new(commandText, ProgramParameters.connection))
             {
@@ -2653,7 +2536,6 @@ namespace mangaerordini
                 {
                     cmd.CommandText = commandText;
                     cmd.Parameters.AddWithValue("@idq", idQ.LongValue);
-
 
                     cmd.ExecuteNonQuery();
 
@@ -2716,7 +2598,6 @@ namespace mangaerordini
                     UpdateFields("M", "E", true);
 
                     ChangeDatiMacchinaCliente.Enabled = true;
-                    //ChangeDatiMacchinaClientless.Checked = (indexcl == 0);
                 }
             }
         }
@@ -2796,14 +2677,12 @@ namespace mangaerordini
             {
                 try
                 {
-
-                    DataSet ds = new();
+                    DataTable ds = new();
                     cmd.SelectCommand.Parameters.AddWithValue("@startingrecord", (page) * recordsPerPage);
                     cmd.SelectCommand.Parameters.AddWithValue("@recordperpage", recordsPerPage);
                     cmd.SelectCommand.Parameters.AddWithValue("@idcl", idcl);
 
-                    cmd.Fill(ds, "Macchine");
-                    data_grid.DataSource = ds.Tables["Macchine"].DefaultView;
+                    cmd.Fill(ds);
 
                     Dictionary<string, string> columnNames = new()
                     {
@@ -2814,18 +2693,7 @@ namespace mangaerordini
                         { "Seriale", "Seriale" },
                         { "code", "Codice" }
                     };
-                    int colCount = data_grid.ColumnCount;
-                    for (int i = 0; i < colCount; i++)
-                    {
-                        if (columnNames.ContainsKey(data_grid.Columns[i].HeaderText))
-                            data_grid.Columns[i].HeaderText = columnNames[data_grid.Columns[i].HeaderText];
-
-                        data_grid.Columns[i].AutoSizeMode = DataGridViewAutoSizeColumnMode.DisplayedCells;
-
-                        int colw = data_grid.Columns[i].Width;
-                        data_grid.Columns[i].AutoSizeMode = DataGridViewAutoSizeColumnMode.None;
-                        data_grid.Columns[i].Width = colw;
-                    }
+                    Utility.DataSourceToDataView(data_grid, ds, columnNames);
                 }
                 catch (SQLiteException ex)
                 {
@@ -2960,29 +2828,20 @@ namespace mangaerordini
                 OnTopMessage.Alert(answer.Error);
                 return;
             }
-
-            if (string.IsNullOrEmpty(answer.Error))
+            else
             {
-                er_list += answer.Error;
                 answer = DataValidation.ValidateSede(idcl, idsd);
                 if (!answer.Success)
                 {
                     OnTopMessage.Alert(answer.Error);
                     return;
                 }
-                er_list += answer.Error;
             }
-            else { er_list += answer.Error; }
 
 
             if (idpref > 0)
             {
                 answer = DataValidation.ValidatePRef(idpref);
-                if (!answer.Success)
-                {
-                    OnTopMessage.Alert(answer.Error);
-                    return;
-                }
                 er_list += answer.Error;
             }
 
@@ -2992,14 +2851,14 @@ namespace mangaerordini
                 er_list += prezzoSpedizione.Error;
             }
 
-            if (er_list != "")
+            if (!string.IsNullOrEmpty(er_list))
             {
                 OnTopMessage.Alert(er_list);
                 UpdateFields("OC", "A", true);
                 return;
             }
 
-            Offerte.GestioneOfferte.Answer esito = Offerte.GestioneOfferte.CreateOffer(dataoffValue.DateValue, numeroOff, idsd, stato, idpref, prezzoSpedizione.DecimalValue, gestSP);
+            Offerte.Answer esito = Offerte.GestioneOfferte.CreateOffer(dataoffValue.DateValue, numeroOff, idsd, stato, idpref, prezzoSpedizione.DecimalValue, gestSP);
 
             if (esito.Success)
             {
@@ -3007,7 +2866,6 @@ namespace mangaerordini
                 int temp_FieldOrdCliente = Convert.ToInt32(ComboBoxOrdCliente.SelectedIndex);
 
                 UpdateFields("OC", "CA", true);
-
 
                 UpdateOfferteCrea();
 
@@ -3123,18 +2981,15 @@ namespace mangaerordini
             {
                 try
                 {
-                    DataSet ds = new();
+                    DataTable ds = new();
                     cmd.SelectCommand.Parameters.AddWithValue("@idcl", idcl);
                     cmd.SelectCommand.Parameters.AddWithValue("@stato", stato);
                     cmd.SelectCommand.Parameters.AddWithValue("@startingrecord", (page) * recordsPerPage);
                     cmd.SelectCommand.Parameters.AddWithValue("@recordperpage", recordsPerPage);
 
-                    cmd.Fill(ds, "OfferteCrea");
-                    for (int i = 0; i < data_grid.Length; i++)
-                    {
-                        data_grid[i].DataSource = ds.Tables["OfferteCrea"].DefaultView;
+                    cmd.Fill(ds);
 
-                        Dictionary<string, string> columnNames = new()
+                    Dictionary<string, string> columnNames = new()
                         {
                             { "ID", "ID" },
                             { "Cliente", "Cliente" },
@@ -3148,18 +3003,10 @@ namespace mangaerordini
                             { "spedg", "Gestione Costo Spedizione" },
                             { "conv", "Ordine Creato" }
                         };
-                        int colCount = data_grid[i].ColumnCount;
-                        for (int j = 0; j < colCount; j++)
-                        {
-                            if (columnNames.ContainsKey(data_grid[i].Columns[j].HeaderText))
-                                data_grid[i].Columns[j].HeaderText = columnNames[data_grid[i].Columns[j].HeaderText];
 
-                            data_grid[i].Columns[i].AutoSizeMode = DataGridViewAutoSizeColumnMode.DisplayedCells;
-
-                            int colw = data_grid[i].Columns[j].Width;
-                            data_grid[i].Columns[j].AutoSizeMode = DataGridViewAutoSizeColumnMode.None;
-                            data_grid[i].Columns[j].Width = colw;
-                        }
+                    for (int i = 0; i < data_grid.Length; i++)
+                    {
+                        Utility.DataSourceToDataView(data_grid[i], ds, columnNames);
                     }
                 }
                 catch (SQLiteException ex)
@@ -3195,11 +3042,10 @@ namespace mangaerordini
                 {
                     try
                     {
-                        DataSet ds = new();
+                        DataTable ds = new();
                         cmd.SelectCommand.Parameters.AddWithValue("@idofferta", idof);
 
-                        cmd.Fill(ds, "OfferteCreaOgg");
-                        data_grid.DataSource = ds.Tables["OfferteCreaOgg"].DefaultView;
+                        cmd.Fill(ds);
 
                         Dictionary<string, string> columnNames = new()
                         {
@@ -3210,18 +3056,7 @@ namespace mangaerordini
                             { "numpezzi", "N. Pezzi" },
                             { "totparz", "Totale Parziale" }
                         };
-                        int colCount = data_grid.ColumnCount;
-                        for (int i = 0; i < colCount; i++)
-                        {
-                            if (columnNames.ContainsKey(data_grid.Columns[i].HeaderText))
-                                data_grid.Columns[i].HeaderText = columnNames[data_grid.Columns[i].HeaderText];
-
-                            data_grid.Columns[i].AutoSizeMode = DataGridViewAutoSizeColumnMode.DisplayedCells;
-
-                            int colw = data_grid.Columns[i].Width;
-                            data_grid.Columns[i].AutoSizeMode = DataGridViewAutoSizeColumnMode.None;
-                            data_grid.Columns[i].Width = colw;
-                        }
+                        Utility.DataSourceToDataView(data_grid, ds, columnNames);
                     }
                     catch (SQLiteException ex)
                     {
@@ -3482,7 +3317,7 @@ namespace mangaerordini
             DataValidation.ValidationResult qtaV = DataValidation.ValidateQta(qta);
             er_list += qtaV.Error;
 
-            if (er_list != "")
+            if (!string.IsNullOrEmpty(er_list))
             {
                 OnTopMessage.Alert(er_list);
 
@@ -3490,7 +3325,7 @@ namespace mangaerordini
                 return;
             }
 
-            Offerte.GestioneOfferte.Answer esito = Offerte.GestioneOfferte.AddObjToOffer(idof, idir, prezzoOrV.DecimalValue, prezzoScV.DecimalValue, qtaV.IntValue);
+            Offerte.Answer esito = Offerte.GestioneOggetti.AddObjToOffer(idof, idir, prezzoOrV.DecimalValue, prezzoScV.DecimalValue, qtaV.IntValue);
 
             if (esito.Success)
             {
@@ -3540,7 +3375,6 @@ namespace mangaerordini
                         return;
                     }
                     long id_contatto = (long)answer.LongValue;
-
 
                     AddOffCreaId.Text = id;
                     AddOffCreaSpedizione.Text = spedizione;
@@ -3606,6 +3440,22 @@ namespace mangaerordini
 
             string er_list = "";
 
+            answer = DataValidation.ValidateCliente(cliente);
+            if (!answer.Success)
+            {
+                OnTopMessage.Alert(answer.Error);
+                return;
+            }
+            else
+            {
+                answer = DataValidation.ValidateSede(cliente, sede);
+                if (!answer.Success)
+                {
+                    OnTopMessage.Alert(answer.Error);
+                    return;
+                }
+            }
+
             if (string.IsNullOrEmpty(numeroOff) || !Regex.IsMatch(numeroOff, @"^\d+$"))
             {
                 er_list += "Numero Offerta non valido o vuoto" + Environment.NewLine;
@@ -3614,47 +3464,19 @@ namespace mangaerordini
             dataoffValue = DataValidation.ValidateDate(dataoffString);
             er_list += dataoffValue.Error;
 
-            answer = DataValidation.ValidateCliente(cliente);
-            if (!answer.Success)
-            {
-                OnTopMessage.Alert(answer.Error);
-                return;
-            }
-
-            if (string.IsNullOrEmpty(answer.Error))
-            {
-                er_list += answer.Error;
-                answer = DataValidation.ValidateSede(cliente, sede);
-                if (!answer.Success)
-                {
-                    OnTopMessage.Alert(answer.Error);
-                    return;
-                }
-                er_list += answer.Error;
-            }
-            else { er_list += answer.Error; }
-
             if (pref > 0)
             {
                 answer = DataValidation.ValidatePRef(pref);
-                if (!answer.Success)
-                {
-                    OnTopMessage.Alert(answer.Error);
-                    return;
-                }
                 er_list += answer.Error;
             }
 
             if (!string.IsNullOrEmpty(spedizioni))
             {
-                if (!string.IsNullOrEmpty(spedizioni))
-                {
-                    prezzoSpedizione = DataValidation.ValidateSpedizione(spedizioni, gestSP);
-                    er_list += prezzoSpedizione.Error;
-                }
+                prezzoSpedizione = DataValidation.ValidateSpedizione(spedizioni, gestSP);
+                er_list += prezzoSpedizione.Error;
             }
 
-            if (er_list != "")
+            if (!string.IsNullOrEmpty(er_list))
             {
                 OnTopMessage.Alert(er_list);
 
@@ -3686,12 +3508,11 @@ namespace mangaerordini
                     cmd.CommandText = commandText;
                     cmd.Parameters.AddWithValue("@date", dataoffValue.DateValue);
                     cmd.Parameters.AddWithValue("@noff", numeroOff);
-                    //cmd.Parameters.AddWithValue("@idsd", sede);
                     cmd.Parameters.AddWithValue("@stato", stato);
                     cmd.Parameters.AddWithValue("@idof", idOf);
                     cmd.Parameters.AddWithValue("@idref", (pref > 0) ? pref : DBNull.Value);
 
-                    if (prezzoSpedizione.DecimalValue.HasValue)
+                    if (prezzoSpedizione.DecimalValue > -1)
                     {
                         cmd.Parameters.AddWithValue("@cossp", prezzoSpedizione.DecimalValue);
                         cmd.Parameters.AddWithValue("@gestsp", gestSP);
@@ -3768,7 +3589,7 @@ namespace mangaerordini
             DataValidation.ValidationResult idQ = DataValidation.ValidateId(idOf);
             er_list += idQ.Error;
 
-            if (er_list != "")
+            if (!string.IsNullOrEmpty(er_list))
             {
                 OnTopMessage.Alert(er_list);
                 //ABILITA CAMPI & BOTTONI
@@ -3933,7 +3754,6 @@ namespace mangaerordini
                     {
                         try
                         {
-
                             cmd.Parameters.AddWithValue("idoff", id);
                             SQLiteDataReader reader = cmd.ExecuteReader();
                             while (reader.Read())
@@ -3992,7 +3812,7 @@ namespace mangaerordini
             DataValidation.ValidationResult idQ = DataValidation.ValidateId(IdOgOfOff);
             er_list += idQ.Error;
 
-            if (er_list != "")
+            if (!string.IsNullOrEmpty(er_list))
             {
                 OnTopMessage.Alert(er_list);
                 //ABILITA CAMPI & BOTTONI
@@ -4011,7 +3831,7 @@ namespace mangaerordini
                 return;
             }
 
-            Offerte.GestioneOfferte.Answer esito = Offerte.GestioneOfferte.DeleteItemFromOffer(idof, (long)idQ.LongValue);
+            Offerte.Answer esito = Offerte.GestioneOggetti.DeleteItemFromOffer(idof, (long)idQ.LongValue);
 
             if (esito.Success)
             {
@@ -4072,7 +3892,7 @@ namespace mangaerordini
             DataValidation.ValidationResult qtaV = DataValidation.ValidateQta(qta);
             er_list += qtaV.Error;
 
-            if (er_list != "")
+            if (!string.IsNullOrEmpty(er_list))
             {
                 OnTopMessage.Alert(er_list);
 
@@ -4081,8 +3901,8 @@ namespace mangaerordini
                 return;
             }
 
-            Offerte.GestioneOfferte.Answer esito =
-                Offerte.GestioneOfferte.UpdateItemFromOffer(idof, (long)idOggToOff, (decimal)prezzoOrV.DecimalValue, (decimal)prezzoScV.DecimalValue, (int)qtaV.IntValue);
+            Offerte.Answer esito =
+                Offerte.GestioneOggetti.UpdateItemFromOffer(idof, (long)idOggToOff, (decimal)prezzoOrV.DecimalValue, (decimal)prezzoScV.DecimalValue, (int)qtaV.IntValue);
 
             if (esito.Success)
             {
@@ -4179,11 +3999,11 @@ namespace mangaerordini
                         string Offerlang = "";
 
                         Dictionary<string, string> offerInfo = new()
-                {
-                    { "numero", "" },
-                    { "cliente", "" },
-                    { "data", "" }
-                };
+                            {
+                                { "numero", "" },
+                                { "cliente", "" },
+                                { "data", "" }
+                            };
 
                         List<Dictionary<string, string>> Items = new();
 
@@ -4207,12 +4027,12 @@ namespace mangaerordini
                                 words.Add(new Word
                                 {
                                     Value = word.Text,
-                                    x = Convert.ToInt32(word.BoundingBox.BottomLeft.X),
-                                    y = Convert.ToInt32(word.BoundingBox.BottomLeft.Y)
+                                    X = Convert.ToInt32(word.BoundingBox.BottomLeft.X),
+                                    Y = Convert.ToInt32(word.BoundingBox.BottomLeft.Y)
                                 });
                             }
 
-                            words = words.OrderBy(a => a.x).ThenBy(a => a.y).ToList();
+                            words = words.OrderBy(a => a.X).ThenBy(a => a.Y).ToList();
                             int WordsCount = words.Count();
                             int pos;
 
@@ -4226,16 +4046,16 @@ namespace mangaerordini
                                 }
                                 else if (Offerlang != "")
                                 {
-                                    pos = BuildStringH(words, words[i].x, words[i].y).IndexOf(findStrField[Offerlang]["numero"]);
+                                    pos = BuildStringH(words, words[i].X, words[i].Y).IndexOf(findStrField[Offerlang]["numero"]);
 
                                     if (pos == 0)
                                     {
                                         offerInfo["numero"] = words[i - 1].Value;
 
-                                        offerInfo["data"] = RemoveNotIntLeft(BuildStringH(words, words[i - 1].x, words[i - 1].y)).Split('/')[1];
+                                        offerInfo["data"] = RemoveNotIntLeft(BuildStringH(words, words[i - 1].X, words[i - 1].Y)).Split('/')[1];
                                     }
 
-                                    pos = BuildStringH(words, words[i].x, words[i].y).IndexOf(findStrField[Offerlang]["cliente"]);
+                                    pos = BuildStringH(words, words[i].X, words[i].Y).IndexOf(findStrField[Offerlang]["cliente"]);
                                     if (pos == 0)
                                     {
                                         offerInfo["cliente"] = words[i - 1].Value;
@@ -4343,7 +4163,6 @@ namespace mangaerordini
                         {
                             f2.ShowDialog();
                             f2.Close();
-                            f2.Dispose();
                         }
 
                         LoadOfferteCreaTable();
@@ -4362,7 +4181,7 @@ namespace mangaerordini
 
             foreach (Word w in words)
             {
-                if (w.y == y && w.x >= x)
+                if (w.Y == y && w.X >= x)
                 {
                     builder += w.Value;
                 }
@@ -4391,6 +4210,25 @@ namespace mangaerordini
             return builder;
         }
 
+        private string RemoveNotIntRight(string builder)
+        {
+            bool isInt = false;
+
+            while (!isInt && builder.Length > 0)
+            {
+                if (!int.TryParse(builder.Substring(builder.Length - 1, 1), out _))
+                {
+                    builder = builder.Remove(builder.Length - 1, 1);
+
+                }
+                else
+                {
+                    isInt = true;
+                }
+            }
+
+            return builder;
+        }
         private string ExtractBodyPDF(string filePath)
         {
             string text = "";
@@ -4444,20 +4282,20 @@ namespace mangaerordini
 
                 case "Ordine":
 
-                    findStrField["ita"].Add("numero", "Ordine No./");
+                    findStrField["ita"].Add("numero", "OrdineNo./");
                     findStrField["eng"].Add("numero", "Number/");
 
-                    findStrField["ita"].Add("numeroOff", "Offerta No./");
-                    findStrField["eng"].Add("numeroOff", "Quotation No./");
+                    findStrField["ita"].Add("data", "OrdineNo./Data");
+                    findStrField["eng"].Add("data", "Number/Date");
 
-                    findStrField["ita"].Add("cliente", "No. cliente");
-                    findStrField["eng"].Add("cliente", "Cust. No.");
+                    findStrField["ita"].Add("numeroOff", "OffertaNo./");
+                    findStrField["eng"].Add("numeroOff", "QuotationNo./");
 
-                    findStrField["ita"].Add("data", "/Data");
-                    findStrField["eng"].Add("data", "/Date");
+                    findStrField["ita"].Add("cliente", "No.cliente");
+                    findStrField["eng"].Add("cliente", "Cust.No.");
 
-                    findStrField["ita"].Add("ETA", "Termine dat.");
-                    findStrField["eng"].Add("ETA", "Shipment Date");
+                    findStrField["ita"].Add("ETA", "Terminedat.");
+                    findStrField["eng"].Add("ETA", "ShipmentDate");
                     break;
                 case "OrdineItem":
 
@@ -4657,12 +4495,12 @@ namespace mangaerordini
             scontoV = DataValidation.ValidateSconto(sconto);
             er_list += scontoV.Error;
 
-            if (er_list != "")
+            if (!string.IsNullOrEmpty(er_list))
             {
                 OnTopMessage.Alert(er_list);
                 return;
             }
-            FieldOrdPrezF.Text = (prezzoI * (1 - scontoV.DecimalValue / 100)).Value.ToString("N2", ProgramParameters.nfi).Replace(".", "");
+            FieldOrdPrezF.Text = (prezzoI * (1 - scontoV.DecimalValue / 100)).ToString("N2", ProgramParameters.nfi).Replace(".", "");
         }
 
         private void ApplySconto(object sender, KeyEventArgs e)
@@ -4690,8 +4528,7 @@ namespace mangaerordini
             prezzoFV = DataValidation.ValidatePrezzo(prezzoF);
             er_list += prezzoFV.Error;
 
-
-            if (er_list != "")
+            if (!string.IsNullOrEmpty(er_list))
             {
                 OnTopMessage.Alert(er_list);
                 UpdateFields("OCR", "A", true);
@@ -4878,13 +4715,13 @@ namespace mangaerordini
 
             if (controllo.Checked)
             {
-                labelOffoOrd.Visible = false;
-                LabelPtotFOff.Visible = false;
+                labelOffoOrd.Visible = true;
+                LabelPtotFOff.Visible = true;
             }
             else
             {
-                labelOffoOrd.Visible = true;
-                LabelPtotFOff.Visible = true;
+                labelOffoOrd.Visible = false;
+                LabelPtotFOff.Visible = false;
             }
             return;
         }
@@ -4987,8 +4824,8 @@ namespace mangaerordini
 
             if (CheckBoxOrdOffertaNonPresente.Checked == false)
             {
-                commandText = "SELECT COUNT(*) FROM " + ProgramParameters.schemadb + @"[offerte_elenco] WHERE ([Id] = @id_offerta) LIMIT 1;";
-                int UserExist = 0;
+                commandText = "SELECT COUNT(*) FROM " + ProgramParameters.schemadb + @"[offerte_elenco] WHERE [Id] = @id_offerta LIMIT 1;";
+                int OfferExist = 0;
 
                 using (SQLiteCommand cmd = new(commandText, ProgramParameters.connection))
                 {
@@ -4997,8 +4834,8 @@ namespace mangaerordini
                         cmd.CommandText = commandText;
                         cmd.Parameters.AddWithValue("@id_offerta", id_offerta);
 
-                        UserExist = Convert.ToInt32(cmd.ExecuteScalar());
-                        if (UserExist < 1)
+                        OfferExist = Convert.ToInt32(cmd.ExecuteScalar());
+                        if (OfferExist < 1)
                         {
                             er_list += "Offerta non valida" + Environment.NewLine;
                         }
@@ -5011,15 +4848,16 @@ namespace mangaerordini
                 }
             }
 
-            if (er_list != "")
+            if (!string.IsNullOrEmpty(er_list))
             {
                 OnTopMessage.Alert(er_list);
                 UpdateFields("OCR", "A", true);
                 return;
             }
-            Ordini.GestioneOrdini.Answer esito = Ordini.GestioneOrdini.CreateOrder(n_ordine, id_offerta, idsd, id_contatto, dataOrdValue, dataETAOrdValue,
-                                                                     tot_ordineV, scontoV, prezzo_finaleV, stato_ordine, prezzoSpedizione, gestSP,
-                                                                     CheckBoxOrdOffertaNonPresente.Checked, CheckBoxCopiaOffertainOrdine.Checked);
+            Ordini.Answer esito = Ordini.GestioneOrdini.CreateOrder(n_ordine, id_offerta, CheckBoxOrdOffertaNonPresente.Checked, CheckBoxCopiaOffertainOrdine.Checked, idsd, id_contatto,
+                                                                        dataOrdValue.DateValue, dataETAOrdValue.DateValue,
+                                                                     tot_ordineV.DecimalValue, scontoV.DecimalValue, prezzo_finaleV.DecimalValue, stato_ordine, gestSP, prezzoSpedizione.DecimalValue
+                                                                     );
 
             if (esito.Success)
             {
@@ -5046,7 +4884,6 @@ namespace mangaerordini
             else
             {
                 OnTopMessage.Error(esito.Error);
-
             }
 
             UpdateFields("OCR", "A", true);
@@ -5517,8 +5354,6 @@ namespace mangaerordini
                         catch (SQLiteException ex)
                         {
                             OnTopMessage.Error("Errore durante oggetti ordini. Codice: " + DbTools.ReturnErorrCode(ex));
-
-
                             return;
                         }
                     }
@@ -5611,7 +5446,7 @@ namespace mangaerordini
             DataValidation.ValidationResult qtaP = DataValidation.ValidateQta(pezzi);
             er_list += qtaP.Error;
 
-            if (er_list != "")
+            if (!string.IsNullOrEmpty(er_list))
             {
                 OnTopMessage.Alert(er_list);
                 bool ischk = CheckBoxOrdOggCheckAddNotOffer.Checked;
@@ -5635,7 +5470,7 @@ namespace mangaerordini
                 return;
             }
 
-            Ordini.GestioneOrdini.Answer esito = Ordini.GestioneOrdini.AddObjToOrder(idordine, idiri, dataETAOrdValue.DateValue, (decimal)prezzo_originaleV.DecimalValue, (decimal)prezzo_scontatoV.DecimalValue, (int)qtaP.IntValue,
+            Ordini.Answer esito = Ordini.GestioneOggetti.AddObjToOrder(idordine, idiri, dataETAOrdValue.DateValue, (decimal)prezzo_originaleV.DecimalValue, (decimal)prezzo_scontatoV.DecimalValue, (int)qtaP.IntValue,
                                                                         CheckBoxOrdOggCheckAddNotOffer.Checked, CheckBoxOrdOggSconto.Checked, idoggOff);
 
             if (esito.Success)
@@ -5722,7 +5557,7 @@ namespace mangaerordini
             DataValidation.ValidationResult idQ = DataValidation.ValidateId(idOr);
             er_list += idQ.Error;
 
-            if (er_list != "")
+            if (!string.IsNullOrEmpty(er_list))
             {
                 OnTopMessage.Alert(er_list);
                 //ABILITA CAMPI & BOTTONI
@@ -5928,7 +5763,7 @@ namespace mangaerordini
             er_list += idQ.Error;
 
 
-            if (er_list != "")
+            if (!string.IsNullOrEmpty(er_list))
             {
                 OnTopMessage.Alert(er_list);
                 //ABILITA CAMPI & BOTTONI
@@ -5963,7 +5798,7 @@ namespace mangaerordini
 
             long idordine = Convert.ToInt64(ComboSelOrd.SelectedValue.ToString());
 
-            Ordini.GestioneOrdini.Answer esito = Ordini.GestioneOrdini.DeleteObjFromOrder(idordine, (long)idQ.LongValue, updateFprice, updateFpriceSconto);
+            Ordini.Answer esito = Ordini.GestioneOggetti.DeleteObjFromOrder(idordine, (long)idQ.LongValue, updateFprice, updateFpriceSconto);
 
             if (esito.Success)
             {
@@ -6075,14 +5910,11 @@ namespace mangaerordini
 
             if (!string.IsNullOrEmpty(spedizioni))
             {
-                if (!string.IsNullOrEmpty(spedizioni))
-                {
-                    prezzoSpedizione = DataValidation.ValidateSpedizione(spedizioni, gestSP);
-                    er_list += prezzoSpedizione.Error;
-                }
+                prezzoSpedizione = DataValidation.ValidateSpedizione(spedizioni, gestSP);
+                er_list += prezzoSpedizione.Error;
             }
 
-            if (er_list != "")
+            if (!string.IsNullOrEmpty(er_list))
             {
                 OnTopMessage.Alert(er_list);
                 UpdateFields("OCR", "A", true);
@@ -6097,8 +5929,6 @@ namespace mangaerordini
                 return;
             }
 
-
-
             string oldRef = "";
             DateTime oldETA = DateTime.MinValue;
             decimal oldPrezF = 0;
@@ -6110,7 +5940,6 @@ namespace mangaerordini
                                                     prezzo_finale,
                                                     stato
                                                 FROM " + ProgramParameters.schemadb + @"[ordini_elenco] WHERE Id=@idord LIMIT " + recordsPerPage;
-
 
             using (SQLiteCommand cmd = new(commandText, ProgramParameters.connection))
             {
@@ -6151,8 +5980,6 @@ namespace mangaerordini
 						   WHERE Id=@idord 
                            LIMIT 1";
 
-
-
             using (SQLiteCommand cmd = new(commandText, ProgramParameters.connection))
             {
                 try
@@ -6166,7 +5993,7 @@ namespace mangaerordini
                     cmd.Parameters.AddWithValue("@prezzoF", prezzo_finaleV.DecimalValue);
                     cmd.Parameters.AddWithValue("@stato", stato_ordine);
                     cmd.Parameters.AddWithValue("@idord", id_ordine);
-                    if (prezzoSpedizione.DecimalValue.HasValue)
+                    if (gestSP > -1)
                     {
                         cmd.Parameters.AddWithValue("@cossp", prezzoSpedizione.DecimalValue);
                         cmd.Parameters.AddWithValue("@gestsp", gestSP);
@@ -6279,7 +6106,7 @@ namespace mangaerordini
             DataValidation.ValidationResult qtaP = DataValidation.ValidateQta(pezzi);
             er_list += qtaP.Error;
 
-            if (er_list != "")
+            if (!string.IsNullOrEmpty(er_list))
             {
                 OnTopMessage.Alert(er_list);
 
@@ -6298,7 +6125,6 @@ namespace mangaerordini
             DialogResult res = OnTopMessage.Question("Vuoi salvare le modifiche all'oggetto?", "Conferma Salvataggio Modifiche Oggetto Ordine", MessageBoxButtons.OKCancel);
             if (res != DialogResult.OK)
             {
-
                 FieldOrdOggPOr.Enabled = true;
                 FieldOrdOggPsc.Enabled = true;
                 FieldOrdOggQta.Enabled = true;
@@ -6310,7 +6136,7 @@ namespace mangaerordini
                 return;
             }
 
-            Ordini.GestioneOrdini.Answer esito = Ordini.GestioneOrdini.UpdateItemFromOrder(idordine, idoggOrd, (decimal)prezzo_originaleV.DecimalValue, (decimal)prezzo_scontatoV.DecimalValue, (int)qtaP.IntValue, dataETAOrdValue.DateValue, CheckBoxOrdOggSconto.Checked);
+            Ordini.Answer esito = Ordini.GestioneOggetti.UpdateItemFromOrder(idordine, idoggOrd, (decimal)prezzo_originaleV.DecimalValue, (decimal)prezzo_scontatoV.DecimalValue, (int)qtaP.IntValue, dataETAOrdValue.DateValue, CheckBoxOrdOggSconto.Checked);
 
             if (esito.Success)
             {
@@ -6347,7 +6173,6 @@ namespace mangaerordini
                     }
                     i++;
                 }
-
 
                 ComboBoxOrdOfferta_SelectedIndexChanged(this, System.EventArgs.Empty);
                 ComboSelOrd_SelectedIndexChanged(this, System.EventArgs.Empty);
@@ -6472,18 +6297,17 @@ namespace mangaerordini
 
                 UpdateFields("OCR", "CA", false);
                 UpdateFields("OCR", "E", false);
-                UpdateFields("OCR", "A", false);
+                UpdateFields("OCR", "A", true);
                 UpdateFields("OCR", "AE", false);
                 ComboBoxOrdCliente.Enabled = true;
                 ComboBoxOrdContatto.Enabled = false;
 
                 ComboBoxOrdCliente.SelectedIndex = Utility.FindIndexFromValue(ComboBoxOrdCliente, idcl);
                 ComboBoxOrdSede.SelectedIndex = Utility.FindIndexFromValue(ComboBoxOrdSede, idsd);
-                //ComboBoxOrdCliente.SelectedIndex = idcl_index;
-                //ComboBoxOrdCliente_SelectedIndexChanged(this, System.EventArgs.Empty);
 
                 if (idcont > 0)
                 {
+                    Populate_combobox_pref(ComboBoxOrdContatto, idcl);
                     ComboBoxOrdContatto.SelectedIndex = Utility.FindIndexFromValue(ComboBoxOrdContatto, idcont);
                 }
             }
@@ -6509,6 +6333,13 @@ namespace mangaerordini
             }
             else
             {
+                ComboBoxOrdSede_SelectedIndexChanged(this, EventArgs.Empty);
+
+                if (idcont > 0)
+                {
+                    ComboBoxOrdContatto.SelectedIndex = Utility.FindIndexFromValue(ComboBoxOrdContatto, idcont);
+                }
+
                 ComboBoxOrdOfferta.Enabled = true;
                 ComboBoxOrdContatto.Enabled = true;
 
@@ -6706,6 +6537,8 @@ namespace mangaerordini
             LoadOrdiniTable();
         }
 
+
+        //IMPORTA ORDINE
         private void BtImportaPDFOrdini_Click(object sender, EventArgs e)
         {
             using (OpenFileDialog openFileDialog = new())
@@ -6745,36 +6578,40 @@ namespace mangaerordini
                             Dictionary<string, string> findStrLang = new()
                             {
                                 { "d'ordine", "ita" },
-                                { "Order", "eng" }
+                                { "Order", "eng" },
+                                { "Order confirmation", "eng" }
+
                             };
 
                             var page = document.GetPage(1);
-                            var words = page.GetWords();
-
-                            var recursiveXYCut = new RecursiveXYCut(new RecursiveXYCut.RecursiveXYCutOptions()
-                            {
-                                MinimumWidth = page.Width / 1.7
-
-                            });
-
-                            var blocks = RecursiveXYCut.Instance.GetBlocks(words);
-                            string line = "";
-
+                            var wordsCollection = page.GetWords();
+                            List<Word> words = new List<Word>();
                             Dictionary<string, Dictionary<string, string>> findStrField = GetDictionarySDSS("Ordine");
 
-                            foreach (var block in blocks)
+                            foreach (var word in wordsCollection)
                             {
-                                line = block.Text.Trim();
-                                if (String.IsNullOrEmpty(line))
-                                    continue;
-
-                                if (lang == "" && findStrLang.ContainsKey(line))
+                                words.Add(new Word
                                 {
-                                    lang = findStrLang[line];
+                                    Value = word.Text,
+                                    X = Convert.ToInt32(word.BoundingBox.BottomLeft.X),
+                                    Y = Convert.ToInt32(word.BoundingBox.BottomLeft.Y)
+                                });
+                            }
+
+                            words = words.OrderBy(a => a.X).ThenBy(a => a.Y).ToList();
+                            int WordsCount = words.Count();
+                            int pos;
+
+                            for (int i = 0; i < WordsCount; i++)
+                            {
+
+                                if (lang == "" && findStrLang.ContainsKey(words[i].Value))
+                                {
+                                    lang = findStrLang[words[i].Value];
+                                    i = 0;
                                 }
                                 else if (lang != "")
                                 {
-                                    int pos = 0;
                                     foreach (KeyValuePair<string, string> searchstr in findStrField[lang])
                                     {
                                         if (orderInfo[searchstr.Key] != "")
@@ -6782,25 +6619,29 @@ namespace mangaerordini
                                             continue;
                                         }
 
-                                        pos = line.IndexOf(searchstr.Value);
+                                        string retruned = BuildStringH(words, words[i].X, words[i].Y);
+                                        pos = retruned.IndexOf(searchstr.Value);
 
-                                        if (pos > -1)
+                                        if (pos == 0)
                                         {
-                                            string bkline = line.Remove(0, pos);
-
-                                            string[] subs = bkline.Split('\n');
-
-                                            pos = searchstr.Value.IndexOf('/');
-                                            if (pos == 0)
-                                                orderInfo[searchstr.Key] = subs[1].Split('/')[1].Trim();
-                                            else if (pos > 1)
-                                                orderInfo[searchstr.Key] = subs[1].Split('/')[0].Trim();
+                                            int posSlash = searchstr.Value.ToString().IndexOf("/") + 1;
+                                            if (posSlash > 0)
+                                            {
+                                                if (posSlash == searchstr.Value.Length)
+                                                {
+                                                    orderInfo[searchstr.Key] = words[i - 1].Value;
+                                                }
+                                                else
+                                                {
+                                                    orderInfo[searchstr.Key] = BuildStringH(words, words[i - 1].X, words[i - 1].Y).Split('/')[1];
+                                                }
+                                            }
                                             else
                                             {
-                                                if (subs.Count() > 1)
-                                                    orderInfo[searchstr.Key] = subs[1].Trim();
-                                                else//Ugly Case for ETA
-                                                    orderInfo[searchstr.Key] = subs[0].Split(':')[1].Trim();
+                                                if (searchstr.Key == "ETA")
+                                                    orderInfo[searchstr.Key] = BuildStringH(words, words[i - 1].X, words[i - 1].Y);
+                                                else
+                                                    orderInfo[searchstr.Key] = words[i - 1].Value;
                                             }
                                         }
                                     }
@@ -6809,6 +6650,7 @@ namespace mangaerordini
                         }
 
                         orderInfo["ETA"] = ReturnEtaImportOrder(orderInfo["ETA"]);
+                        orderInfo["data"] = RemoveNotIntLeft(RemoveNotIntRight(orderInfo["data"]));
 
                         if (lang == "")
                         {
@@ -6923,7 +6765,7 @@ namespace mangaerordini
                             }
                         }
 
-                        Offerte.GestioneOfferte.Answer checkOfferta = Offerte.GestioneOfferte.GetIfTransformed(orderInfo["numeroOff"].Trim());
+                        Offerte.Answer checkOfferta = Offerte.GestioneOfferte.GetIfTransformed(orderInfo["numeroOff"].Trim());
 
                         if (checkOfferta.Success && checkOfferta.LongValue > 0 && checkOfferta.Bool)
                         {
@@ -6938,7 +6780,6 @@ namespace mangaerordini
                             f2.Dispose();
                         }
 
-                        //LoadOrdiniTable();
                         UpdateOrdini();
 
                         ComboSelOrd_SelectedIndexChanged(this, System.EventArgs.Empty);
@@ -6987,10 +6828,8 @@ namespace mangaerordini
         {
             DataGridView[] data_grid = new DataGridView[] { DataGridViewVisualizzaOrdini };
 
-
             string commandText = "SELECT COUNT(*) FROM " + ProgramParameters.schemadb + @"[ordini_elenco];";
             int count = 1;
-
 
             using (SQLiteCommand cmdCount = new(commandText, ProgramParameters.connection))
             {
@@ -7139,8 +6978,6 @@ namespace mangaerordini
         private void LoaVisOrdOggTable(long id_ordine = 0)
         {
             DataGridView data_grid = dataGridViewVisOrdOggetti;
-
-
 
             string commandText = @"SELECT
 									OP.Id as ID,
@@ -7472,7 +7309,6 @@ namespace mangaerordini
             {
                 OnTopMessage.Alert("Evento non presente.");
             }
-
 
             UpdateFields("VS", "E", true);
 
@@ -7982,8 +7818,6 @@ namespace mangaerordini
             if (idmc > 0)
                 commandText = "SELECT Id,nome,codice FROM " + ProgramParameters.schemadb + @"[pezzi_ricambi] WHERE (ID_macchina=@idmc) AND deleted = @deleted " + extenQuery + " ORDER BY Id ASC;";
 
-
-
             using (SQLiteCommand cmd = new(commandText, ProgramParameters.connection))
             {
                 try
@@ -8030,13 +7864,6 @@ namespace mangaerordini
                 idOrd = Convert.ToInt64(ComboSelOrd.SelectedValue.ToString());
             }
 
-            /*if (offpezziSel == true && ComboSelOrd.DataSource != null)
-            {
-                idOrd = Convert.ToInt64(ComboSelOrd.SelectedValue.ToString());
-                extenQuery += " AND Id NOT IN (SELECT ID_ricambio FROM " + ProgramParameters.schemadb + @"[ordine_pezzi] WHERE ID_ordine=@idOrd) ";
-            }*/
-
-
             string macchina;
             if (idmc > 0)
                 macchina = " ID_macchina = @idmc ";
@@ -8049,19 +7876,6 @@ namespace mangaerordini
                 extenQuery += " AND ( Id LIKE @filterstr OR nome LIKE @filterstr OR codice LIKE @filterstr)  ";
             }
 
-            /*string commandText = @"SELECT 
-                                        Id,
-                                        nome,
-                                        codice 
-                                    FROM " + ProgramParameters.schemadb + @"[pezzi_ricambi] 
-                                    WHERE  
-                                        Id NOT IN 
-                                            (SELECT ID_ricambio FROM " + ProgramParameters.schemadb + @"[offerte_pezzi] WHERE ID_offerta = 
-                                                (SELECT IIF(ID_offerta IS NULL, 0, ID_offerta) FROM " + ProgramParameters.schemadb + @"[ordini_elenco] WHERE id = @idOrd LIMIT 1)
-                                            ) "
-                                        + macchina + extenQuery + 
-                                    " ORDER BY Id ASC;";*/
-
             string commandText = @"SELECT 
                                         Id,
                                         nome,
@@ -8069,8 +7883,6 @@ namespace mangaerordini
                                     FROM " + ProgramParameters.schemadb + @"[pezzi_ricambi] 
                                     WHERE " + macchina + extenQuery +
                                     " ORDER BY Id ASC;";
-
-
 
             using (SQLiteCommand cmd = new(commandText, ProgramParameters.connection))
             {
@@ -8441,7 +8253,6 @@ namespace mangaerordini
                 ChangeDatiPRefSede
             };
 
-            //Populate_combobox_sedi(nomi_ctr);
             Populate_combobox_dummy(nomi_ctrs: nomi_ctr);
 
             if (page == 0)
@@ -8474,10 +8285,11 @@ namespace mangaerordini
         private void UpdatePRef(int page = 0)
         {
 
-            Dictionary<ComboBox, ComboBox> nome_ctr = new Dictionary<ComboBox, ComboBox>();
-
-            nome_ctr.Add(AddOffCreaPRef, ComboBoxOrdCliente);
-            nome_ctr.Add(ComboBoxOrdContatto, AddOffCreaCliente);
+            Dictionary<ComboBox, ComboBox> nome_ctr = new Dictionary<ComboBox, ComboBox>
+            {
+                { AddOffCreaPRef, ComboBoxOrdCliente },
+                { ComboBoxOrdContatto, AddOffCreaCliente }
+            };
 
             foreach (KeyValuePair<ComboBox, ComboBox> ctr in nome_ctr)
             {
@@ -8561,7 +8373,6 @@ namespace mangaerordini
 
         private void UpdateFixedComboValue()
         {
-
             ComboBox[] nomi_ctr = new ComboBox[] {
                 AddOffCreaStato,
                 OffCreaFiltroStato

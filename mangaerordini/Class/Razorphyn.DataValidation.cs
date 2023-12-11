@@ -1,11 +1,7 @@
-﻿using mangaerordini;
-using Newtonsoft.Json;
-using System;
-using System.Collections.Generic;
+﻿using System;
 using System.Data.SQLite;
 using System.Globalization;
 using System.Text.RegularExpressions;
-using static Razorphyn.SupportClasses;
 
 namespace Razorphyn
 {
@@ -18,9 +14,9 @@ namespace Razorphyn
         {
             public bool Success { get; set; } = false;
             public bool BoolValue { get; set; } = false;
-            public decimal? DecimalValue { get; set; } = null;
-            public long? LongValue { get; set; } = null;
-            public int? IntValue { get; set; } = null;
+            public decimal DecimalValue { get; set; }
+            public long LongValue { get; set; }
+            public int IntValue { get; set; }
             public string Error { get; set; } = null;
             public DateTime DateValue { get; set; } = DateTime.MinValue;
             public string General { get; set; } = null;
@@ -357,11 +353,11 @@ namespace Razorphyn
                 {
                     answer.DecimalValue = prezzo;
                 }
-            }
 
-            if (gestSP < 0)
-            {
-                answer.Error += "Selezionare opzione per la gestione del costo della spedizione" + Environment.NewLine;
+                if (gestSP < 0 && prezzo>0)
+                {
+                    answer.Error += "Selezionare opzione per la gestione del costo della spedizione o mettere costo a zero." + Environment.NewLine;
+                }
             }
 
             return answer;

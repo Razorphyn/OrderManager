@@ -238,7 +238,7 @@ namespace ManagerOrdini.Forms
             this.OrderItemCollection.ColumnStyles.Add(new System.Windows.Forms.ColumnStyle(System.Windows.Forms.SizeType.Absolute, 114F));
             this.OrderItemCollection.ColumnStyles.Add(new System.Windows.Forms.ColumnStyle(System.Windows.Forms.SizeType.Absolute, 109F));
             this.OrderItemCollection.ColumnStyles.Add(new System.Windows.Forms.ColumnStyle(System.Windows.Forms.SizeType.Absolute, 112F));
-            this.OrderItemCollection.ColumnStyles.Add(new System.Windows.Forms.ColumnStyle(System.Windows.Forms.SizeType.Absolute, 116F));
+            this.OrderItemCollection.ColumnStyles.Add(new System.Windows.Forms.ColumnStyle(System.Windows.Forms.SizeType.Absolute, 117F));
             this.OrderItemCollection.Controls.Add(this.label11, 9, 0);
             this.OrderItemCollection.Controls.Add(this.label10, 2, 0);
             this.OrderItemCollection.Controls.Add(this.label7, 0, 0);
@@ -261,9 +261,9 @@ namespace ManagerOrdini.Forms
             // 
             this.label11.AutoSize = true;
             this.label11.Dock = System.Windows.Forms.DockStyle.Fill;
-            this.label11.Location = new System.Drawing.Point(1005, 1);
+            this.label11.Location = new System.Drawing.Point(1004, 1);
             this.label11.Name = "label11";
-            this.label11.Size = new System.Drawing.Size(110, 50);
+            this.label11.Size = new System.Drawing.Size(111, 50);
             this.label11.TabIndex = 8;
             this.label11.Text = "ETA";
             this.label11.TextAlign = System.Drawing.ContentAlignment.MiddleCenter;
@@ -272,7 +272,7 @@ namespace ManagerOrdini.Forms
             // 
             this.label10.AutoSize = true;
             this.label10.Dock = System.Windows.Forms.DockStyle.Fill;
-            this.label10.Location = new System.Drawing.Point(392, 1);
+            this.label10.Location = new System.Drawing.Point(391, 1);
             this.label10.Name = "label10";
             this.label10.Size = new System.Drawing.Size(66, 50);
             this.label10.TabIndex = 7;
@@ -294,7 +294,7 @@ namespace ManagerOrdini.Forms
             // 
             this.label6.AutoSize = true;
             this.label6.Dock = System.Windows.Forms.DockStyle.Fill;
-            this.label6.Location = new System.Drawing.Point(892, 1);
+            this.label6.Location = new System.Drawing.Point(891, 1);
             this.label6.Name = "label6";
             this.label6.Size = new System.Drawing.Size(106, 50);
             this.label6.TabIndex = 5;
@@ -305,7 +305,7 @@ namespace ManagerOrdini.Forms
             // 
             this.label5.AutoSize = true;
             this.label5.Dock = System.Windows.Forms.DockStyle.Fill;
-            this.label5.Location = new System.Drawing.Point(782, 1);
+            this.label5.Location = new System.Drawing.Point(781, 1);
             this.label5.Name = "label5";
             this.label5.Size = new System.Drawing.Size(103, 50);
             this.label5.TabIndex = 4;
@@ -316,7 +316,7 @@ namespace ManagerOrdini.Forms
             // 
             this.label4.AutoSize = true;
             this.label4.Dock = System.Windows.Forms.DockStyle.Fill;
-            this.label4.Location = new System.Drawing.Point(667, 1);
+            this.label4.Location = new System.Drawing.Point(666, 1);
             this.label4.Name = "label4";
             this.label4.Size = new System.Drawing.Size(108, 50);
             this.label4.TabIndex = 3;
@@ -327,7 +327,7 @@ namespace ManagerOrdini.Forms
             // 
             this.label3.AutoSize = true;
             this.label3.Dock = System.Windows.Forms.DockStyle.Fill;
-            this.label3.Location = new System.Drawing.Point(558, 1);
+            this.label3.Location = new System.Drawing.Point(557, 1);
             this.label3.Name = "label3";
             this.label3.Size = new System.Drawing.Size(102, 50);
             this.label3.TabIndex = 2;
@@ -340,7 +340,7 @@ namespace ManagerOrdini.Forms
             this.label2.Dock = System.Windows.Forms.DockStyle.Fill;
             this.label2.Location = new System.Drawing.Point(89, 1);
             this.label2.Name = "label2";
-            this.label2.Size = new System.Drawing.Size(296, 50);
+            this.label2.Size = new System.Drawing.Size(295, 50);
             this.label2.TabIndex = 0;
             this.label2.Text = "Pezzo";
             this.label2.TextAlign = System.Drawing.ContentAlignment.MiddleCenter;
@@ -349,7 +349,7 @@ namespace ManagerOrdini.Forms
             // 
             this.label9.AutoSize = true;
             this.label9.Dock = System.Windows.Forms.DockStyle.Fill;
-            this.label9.Location = new System.Drawing.Point(465, 1);
+            this.label9.Location = new System.Drawing.Point(464, 1);
             this.label9.Name = "label9";
             this.label9.Size = new System.Drawing.Size(86, 50);
             this.label9.TabIndex = 1;
@@ -405,18 +405,18 @@ namespace ManagerOrdini.Forms
             this.FieldOrdData.CalendarFont = new System.Drawing.Font("Microsoft Sans Serif", 12F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
             this.FieldOrdData.Font = new System.Drawing.Font("Microsoft Sans Serif", 12F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
             this.FieldOrdData.Format = System.Windows.Forms.DateTimePickerFormat.Custom;
-            this.FieldOrdData.Location = new System.Drawing.Point(141, 82);
+            this.FieldOrdData.Location = new System.Drawing.Point(141, 80);
             this.FieldOrdData.Name = "FieldOrdData";
-            this.FieldOrdData.Size = new System.Drawing.Size(240, 26);
+            this.FieldOrdData.Size = new System.Drawing.Size(240, 30);
             this.FieldOrdData.TabIndex = 164;
             // 
             // FieldOrdNOrdine
             // 
             this.FieldOrdNOrdine.Anchor = ((System.Windows.Forms.AnchorStyles)((System.Windows.Forms.AnchorStyles.Left | System.Windows.Forms.AnchorStyles.Right)));
             this.FieldOrdNOrdine.Font = new System.Drawing.Font("Segoe UI", 12F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
-            this.FieldOrdNOrdine.Location = new System.Drawing.Point(881, 42);
+            this.FieldOrdNOrdine.Location = new System.Drawing.Point(881, 41);
             this.FieldOrdNOrdine.Name = "FieldOrdNOrdine";
-            this.FieldOrdNOrdine.Size = new System.Drawing.Size(241, 29);
+            this.FieldOrdNOrdine.Size = new System.Drawing.Size(241, 34);
             this.FieldOrdNOrdine.TabIndex = 163;
             // 
             // ComboBoxOrdContatto
@@ -424,9 +424,9 @@ namespace ManagerOrdini.Forms
             this.ComboBoxOrdContatto.Anchor = ((System.Windows.Forms.AnchorStyles)((System.Windows.Forms.AnchorStyles.Left | System.Windows.Forms.AnchorStyles.Right)));
             this.ComboBoxOrdContatto.Font = new System.Drawing.Font("Microsoft Sans Serif", 12F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
             this.ComboBoxOrdContatto.FormattingEnabled = true;
-            this.ComboBoxOrdContatto.Location = new System.Drawing.Point(881, 5);
+            this.ComboBoxOrdContatto.Location = new System.Drawing.Point(881, 3);
             this.ComboBoxOrdContatto.Name = "ComboBoxOrdContatto";
-            this.ComboBoxOrdContatto.Size = new System.Drawing.Size(241, 28);
+            this.ComboBoxOrdContatto.Size = new System.Drawing.Size(241, 33);
             this.ComboBoxOrdContatto.TabIndex = 162;
             // 
             // ComboBoxOrdSede
@@ -434,9 +434,9 @@ namespace ManagerOrdini.Forms
             this.ComboBoxOrdSede.Anchor = ((System.Windows.Forms.AnchorStyles)((System.Windows.Forms.AnchorStyles.Left | System.Windows.Forms.AnchorStyles.Right)));
             this.ComboBoxOrdSede.Font = new System.Drawing.Font("Microsoft Sans Serif", 12F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
             this.ComboBoxOrdSede.FormattingEnabled = true;
-            this.ComboBoxOrdSede.Location = new System.Drawing.Point(547, 5);
+            this.ComboBoxOrdSede.Location = new System.Drawing.Point(547, 3);
             this.ComboBoxOrdSede.Name = "ComboBoxOrdSede";
-            this.ComboBoxOrdSede.Size = new System.Drawing.Size(239, 28);
+            this.ComboBoxOrdSede.Size = new System.Drawing.Size(239, 33);
             this.ComboBoxOrdSede.TabIndex = 161;
             // 
             // ComboBoxOrdCliente
@@ -444,9 +444,9 @@ namespace ManagerOrdini.Forms
             this.ComboBoxOrdCliente.Anchor = ((System.Windows.Forms.AnchorStyles)((System.Windows.Forms.AnchorStyles.Left | System.Windows.Forms.AnchorStyles.Right)));
             this.ComboBoxOrdCliente.Font = new System.Drawing.Font("Microsoft Sans Serif", 12F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
             this.ComboBoxOrdCliente.FormattingEnabled = true;
-            this.ComboBoxOrdCliente.Location = new System.Drawing.Point(141, 5);
+            this.ComboBoxOrdCliente.Location = new System.Drawing.Point(141, 3);
             this.ComboBoxOrdCliente.Name = "ComboBoxOrdCliente";
-            this.ComboBoxOrdCliente.Size = new System.Drawing.Size(240, 28);
+            this.ComboBoxOrdCliente.Size = new System.Drawing.Size(240, 33);
             this.ComboBoxOrdCliente.TabIndex = 159;
             // 
             // ComboBoxOrdOfferta
@@ -454,9 +454,9 @@ namespace ManagerOrdini.Forms
             this.ComboBoxOrdOfferta.Anchor = ((System.Windows.Forms.AnchorStyles)((System.Windows.Forms.AnchorStyles.Left | System.Windows.Forms.AnchorStyles.Right)));
             this.ComboBoxOrdOfferta.Font = new System.Drawing.Font("Segoe UI", 12F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
             this.ComboBoxOrdOfferta.FormattingEnabled = true;
-            this.ComboBoxOrdOfferta.Location = new System.Drawing.Point(141, 42);
+            this.ComboBoxOrdOfferta.Location = new System.Drawing.Point(141, 41);
             this.ComboBoxOrdOfferta.Name = "ComboBoxOrdOfferta";
-            this.ComboBoxOrdOfferta.Size = new System.Drawing.Size(240, 29);
+            this.ComboBoxOrdOfferta.Size = new System.Drawing.Size(240, 36);
             this.ComboBoxOrdOfferta.TabIndex = 157;
             // 
             // CheckBoxOrdOffertaNonPresente
@@ -477,9 +477,9 @@ namespace ManagerOrdini.Forms
             this.FieldOrdETA.Anchor = ((System.Windows.Forms.AnchorStyles)((System.Windows.Forms.AnchorStyles.Left | System.Windows.Forms.AnchorStyles.Right)));
             this.FieldOrdETA.Font = new System.Drawing.Font("Microsoft Sans Serif", 12F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
             this.FieldOrdETA.Format = System.Windows.Forms.DateTimePickerFormat.Custom;
-            this.FieldOrdETA.Location = new System.Drawing.Point(547, 82);
+            this.FieldOrdETA.Location = new System.Drawing.Point(547, 80);
             this.FieldOrdETA.Name = "FieldOrdETA";
-            this.FieldOrdETA.Size = new System.Drawing.Size(239, 26);
+            this.FieldOrdETA.Size = new System.Drawing.Size(239, 30);
             this.FieldOrdETA.TabIndex = 165;
             this.FieldOrdETA.Value = new System.DateTime(2021, 12, 26, 22, 26, 7, 0);
             // 
@@ -487,9 +487,9 @@ namespace ManagerOrdini.Forms
             // 
             this.FieldOrdSped.Anchor = ((System.Windows.Forms.AnchorStyles)((System.Windows.Forms.AnchorStyles.Left | System.Windows.Forms.AnchorStyles.Right)));
             this.FieldOrdSped.Font = new System.Drawing.Font("Segoe UI", 12F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
-            this.FieldOrdSped.Location = new System.Drawing.Point(141, 120);
+            this.FieldOrdSped.Location = new System.Drawing.Point(141, 117);
             this.FieldOrdSped.Name = "FieldOrdSped";
-            this.FieldOrdSped.Size = new System.Drawing.Size(240, 29);
+            this.FieldOrdSped.Size = new System.Drawing.Size(240, 34);
             this.FieldOrdSped.TabIndex = 166;
             // 
             // FieldOrdSpedGestione
@@ -497,9 +497,9 @@ namespace ManagerOrdini.Forms
             this.FieldOrdSpedGestione.Anchor = ((System.Windows.Forms.AnchorStyles)((System.Windows.Forms.AnchorStyles.Left | System.Windows.Forms.AnchorStyles.Right)));
             this.FieldOrdSpedGestione.Font = new System.Drawing.Font("Segoe UI", 12F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
             this.FieldOrdSpedGestione.FormattingEnabled = true;
-            this.FieldOrdSpedGestione.Location = new System.Drawing.Point(881, 120);
+            this.FieldOrdSpedGestione.Location = new System.Drawing.Point(881, 117);
             this.FieldOrdSpedGestione.Name = "FieldOrdSpedGestione";
-            this.FieldOrdSpedGestione.Size = new System.Drawing.Size(241, 29);
+            this.FieldOrdSpedGestione.Size = new System.Drawing.Size(241, 36);
             this.FieldOrdSpedGestione.TabIndex = 167;
             // 
             // FieldOrdStato
@@ -507,9 +507,9 @@ namespace ManagerOrdini.Forms
             this.FieldOrdStato.Anchor = ((System.Windows.Forms.AnchorStyles)((System.Windows.Forms.AnchorStyles.Left | System.Windows.Forms.AnchorStyles.Right)));
             this.FieldOrdStato.Font = new System.Drawing.Font("Segoe UI", 12F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
             this.FieldOrdStato.FormattingEnabled = true;
-            this.FieldOrdStato.Location = new System.Drawing.Point(547, 120);
+            this.FieldOrdStato.Location = new System.Drawing.Point(547, 117);
             this.FieldOrdStato.Name = "FieldOrdStato";
-            this.FieldOrdStato.Size = new System.Drawing.Size(239, 29);
+            this.FieldOrdStato.Size = new System.Drawing.Size(239, 36);
             this.FieldOrdStato.TabIndex = 168;
             // 
             // tableLayoutPanel3

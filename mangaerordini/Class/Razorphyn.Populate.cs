@@ -2,7 +2,6 @@
 using System.Collections.Generic;
 using System.Data.SQLite;
 using System.Linq;
-using System.Runtime.ConstrainedExecution;
 using System.Windows.Forms;
 using static Razorphyn.SupportClasses;
 
@@ -250,7 +249,6 @@ namespace Razorphyn
             {
                 try
                 {
-
                     cmd.CommandText = commandText;
                     cmd.Parameters.AddWithValue("@idcl", idcl);
                     cmd.Parameters.AddWithValue("@idof", codice);

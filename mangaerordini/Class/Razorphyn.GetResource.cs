@@ -145,7 +145,7 @@ namespace Razorphyn
 
             return answer;
         }
-    
+
         internal static List<long> GetIdFromDataTable(DataGridView table)
         {
             List<long> ids = new List<long>();

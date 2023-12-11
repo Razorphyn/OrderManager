@@ -131,7 +131,7 @@ namespace ManagerOrdini
             stato = (stato < 0) ? 0 : stato;
 
             DataValidation.ValidationResult prezzoSpedizione = new();
-            Offerte.GestioneOfferte.Answer esito = new();
+            Offerte.Answer esito = new();
 
             string er_list = "";
 
@@ -236,7 +236,7 @@ namespace ManagerOrdini
                         continue;
                     }
 
-                    Offerte.GestioneOfferte.Answer esitoOgg = Offerte.GestioneOfferte.AddObjToOffer(offerID, idir, prezzoOrV.DecimalValue, prezzoScV.DecimalValue, qtaV.IntValue);
+                    Offerte.Answer esitoOgg = Offerte.GestioneOggetti.AddObjToOffer(offerID, idir, prezzoOrV.DecimalValue, prezzoScV.DecimalValue, qtaV.IntValue);
 
                     if (!esitoOgg.Success)
                     {

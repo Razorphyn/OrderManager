@@ -241,7 +241,7 @@ namespace mangaerordini
                     string[] fnames_ver = str.Split('-');
                     int index_str = (fnames_ver.Length > 1) ? 1 : 0;
 
-                    if (Decimal.TryParse(fnames_ver[index_str].Replace('.',','), out decimal dec))
+                    if (Decimal.TryParse(fnames_ver[index_str].Replace('.', ','), out decimal dec))
                     {
                         if (versione.DecimalValue < dec)
                         {

@@ -1,7 +1,6 @@
 ﻿using CsvHelper.Configuration.Attributes;
 using System;
 using System.Collections.Generic;
-using System.Data.SqlClient;
 using System.Data.SQLite;
 using System.Windows.Forms;
 
@@ -19,8 +18,8 @@ namespace Razorphyn
         internal class Word
         {
             public string Value { get; set; }
-            public int x { get; set; }
-            public int y { get; set; }
+            public int X { get; set; }
+            public int Y { get; set; }
         }
 
         internal class U10_Ricambio
@@ -58,7 +57,7 @@ namespace Razorphyn
             public DateTime Nuovo_ETA { get; set; }
         }
 
-        internal class U10_Offerta_Ricambio: U10_Ricambio
+        internal class U10_Offerta_Ricambio : U10_Ricambio
         {
             internal static List<U10_Ricambio> Offerta_GetItemCollection(long id_offerta, List<string> list, SQLiteConnection temp_connection)
             {
@@ -87,31 +86,33 @@ namespace Razorphyn
 
                     cmd_items.Parameters.AddWithValue("@id_offerta", id_offerta);
                     cmd_items.Parameters.AddWithValue("@codici_ricambio", idlist);
-                    try { 
-                    using (SQLiteDataReader reader = cmd_items.ExecuteReader())
+                    try
                     {
-                        while (reader.Read())
+                        using (SQLiteDataReader reader = cmd_items.ExecuteReader())
                         {
-                            itemsOffer.Add(new U10_Ricambio()
+                            while (reader.Read())
                             {
-                                Id_db_entry = Convert.ToInt64(reader["ID_offerte_pezzi"]),
-                                Id_ricambio = Convert.ToInt64(reader["ID_ricambio"]),
-                                Nome = Convert.ToString(reader["Nome"]),
-                                Codice = Convert.ToString(reader["Codice"]),
-                                Qta = Convert.ToInt32(reader["qta"]),
-                                Prezzo = Convert.ToDecimal(reader["prezzo"]),
-                                Prezzo_Sconto = Convert.ToDecimal(reader["prezzo_sconto"]),
+                                itemsOffer.Add(new U10_Ricambio()
+                                {
+                                    Id_db_entry = Convert.ToInt64(reader["ID_offerte_pezzi"]),
+                                    Id_ricambio = Convert.ToInt64(reader["ID_ricambio"]),
+                                    Nome = Convert.ToString(reader["Nome"]),
+                                    Codice = Convert.ToString(reader["Codice"]),
+                                    Qta = Convert.ToInt32(reader["qta"]),
+                                    Prezzo = Convert.ToDecimal(reader["prezzo"]),
+                                    Prezzo_Sconto = Convert.ToDecimal(reader["prezzo_sconto"]),
 
-                                Nuovo_Codice = Convert.ToString(reader["Codice"]),
-                                Nuovo_Qta = Convert.ToInt32(reader["qta"]),
-                                Nuovo_Prezzo = Convert.ToDecimal(reader["prezzo"]),
-                                Nuovo_Prezzo_Sconto = Convert.ToDecimal(reader["prezzo_sconto"]),
+                                    Nuovo_Codice = Convert.ToString(reader["Codice"]),
+                                    Nuovo_Qta = Convert.ToInt32(reader["qta"]),
+                                    Nuovo_Prezzo = Convert.ToDecimal(reader["prezzo"]),
+                                    Nuovo_Prezzo_Sconto = Convert.ToDecimal(reader["prezzo_sconto"]),
 
-                                Duplicate = Convert.ToBoolean(reader["Duplicate"])
-                            });
+                                    Duplicate = Convert.ToBoolean(reader["Duplicate"])
+                                });
+                            }
                         }
                     }
-                    }catch (Exception ex)
+                    catch (Exception ex)
                     {
                         OnTopMessage.Error("UPDATE 10: Errore durante collezioanemnto oggetti. Codice: " + ex.Message);
                     }
@@ -121,13 +122,14 @@ namespace Razorphyn
             }
         }
 
-        internal class U10_Ordine_Ricambio:U10_Ricambio
+        internal class U10_Ordine_Ricambio : U10_Ricambio
         {
             internal static List<U10_Ricambio> Ordine_GetItemCollection(long id_ordine, List<string> list, SQLiteConnection temp_connection)
             {
                 List<U10_Ricambio> itemsOffer = new List<U10_Ricambio>();
                 string commandText = @"SELECT 
-	                                                PR.[id] AS ID_ricambio,
+	                                                OP.[Id] AS ID_ordine_pezzi,
+	                                                PR.[Id] AS ID_ricambio,
 	                                                PR.[codice] AS Codice,
 	                                                PR.[nome] AS Nome,
                                                     OP.[pezzi] AS qta,
@@ -158,7 +160,8 @@ namespace Razorphyn
                             {
                                 itemsOffer.Add(new U10_Ricambio()
                                 {
-                                    Id_db_entry = Convert.ToInt64(reader["ID_ricambio"]),
+                                    Id_ricambio = Convert.ToInt64(reader["ID_ricambio"]),
+                                    Id_db_entry = Convert.ToInt64(reader["ID_ordine_pezzi"]),
                                     Nome = Convert.ToString(reader["Nome"]),
                                     Codice = Convert.ToString(reader["Codice"]),
                                     Qta = Convert.ToInt32(reader["qta"]),

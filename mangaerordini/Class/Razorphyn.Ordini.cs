@@ -1,28 +1,24 @@
 ﻿using System;
-using System.Collections.Generic;
 using System.Data.SQLite;
 using System.Windows.Forms;
-using static iText.StyledXmlParser.Jsoup.Select.Evaluator;
 using static Razorphyn.DataValidation;
-using static Razorphyn.SupportClasses;
 using Outlook = Microsoft.Office.Interop.Outlook;
 
 namespace Razorphyn
 {
     internal static class Ordini
     {
+        public class Answer
+        {
+            public bool Success { get; set; } = false;
+            public string Error { get; set; } = null;
+            public long Id { get; set; } = 0;
+        }
+
         internal static class GestioneOrdini
         {
-            public class Answer
-            {
-                public bool Success { get; set; } = false;
-                public string Error { get; set; } = null;
-                public long Id { get; set; } = 0;
-            }
-
-            internal static Answer CreateOrder(string n_ordine, long id_offerta, long id_sede, long id_contatto, ValidationResult OrderDate, ValidationResult OrderETADate,
-                                                ValidationResult tot_ordine, ValidationResult sconto, ValidationResult prezzo_finale, int stato_ordine, ValidationResult prezzoSpedizione,
-                                                int gestSP, bool OrderNotFromOffer, bool CopyItemFromOfferToOrder)
+            internal static Answer CreateOrder(string n_ordine, long id_offerta, bool OrderNotFromOffer, bool CopyItemFromOfferToOrder, long id_sede, long id_contatto, DateTime OrderDate, DateTime OrderETADate,
+                                                Decimal tot_ordine, Decimal sconto, Decimal prezzo_finale, int stato_ordine, int gestSP, Decimal prezzoSpedizione)
             {
                 string commandText = @"INSERT INTO " + ProgramParameters.schemadb + @"[ordini_elenco]
                             (codice_ordine, ID_offerta, ID_sede, ID_riferimento, data_ordine, data_ETA, totale_ordine,sconto,prezzo_finale,stato,costo_spedizione,gestione_spedizione)
@@ -42,15 +38,15 @@ namespace Razorphyn
                         cmd.Parameters.AddWithValue("@idoof", (id_offerta > 0) ? id_offerta : DBNull.Value);
                         cmd.Parameters.AddWithValue("@idsd", id_sede);
                         cmd.Parameters.AddWithValue("@idcont", (id_contatto > 0) ? id_contatto : DBNull.Value);
-                        cmd.Parameters.AddWithValue("@dataord", OrderDate.DateValue);
-                        cmd.Parameters.AddWithValue("@dataeta", OrderETADate.DateValue);
-                        cmd.Parameters.AddWithValue("@totord", tot_ordine.DecimalValue);
-                        cmd.Parameters.AddWithValue("@sconto", sconto.DecimalValue);
-                        cmd.Parameters.AddWithValue("@prezzoF", prezzo_finale.DecimalValue);
+                        cmd.Parameters.AddWithValue("@dataord", OrderDate);
+                        cmd.Parameters.AddWithValue("@dataeta", OrderETADate);
+                        cmd.Parameters.AddWithValue("@totord", tot_ordine);
+                        cmd.Parameters.AddWithValue("@sconto", sconto);
+                        cmd.Parameters.AddWithValue("@prezzoF", prezzo_finale);
                         cmd.Parameters.AddWithValue("@stato", stato_ordine);
-                        if (prezzoSpedizione.DecimalValue.HasValue)
+                        if (gestSP > -1)
                         {
-                            cmd.Parameters.AddWithValue("@cossp", prezzoSpedizione.DecimalValue);
+                            cmd.Parameters.AddWithValue("@cossp", prezzoSpedizione);
                             cmd.Parameters.AddWithValue("@gestsp", gestSP);
                         }
                         else
@@ -116,7 +112,7 @@ namespace Razorphyn
                                                         cmd3.Parameters.AddWithValue("@prezor", reader["prezzo_unitario_originale"]);
                                                         cmd3.Parameters.AddWithValue("@prezsco", reader["prezzo_unitario_sconto"]);
                                                         cmd3.Parameters.AddWithValue("@qta", reader["pezzi"]);
-                                                        cmd3.Parameters.AddWithValue("@dataeta", OrderETADate.DateValue);
+                                                        cmd3.Parameters.AddWithValue("@dataeta", OrderETADate);
                                                         cmd3.Parameters.AddWithValue("@idoffogg", reader["Id"]);
 
                                                         cmd3.ExecuteNonQuery();
@@ -152,6 +148,54 @@ namespace Razorphyn
                 }
             }
 
+            internal static void UpdateCalendarOnObj(long idordine, Outlook.Folder personalCalendar, SQLiteConnection connection = null)
+            {
+                string ordinecode = null;
+                DateTime eta = DateTime.MinValue;
+
+                connection ??= ProgramParameters.connection;
+
+                string commandText = @"SELECT 
+                                        codice_ordine,
+                                        data_ETA
+                                    FROM " + ProgramParameters.schemadb + @"[ordini_elenco] 
+                                        WHERE Id=@idord LIMIT 1;";
+
+                using (SQLiteCommand cmd2 = new(commandText, connection))
+                {
+                    try
+                    {
+                        cmd2.CommandText = commandText;
+                        cmd2.Parameters.AddWithValue("@idord", idordine);
+
+                        SQLiteDataReader reader = cmd2.ExecuteReader();
+                        while (reader.Read())
+                        {
+                            ordinecode = (string)reader["codice_ordine"];
+                            eta = (DateTime)reader["data_ETA"];
+                        }
+                        eta = eta.Date;
+                    }
+                    catch (SQLiteException ex)
+                    {
+                        OnTopMessage.Error("Errore durante lettura dati ordine in fase aggiornamento dati calendario. Codice: " + DbTools.ReturnErorrCode(ex));
+                    }
+                }
+
+                if (!String.IsNullOrEmpty(ordinecode) && CalendarManager.FindAppointment(personalCalendar, ordinecode, connection))
+                {
+                    DialogResult dialogResult = OnTopMessage.Question("Vuoi aggiornare l'evento sul calendario con le nuove informazioni?", "Aggiornare Evento Ordine Calendario");
+                    if (dialogResult == DialogResult.Yes)
+                    {
+                        CalendarManager.UpdateCalendar(personalCalendar, ordinecode, ordinecode, idordine, eta, false, connection);
+                    }
+                }
+            }
+        }
+
+
+        internal static class GestioneOggetti
+        {
 
             internal static Answer AddObjToOrder(long id_ordine, long id_ricambio, DateTime eta_ordine, decimal prezzo_originale, decimal prezzo_scontato,
                                                       int qta, bool oggetto_non_in_offerta, bool applica_sconto, long idoggOff = 0)
@@ -211,8 +255,6 @@ namespace Razorphyn
                 }
                 return answer;
             }
-
-
             internal static Answer DeleteObjFromOrder(long idordine, long id_entry_ricambio_ordine, bool updateFprice, bool updateFpriceSconto, SQLiteConnection connection = null)
             {
                 Answer answer = new Answer();
@@ -285,7 +327,6 @@ namespace Razorphyn
                 }
             }
 
-
             internal static Answer UpdateItemFromOrder(long idordine, long id_entry_ricambio_ordine, decimal prezzo, decimal prezzo_sconto, int quantita, DateTime ETA, bool applyDiscount, SQLiteConnection connection = null)
             {
 
@@ -354,48 +395,6 @@ namespace Razorphyn
                 }
             }
 
-
-            internal static void UpdateCalendarOnObj(long idordine, Outlook.Folder personalCalendar)
-            {
-                string ordinecode = null;
-                DateTime eta = DateTime.MinValue;
-
-                string commandText = @"SELECT 
-                                        codice_ordine,
-                                        data_ETA
-                                    FROM " + ProgramParameters.schemadb + @"[ordini_elenco] 
-                                        WHERE Id=@idord LIMIT 1;";
-
-                using (SQLiteCommand cmd2 = new(commandText, ProgramParameters.connection))
-                {
-                    try
-                    {
-                        cmd2.CommandText = commandText;
-                        cmd2.Parameters.AddWithValue("@idord", idordine);
-
-                        SQLiteDataReader reader = cmd2.ExecuteReader();
-                        while (reader.Read())
-                        {
-                            ordinecode = (string)reader["codice_ordine"];
-                            eta = (DateTime)reader["data_ETA"];
-                        }
-                        eta = eta.Date;
-                    }
-                    catch (SQLiteException ex)
-                    {
-                        OnTopMessage.Error("Errore durante lettura dati ordine in fase aggiornamento dati calendario. Codice: " + DbTools.ReturnErorrCode(ex));
-                    }
-                }
-
-                if (!String.IsNullOrEmpty(ordinecode) && CalendarManager.FindAppointment(personalCalendar, ordinecode))
-                {
-                    DialogResult dialogResult = OnTopMessage.Question("Vuoi aggiornare l'evento sul calendario con le nuove informazioni?", "Aggiornare Evento Ordine Calendario");
-                    if (dialogResult == DialogResult.Yes)
-                    {
-                        CalendarManager.UpdateCalendar(personalCalendar, ordinecode, ordinecode, idordine, eta, false);
-                    }
-                }
-            }
         }
 
         internal static class GetResources

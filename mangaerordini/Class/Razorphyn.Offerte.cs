@@ -3,22 +3,22 @@ using System;
 using System.Collections.Generic;
 using System.Data;
 using System.Data.SQLite;
-using static iText.StyledXmlParser.Jsoup.Select.Evaluator;
 using static Razorphyn.DataValidation;
 
 namespace Razorphyn
 {
     internal static class Offerte
     {
+        public class Answer
+        {
+            public bool Success { get; set; } = false;
+            public long LongValue { get; set; } = 0;
+            public bool Bool { get; set; }
+            public string Error { get; set; } = null;
+        }
+
         internal static class GestioneOfferte
         {
-            public class Answer
-            {
-                public bool Success { get; set; } = false;
-                public long LongValue { get; set; } = 0;
-                public bool Bool { get; set; }
-                public string Error { get; set; } = null;
-            }
 
             internal static Answer CreateOffer(DateTime dataoffValue, string numeroOff, long idsd, int stato, long idpref, decimal? prezzoSpedizione, int gestSP)
             {
@@ -75,44 +75,6 @@ namespace Razorphyn
                 return esito;
             }
 
-            internal static Answer AddObjToOffer(long idof, long idir, decimal? prezzoOrV, decimal? prezzoScV, int? qtaV, string nome = null)
-            {
-                Answer esito = new();
-
-                string commandText = @" BEGIN TRANSACTION;
-                                    INSERT OR ROLLBACK INTO " + ProgramParameters.schemadb + @"[offerte_pezzi]
-                                        (ID_offerta, ID_ricambio, prezzo_unitario_originale, prezzo_unitario_sconto,pezzi) 
-                                        VALUES (@idof,@idri,@por,@pos,@pezzi);
-                                    UPDATE OR ROLLBACK " + ProgramParameters.schemadb + @"[offerte_elenco]
-									    SET tot_offerta = ifnull( (SELECT SUM(OP.pezzi * OP.prezzo_unitario_sconto) FROM " + ProgramParameters.schemadb + @"[offerte_pezzi] AS OP WHERE OP.ID_offerta=@idof) , 0) 
-									    WHERE Id=@idof LIMIT 1;
-                                    COMMIT;";
-
-                using (SQLiteCommand cmd = new(commandText, ProgramParameters.connection))
-                {
-                    try
-                    {
-                        cmd.CommandText = commandText;
-                        cmd.Parameters.AddWithValue("@idof", idof);
-                        cmd.Parameters.AddWithValue("@idri", idir);
-                        cmd.Parameters.AddWithValue("@por", prezzoOrV);
-                        cmd.Parameters.AddWithValue("@pos", prezzoScV);
-                        cmd.Parameters.AddWithValue("@pezzi", qtaV);
-                        cmd.ExecuteNonQuery();
-
-                        esito.Success = true;
-
-                        OnTopMessage.Information("Oggetto " + nome + " aggiunto all'offerta");
-                    }
-                    catch (SQLiteException ex)
-                    {
-                        OnTopMessage.Error("Errore durante aggiunta al database. Codice: " + DbTools.ReturnErorrCode(ex));
-                    }
-                }
-
-                return esito;
-            }
-
             internal static Answer GetIfTransformed(string codice)
             {
                 Answer answer = new Answer();
@@ -156,8 +118,50 @@ namespace Razorphyn
 
                 return answer;
             }
-            
-            internal static Answer DeleteItemFromOffer(long id_offerta, long id_item_entry, SQLiteConnection connection = null) 
+
+        }
+
+        internal static class GestioneOggetti
+        {
+            internal static Answer AddObjToOffer(long idof, long idir, decimal? prezzoOrV, decimal? prezzoScV, int? qtaV, string nome = null)
+            {
+                Answer esito = new();
+
+                string commandText = @" BEGIN TRANSACTION;
+                                    INSERT OR ROLLBACK INTO " + ProgramParameters.schemadb + @"[offerte_pezzi]
+                                        (ID_offerta, ID_ricambio, prezzo_unitario_originale, prezzo_unitario_sconto,pezzi) 
+                                        VALUES (@idof,@idri,@por,@pos,@pezzi);
+                                    UPDATE OR ROLLBACK " + ProgramParameters.schemadb + @"[offerte_elenco]
+									    SET tot_offerta = ifnull( (SELECT SUM(OP.pezzi * OP.prezzo_unitario_sconto) FROM " + ProgramParameters.schemadb + @"[offerte_pezzi] AS OP WHERE OP.ID_offerta=@idof) , 0) 
+									    WHERE Id=@idof LIMIT 1;
+                                    COMMIT;";
+
+                using (SQLiteCommand cmd = new(commandText, ProgramParameters.connection))
+                {
+                    try
+                    {
+                        cmd.CommandText = commandText;
+                        cmd.Parameters.AddWithValue("@idof", idof);
+                        cmd.Parameters.AddWithValue("@idri", idir);
+                        cmd.Parameters.AddWithValue("@por", prezzoOrV);
+                        cmd.Parameters.AddWithValue("@pos", prezzoScV);
+                        cmd.Parameters.AddWithValue("@pezzi", qtaV);
+                        cmd.ExecuteNonQuery();
+
+                        esito.Success = true;
+
+                        OnTopMessage.Information("Oggetto " + nome + " aggiunto all'offerta");
+                    }
+                    catch (SQLiteException ex)
+                    {
+                        OnTopMessage.Error("Errore durante aggiunta al database. Codice: " + DbTools.ReturnErorrCode(ex));
+                    }
+                }
+
+                return esito;
+            }
+
+            internal static Answer DeleteItemFromOffer(long id_offerta, long id_item_entry, SQLiteConnection connection = null)
             {
                 Answer esito = new();
                 connection ??= ProgramParameters.connection;
@@ -193,7 +197,7 @@ namespace Razorphyn
                 return esito;
             }
 
-            internal static Answer UpdateItemFromOffer(long id_offerta,  long id_item_entry, decimal prezzo, decimal prezzo_scontato, int quantita, SQLiteConnection connection = null)
+            internal static Answer UpdateItemFromOffer(long id_offerta, long id_item_entry, decimal prezzo, decimal prezzo_scontato, int quantita, SQLiteConnection connection = null)
             {
                 Answer esito = new();
                 connection ??= ProgramParameters.connection;
@@ -229,6 +233,7 @@ namespace Razorphyn
                 }
                 return esito;
             }
+
         }
 
         internal static class GetResources

@@ -1,7 +1,6 @@
 ﻿using Razorphyn;
 using System;
 using System.Collections.Generic;
-using System.Data;
 using System.Data.SQLite;
 using System.Drawing;
 using System.Text.RegularExpressions;
@@ -253,8 +252,22 @@ namespace ManagerOrdini.Forms.Update
 
             for (int i = 0; i < c; i++)
             {
-                if (i != index && Items[i].Nuovo_Qta != 0 && Items[i].Nuovo_Codice == Items[index].Nuovo_Codice && Items[i].Nuovo_ETA == Items[index].ETA)
-                    return false;
+                /*if (i != index && Items[i].Nuovo_Qta != 0 && Items[i].Nuovo_Codice == Items[index].Nuovo_Codice && Items[i].Nuovo_ETA == Items[index].ETA)
+                    return false;*/
+
+                if (i != index && Items[i].Nuovo_Qta != 0)
+                {
+                    if (Items[i].Nuovo_Codice[0] != 'D')
+                    {
+                        if (Items[i].Nuovo_Codice == Items[index].Nuovo_Codice)
+                            return false;
+                    }
+                    else
+                    {
+                        if (Items[i].Id_ricambio == Items[index].Id_ricambio)
+                            return false;
+                    }
+                }
             }
             return true;
         }
@@ -401,7 +414,7 @@ namespace ManagerOrdini.Forms.Update
                 {
                     if (Items[i].Delete)
                     {
-                        Offerte.GestioneOfferte.DeleteItemFromOffer(id_offerta, Items[i].Id_db_entry, temp_connection);
+                        Offerte.GestioneOggetti.DeleteItemFromOffer(id_offerta, Items[i].Id_db_entry, temp_connection);
                     }
                     else
                     {
@@ -426,7 +439,7 @@ namespace ManagerOrdini.Forms.Update
                                 }
                             }
                         }
-                        Offerte.GestioneOfferte.UpdateItemFromOffer(id_offerta, Items[i].Id_db_entry, Items[i].Nuovo_Prezzo, Items[i].Nuovo_Prezzo_Sconto, Items[i].Nuovo_Qta, temp_connection);
+                        Offerte.GestioneOggetti.UpdateItemFromOffer(id_offerta, Items[i].Id_db_entry, Items[i].Nuovo_Prezzo, Items[i].Nuovo_Prezzo_Sconto, Items[i].Nuovo_Qta, temp_connection);
                     }
                 }
             }

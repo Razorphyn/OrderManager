@@ -16,9 +16,8 @@ namespace ManagerOrdini.Forms.Update
 
         List<U10_Ricambio> Items;
         long id_ordine;
-        bool prevent_closing;
 
-        internal U10_Ordine(List<U10_Ricambio> items, long id_ordine, bool prevent_closing)
+        internal U10_Ordine(List<U10_Ricambio> items, long id_ordine)
         {
             InitializeComponent();
 
@@ -33,7 +32,6 @@ namespace ManagerOrdini.Forms.Update
             this.Text = "Rimozione Duplicati da Ordini";
             this.Activate();
             this.id_ordine = id_ordine;
-            this.prevent_closing = prevent_closing;
 
         }
         private void PopoluateItemsPanel(List<U10_Ricambio> Items)
@@ -249,14 +247,25 @@ namespace ManagerOrdini.Forms.Update
 
         private bool CheckIfCodiceETAUniqueInOrder(int index)
         {
-
             int c = Items.Count;
 
             for (int i = 0; i < c; i++)
             {
-                if (i != index && Items[i].Nuovo_Qta != 0 && Items[i].Nuovo_Codice == Items[index].Nuovo_Codice && Items[i].Nuovo_ETA == Items[index].Nuovo_ETA)
-                    return false;
+                if (i != index && Items[i].Nuovo_Qta != 0)
+                {
+                    if (Items[i].Nuovo_Codice[0] != 'D')
+                    {
+                        if (Items[i].Nuovo_Codice == Items[index].Nuovo_Codice && Items[i].Nuovo_ETA == Items[index].Nuovo_ETA)
+                            return false;
+                    }
+                    else
+                    {
+                        if (Items[i].Id_ricambio == Items[index].Id_ricambio && Items[i].Nuovo_ETA == Items[index].Nuovo_ETA)
+                            return false;
+                    }
+                }
             }
+
             return true;
         }
 
@@ -443,7 +452,7 @@ namespace ManagerOrdini.Forms.Update
                 {
                     if (Items[i].Delete)
                     {
-                        Ordini.GestioneOrdini.DeleteObjFromOrder(id_ordine, Items[i].Id_db_entry, updateFprice, updateFpriceSconto, temp_connection);
+                        Ordini.GestioneOggetti.DeleteObjFromOrder(id_ordine, Items[i].Id_db_entry, updateFprice, updateFpriceSconto, temp_connection);
                     }
                     else
                     {
@@ -468,23 +477,20 @@ namespace ManagerOrdini.Forms.Update
                                 }
                             }
                         }
-                        Ordini.GestioneOrdini.UpdateItemFromOrder(id_ordine, Items[i].Id_db_entry, Items[i].Nuovo_Prezzo, Items[i].Nuovo_Prezzo_Sconto, Items[i].Nuovo_Qta, Items[i].Nuovo_ETA, updateFprice, temp_connection);
+                        Ordini.GestioneOggetti.UpdateItemFromOrder(id_ordine, Items[i].Id_db_entry, Items[i].Nuovo_Prezzo, Items[i].Nuovo_Prezzo_Sconto, Items[i].Nuovo_Qta, Items[i].Nuovo_ETA, updateFprice, temp_connection);
                     }
                 }
 
-                using (UserSettings UserSettings = new())
+                UserSettings UserSettings = new();
+                if (Boolean.Parse(UserSettings.settings["calendario"]["aggiornaCalendario"]) == true)
                 {
-                    if (Boolean.Parse(UserSettings.settings["calendario"]["aggiornaCalendario"]) == true)
-                    {
-                        Outlook.Application OlApp = new();
-                        Outlook.Folder personalCalendar = CalendarManager.FindCalendar(OlApp, UserSettings.settings["calendario"]["nomeCalendario"]);
-                        Ordini.GestioneOrdini.UpdateCalendarOnObj(id_ordine, personalCalendar);
-                    }
+                    Outlook.Application OlApp = new();
+                    Outlook.Folder personalCalendar = CalendarManager.FindCalendar(OlApp, UserSettings.settings["calendario"]["nomeCalendario"]);
+                    Ordini.GestioneOrdini.UpdateCalendarOnObj(id_ordine, personalCalendar, temp_connection);
                 }
-            }
 
+            }
             this.Close();
         }
-
     }
 }

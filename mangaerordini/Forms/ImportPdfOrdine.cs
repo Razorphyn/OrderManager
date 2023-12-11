@@ -197,9 +197,9 @@ namespace ManagerOrdini.Forms
                 }
 
 
-                Ordini.GestioneOrdini.Answer esito = Ordini.GestioneOrdini.CreateOrder(n_ordine, id_offerta, idsd, id_contatto, dataOrdValue, dataETAOrdValue,
-                                                                         tot_ordineV, scontoV, prezzo_finaleV, stato_ordine, prezzoSpedizione, gestSP,
-                                                                         CheckBoxOrdOffertaNonPresente.Checked, false);
+                Ordini.Answer esito = Ordini.GestioneOrdini.CreateOrder(n_ordine, id_offerta, CheckBoxOrdOffertaNonPresente.Checked, false, idsd, id_contatto, dataOrdValue.DateValue, dataETAOrdValue.DateValue,
+                                                                         tot_ordineV.DecimalValue, scontoV.DecimalValue, prezzo_finaleV.DecimalValue, stato_ordine, gestSP, prezzoSpedizione.DecimalValue
+                                                                         );
 
                 if (esito.Success)
                 {
@@ -244,7 +244,7 @@ namespace ManagerOrdini.Forms
                         idoggric = Convert.ToInt64(GetResource.GetIdRicambioInOffferta(offerID, items[i].id).LongValue);
                     }
 
-                    Ordini.GestioneOrdini.Answer esitoOgg = Ordini.GestioneOrdini.AddObjToOrder(orderID, items[i].id, items[i].eta, items[i].prezzo, items[i].prezzo_scontato, items[i].qta,
+                    Ordini.Answer esitoOgg = Ordini.GestioneOggetti.AddObjToOrder(orderID, items[i].id, items[i].eta, items[i].prezzo, items[i].prezzo_scontato, items[i].qta,
                                                                                     items[i].isNotOffer, false, idoggric);
 
                     if (!esitoOgg.Success)
@@ -833,26 +833,28 @@ namespace ManagerOrdini.Forms
             {
                 Error += "Il ricambio non esiste nel database.";
             }
-            else
-                id = idir;
 
             DataValidation.ValidationResult prezzoOrV = DataValidation.ValidatePrezzo(prezzoOr);
             Error += prezzoOrV.Error;
-            this.prezzo = prezzoOrV.DecimalValue != null ? (decimal)prezzoOrV.DecimalValue : 0;
-
+            
             DataValidation.ValidationResult prezzoScV = DataValidation.ValidatePrezzo(prezzoSc);
             Error += prezzoScV.Error;
-            this.prezzo_scontato = prezzoScV.DecimalValue != null ? (decimal)prezzoScV.DecimalValue : 0;
-
+            
             DataValidation.ValidationResult qtaV = DataValidation.ValidateQta(qta);
             Error += qtaV.Error;
-            this.qta = qtaV.IntValue != null ? (int)qtaV.IntValue : 0;
-
+            
             DataValidation.ValidationResult delivery = DataValidation.ValidateDate(etaItem);
             Error += delivery.Error;
-            this.eta = delivery.DateValue != null ? (DateTime)delivery.DateValue : DateTime.MinValue;
 
-            this.isNotOffer = !isOffer;
+            if (String.IsNullOrEmpty(Error))
+            {
+                this.id = idir;
+                this.qta = qtaV.IntValue;
+                this.prezzo_scontato = prezzoScV.DecimalValue;
+                this.prezzo = prezzoOrV.DecimalValue;
+                this.eta = delivery.DateValue != null ? (DateTime)delivery.DateValue : DateTime.MinValue;
+                this.isNotOffer = !isOffer;
+            }
         }
     }
 }
