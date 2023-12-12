@@ -7,7 +7,7 @@ namespace Razorphyn
 
     public class UserSettings
     {
-        public Dictionary<string, Dictionary<string, string>> settings = new Dictionary<string, Dictionary<string, string>>();
+        public Dictionary<string, Dictionary<string, string>> settings = new();
 
         public UserSettings()
         {
@@ -43,6 +43,5 @@ namespace Razorphyn
                 }
             }
         }
-
     }
 }

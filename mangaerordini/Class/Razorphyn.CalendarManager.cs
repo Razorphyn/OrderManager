@@ -10,24 +10,25 @@ using Outlook = Microsoft.Office.Interop.Outlook;
 
 namespace Razorphyn
 {
-    public class CalendarManager
+    internal class CalendarManager
     {
-        readonly DbTools DbTools = new DbTools();
 
-        public class CalendarResult
+        internal class CalendarResult
         {
-            public bool Success { get; set; } = false;
+            internal bool Success { get; set; } = false;
 
-            public bool Found { get; set; } = false;
+            internal bool Found { get; set; } = false;
 
-            public DateTime AppointmentDate { get; set; } = DateTime.Now.AddDays(-7);
+            internal DateTime AppointmentDate { get; set; } = DateTime.Now.AddDays(-7);
 
-            public Outlook.Folder CalendarFolder { get; set; } = null;
+            internal Outlook.Folder CalendarFolder { get; set; } = null;
         }
 
-        public void UpdateCalendar(Outlook.Folder personalCalendar, string oldRef, string newRef, int id_ordine, DateTime estDate, bool delete = true)
+        internal static void UpdateCalendar(Outlook.Folder personalCalendar, string oldRef, string newRef, long id_ordine, DateTime estDate, bool delete = true, SQLiteConnection connection = null)//send db
         {
             bool check = false;
+            connection ??= ProgramParameters.connection;
+
             if (delete == true)
                 check = RemoveAppointment(personalCalendar, oldRef);
 
@@ -35,7 +36,7 @@ namespace Razorphyn
             {
                 Thread.CurrentThread.CurrentCulture = new CultureInfo("it-IT");
 
-                DataValidation.ValidationResult dateAppoint = new DataValidation.ValidationResult
+                DataValidation.ValidationResult dateAppoint = new()
                 {
                     DateValue = DateTime.MinValue
                 };
@@ -54,7 +55,6 @@ namespace Razorphyn
                             return;
                         }
 
-                        var DataValidation = new DataValidation();
                         dateAppoint = DataValidation.ValidateDate(input);
 
                         if (dateAppoint.Error != null)
@@ -92,7 +92,7 @@ namespace Razorphyn
             }
         }
 
-        public void AddAppointment(Outlook.Folder personalCalendar, string ordRef, string body, DateTime estDate)
+        internal static void AddAppointment(Outlook.Folder personalCalendar, string ordRef, string body, DateTime estDate)
         {
             try
             {
@@ -127,7 +127,7 @@ namespace Razorphyn
             }
         }
 
-        public bool RemoveAppointment(Outlook.Folder personalCalendar, string ordRef, List<Tuple<string, Outlook.AppointmentItem>> listaApp = null)
+        internal static bool RemoveAppointment(Outlook.Folder personalCalendar, string ordRef, List<Tuple<string, Outlook.AppointmentItem>> listaApp = null)
         {
             bool found = false;
             int c = 0;
@@ -218,7 +218,7 @@ namespace Razorphyn
 
         }
 
-        public bool? MoveAppointment(Outlook.Application OlApp, string oldCalendar, string newCalendar)
+        internal static bool? MoveAppointment(Outlook.Application OlApp, string oldCalendar, string newCalendar)
         {
             Outlook.Folder personalCalendar = FindCalendar(OlApp, oldCalendar);
             Outlook.Folder newCalendarFolder = FindCalendar(OlApp, newCalendar);
@@ -234,7 +234,7 @@ namespace Razorphyn
             bool error_free = true;
             int c = 0;
 
-            List<Outlook.AppointmentItem> listaApp = new List<Outlook.AppointmentItem>();
+            List<Outlook.AppointmentItem> listaApp = new();
             foreach (Outlook.AppointmentItem apptItem in restrictedItems)
             {
 
@@ -261,7 +261,7 @@ namespace Razorphyn
             return error_free;
         }
 
-        public bool UpdateBodyCalendar(Outlook.Folder personalCalendar, string ordRef, string body)
+        internal static bool UpdateBodyCalendar(Outlook.Folder personalCalendar, string ordRef, string body, string title = null)
         {
             if (personalCalendar == null)
             {
@@ -282,6 +282,8 @@ namespace Razorphyn
 
             foreach (Outlook.AppointmentItem apptItem in restrictedItems)
             {
+                if (!String.IsNullOrEmpty(title))
+                    apptItem.Subject = title;
                 apptItem.Body = body;
                 apptItem.Save();
                 updated = true;
@@ -290,7 +292,7 @@ namespace Razorphyn
             return updated;
         }
 
-        public string CreateAppointmentBody(int id_ordine)
+        internal static string CreateAppointmentBody(long id_ordine, SQLiteConnection connection = null)//dc connection
         {
             string clnome = "";
             string clstato = "";
@@ -304,15 +306,17 @@ namespace Razorphyn
             string optotf = "";
             string prezzofinaleIclSped = "";
 
+            connection ??= ProgramParameters.connection;
 
             string commandText = @"SELECT
 												OP.Id AS idord,
 												(CASE OP.stato WHEN 0 THEN 'APERTO'  WHEN 1 THEN 'CHIUSO' END) AS ordstat,
 												OP.codice_ordine AS codice_ordine,
 												CE.nome as clnome,
-												CE.stato as clstato,
-												CE.provincia as clprov,
-												CE.citta as clcitt,
+
+												CS.stato as clstato,
+												CS.provincia as clprov,
+												CS.citta as clcitt,
 
 												CR.nome as crnome,
 												CR.telefono as crtel,
@@ -332,25 +336,27 @@ namespace Razorphyn
                                                                                       END) ),'.',',') AS prezzofinaleIclSped
 												
 
-									   FROM " + ProgramParameters.schemadb + @"[ordini_elenco] AS OP
-									   LEFT JOIN " + ProgramParameters.schemadb + @"[offerte_elenco] AS OE
-										ON OE.Id = OP.ID_offerta
-									   LEFT JOIN " + ProgramParameters.schemadb + @"[clienti_elenco] AS CE
-										ON CE.Id = OE.ID_cliente
-									   LEFT JOIN " + ProgramParameters.schemadb + @"[clienti_riferimenti] AS CR
-										ON CR.Id = OE.ID_riferimento
+                                        FROM " + ProgramParameters.schemadb + @"[ordini_elenco] AS OP
+                                        LEFT JOIN " + ProgramParameters.schemadb + @"[offerte_elenco] AS OE
+                                            ON OE.Id = OP.ID_offerta
+                                        LEFT JOIN " + ProgramParameters.schemadb + @"[clienti_sedi] AS CS
+                                            ON CS.Id = OE.ID_sede
+                                        LEFT JOIN " + ProgramParameters.schemadb + @"[clienti_elenco] AS CE
+                                            ON CE.Id = CS.ID_cliente                                        
+                                        LEFT JOIN " + ProgramParameters.schemadb + @"[clienti_riferimenti] AS CR
+                                            ON CR.Id = OE.ID_riferimento
+                                        WHERE OP.ID_offerta IS NOT NULL AND OP.id=@idOrdine
 
-									   WHERE OP.ID_offerta IS NOT NULL AND OP.id=@idOrdine
-
-                                        UNION ALL
+                                    UNION ALL
                                         SELECT
 												OP.Id AS idord,
 												(CASE OP.stato WHEN 0 THEN 'APERTO'  WHEN 1 THEN 'CHIUSO' END) AS ordstat,
 												OP.codice_ordine AS codice_ordine,
 												CE.nome as clnome,
-												CE.stato as clstato,
-												CE.provincia as clprov,
-												CE.citta as clcitt,
+
+												CS.stato as clstato,
+												CS.provincia as clprov,
+												CS.citta as clcitt,
 
 												CR.nome as crnome,
 												CR.telefono as crtel,
@@ -370,18 +376,20 @@ namespace Razorphyn
                                                                                       END) ),'.',',') AS prezzofinaleIclSped
 												
 
-									   FROM " + ProgramParameters.schemadb + @"[ordini_elenco] AS OP
-									   LEFT JOIN " + ProgramParameters.schemadb + @"[clienti_elenco] AS CE
-										ON CE.Id = OP.ID_cliente
-									   LEFT JOIN " + ProgramParameters.schemadb + @"[clienti_riferimenti] AS CR
-										ON CR.Id = OP.ID_riferimento
+                                        FROM " + ProgramParameters.schemadb + @"[ordini_elenco] AS OP
+                                        LEFT JOIN " + ProgramParameters.schemadb + @"[clienti_sedi] AS CS
+                                            ON CS.Id = OP.ID_sede
+                                        LEFT JOIN " + ProgramParameters.schemadb + @"[clienti_elenco] AS CE
+										    ON CE.Id = CS.ID_cliente
+                                        LEFT JOIN " + ProgramParameters.schemadb + @"[clienti_riferimenti] AS CR
+                                            ON CR.Id = OP.ID_riferimento
 
-									   WHERE OP.ID_offerta IS NULL AND OP.id=@idOrdine  
+                                        WHERE OP.ID_offerta IS NULL AND OP.id=@idOrdine  
 
                                         LIMIT 1;";
 
 
-            using (SQLiteCommand cmd = new SQLiteCommand(commandText, ProgramParameters.connection))
+            using (SQLiteCommand cmd = new(commandText, connection))
             {
                 try
                 {
@@ -449,7 +457,7 @@ namespace Razorphyn
 									ORDER BY OP.Id;";
 
 
-            using (SQLiteCommand cmd = new SQLiteCommand(commandText, ProgramParameters.connection))
+            using (SQLiteCommand cmd = new(commandText, connection))
             {
                 try
                 {
@@ -478,9 +486,9 @@ namespace Razorphyn
             return body;
         }
 
-        public void AggiornaDataCalendario(Outlook.Folder personalCalendar, string newRef)
+        internal static void AggiornaDataCalendario(Outlook.Folder personalCalendar, string newRef)
         {
-            DataValidation DataValidation = new DataValidation();
+            //DataValidation DataValidation = new DataValidation();
             Outlook.Items restrictedItems;
 
             if (!FindAppointment(personalCalendar, newRef))
@@ -495,7 +503,7 @@ namespace Razorphyn
 
             foreach (Outlook.AppointmentItem entry in restrictedItems)
             {
-                DataValidation.ValidationResult answer = new DataValidation.ValidationResult();
+                DataValidation.ValidationResult answer = new();
 
                 while (answer.DateValue == DateTime.MinValue)
                 {
@@ -533,11 +541,11 @@ namespace Razorphyn
             }
         }
 
-        public void FindCalendarDuplicate(Outlook.Folder personalCalendar, string newRef)
+        internal static void FindCalendarDuplicate(Outlook.Folder personalCalendar, string newRef)
         {
             Outlook.Items restrictedItems = CalendarGetItems(personalCalendar, DateTime.Now.AddDays(-7), DateTime.MaxValue, newRef);
 
-            List<Tuple<string, Outlook.AppointmentItem>> listaApp = new List<Tuple<string, Outlook.AppointmentItem>>();
+            List<Tuple<string, Outlook.AppointmentItem>> listaApp = new();
 
             int c = 0;
 
@@ -561,9 +569,9 @@ namespace Razorphyn
             return;
         }
 
-        private CalendarResult CreateCustomCalendar(Outlook.Application OlApp, string calName)
+        internal static CalendarResult CreateCustomCalendar(Outlook.Application OlApp, string calName)
         {
-            CalendarResult answer = new CalendarResult
+            CalendarResult answer = new()
             {
                 Success = true
             };
@@ -594,19 +602,15 @@ namespace Razorphyn
                 }
                 catch
                 {
-                    OnTopMessage.Error("Errore durante verifica necessità cartella OutLook. Impossibile aggiornare informazioni." + Environment.NewLine + "Incrociare dia per evitare danni ai dati");
+                    OnTopMessage.Error("Errore durante verifica necessità cartella OutLook. Impossibile aggiornare informazioni." + Environment.NewLine + "Incrociare le dita per evitare danni ai dati");
                     answer.Success = false;
-                }
-                finally
-                {
-                    //ReleaseObj(OlApp);
                 }
             }
 
             return answer;
         }
 
-        public Outlook.Folder FindCalendar(Outlook.Application OlApp, string calendarName)
+        internal static Outlook.Folder FindCalendar(Outlook.Application OlApp, string calendarName)
         {
             Outlook.Folder AppointmentFolder = OlApp.Session.GetDefaultFolder(Outlook.OlDefaultFolders.olFolderCalendar) as Outlook.Folder;
 
@@ -632,12 +636,10 @@ namespace Razorphyn
                 }
             }
 
-            //ReleaseObj(OlApp);
-
             return personalCalendar;
         }
 
-        public Outlook.Items CalendarGetItems(Outlook.Folder personalCalendar, DateTime startDate, DateTime endDate, string orderef = "")
+        internal static Outlook.Items CalendarGetItems(Outlook.Folder personalCalendar, DateTime startDate, DateTime endDate, string orderef = "")
         {
 
             string AppCode = "##ManaOrdini" + orderef;
@@ -653,8 +655,9 @@ namespace Razorphyn
             return restrictedItems;
         }
 
-        public bool FindAppointment(Outlook.Folder personalCalendar, string ordRef)
+        internal static bool FindAppointment(Outlook.Folder personalCalendar, string ordRef, SQLiteConnection connection = null)
         {
+            connection ??= ProgramParameters.connection;
             try
             {
                 if (personalCalendar is null)
@@ -662,7 +665,7 @@ namespace Razorphyn
                     return false;
                 }
 
-                CalendarResult answer = GetDbDateCalendar(new string[] { ordRef });
+                CalendarResult answer = GetDbDateCalendar(new string[] { ordRef }, connection);
 
                 if (answer.Success && !answer.Found)
                 {
@@ -681,13 +684,13 @@ namespace Razorphyn
 
                 foreach (Outlook.AppointmentItem apptItem in restrictedItems)
                 {
-                    UpdateDbDateAppointment(apptItem.Start, ordRef);
+                    UpdateDbDateAppointment(apptItem.Start, ordRef, connection);
                     return true;
                 }
 
                 OnTopMessage.Alert("Nel database è presente un appuntamento, ma non esiste corrispondenza in Outlook. Verificare informazioni, rischio conflitto." + Environment.NewLine + "Il dato su database è stato resetatto.");
 
-                UpdateDbDateAppointment(null, ordRef);
+                UpdateDbDateAppointment(null, ordRef, connection);
                 return false;
             }
             catch (System.Exception ex)
@@ -697,16 +700,14 @@ namespace Razorphyn
             }
         }
 
-        public void UpdateDbDateAppointment(DateTime? AppointmentDate, string ordRef)
+        internal static void UpdateDbDateAppointment(DateTime? AppointmentDate, string ordRef, SQLiteConnection connection = null) //dbconnection
         {
-            MessageBox.Show("" + AppointmentDate);
-
-            if (DateTime.Compare((DateTime)AppointmentDate, DateTime.MinValue) == 0)
+            if (AppointmentDate != null && DateTime.Compare((DateTime)AppointmentDate, DateTime.MinValue) == 0)
             {
                 return;
             }
 
-            var DataValidation = new DataValidation();
+            connection ??= ProgramParameters.connection;
 
             DataValidation.ValidationResult codice_ordine = DataValidation.ValidateId(ordRef);
             if (codice_ordine.Error != null)
@@ -715,12 +716,13 @@ namespace Razorphyn
                 return;
             }
 
-            string commandText = @"UPDATE  " + ProgramParameters.schemadb + @"[ordini_elenco] SET data_calendar_event = @dataVal WHERE codice_ordine = @ordCode LIMIT 1;";
-            using (SQLiteCommand cmd = new SQLiteCommand(commandText, ProgramParameters.connection))
+            try
             {
-                try
+                string commandText = @"UPDATE  " + ProgramParameters.schemadb + @"[ordini_elenco] SET data_calendar_event = @dataVal WHERE codice_ordine = @ordCode LIMIT 1;";
+                using (SQLiteCommand cmd = new(commandText, connection))
                 {
-                    if (!(AppointmentDate is null))
+
+                    if (AppointmentDate is not null)
                     {
                         DateTime temp = (DateTime)AppointmentDate;
                         AppointmentDate = new DateTime(temp.Year, temp.Month, temp.Day, 0, 0, 0);
@@ -732,70 +734,60 @@ namespace Razorphyn
                         cmd.Parameters.AddWithValue("@dataVal", DBNull.Value);
                     }
 
-                    cmd.Parameters.AddWithValue("@ordCode", codice_ordine.IntValue);
+                    cmd.Parameters.AddWithValue("@ordCode", codice_ordine.LongValue);
 
                     cmd.ExecuteNonQuery();
+
                 }
-                catch (SQLiteException ex)
-                {
-                    OnTopMessage.Error("Errore durante aggiornamento date calendario al database. Codice: " + DbTools.ReturnErorrCode(ex));
-                }
+            }
+            catch (SQLiteException ex)
+            {
+                OnTopMessage.Error("Errore durante aggiornamento date calendario al database. Codice: " + DbTools.ReturnErorrCode(ex));
             }
         }
 
-        public CalendarResult GetDbDateCalendar(string[] ordRef)
+        internal static CalendarResult GetDbDateCalendar(string[] ordRef, SQLiteConnection connection = null) //db conncetion
         {
-            CalendarResult answer = new CalendarResult();
-            List<int> ids = new List<int>();
+            CalendarResult answer = new();
+            List<long> ids = new();
+            connection ??= ProgramParameters.connection;
 
             foreach (string idOrd in ordRef)
             {
-                var Validator = new DataValidation();
-                DataValidation.ValidationResult codice_ordine = Validator.ValidateId(idOrd);
+                DataValidation.ValidationResult codice_ordine = DataValidation.ValidateId(idOrd);
                 if (codice_ordine.Error != null)
                 {
                     OnTopMessage.Error("Codice ordine errato.");
                     return answer;
                 }
 
-                ids.Add((int)codice_ordine.IntValue);
+                ids.Add((long)codice_ordine.LongValue);
             }
 
-            string commandText = @"SELECT data_calendar_event FROM " + ProgramParameters.schemadb + @"[ordini_elenco] WHERE codice_ordine IN (@ordCode)  LIMIT 1;";
-            using (SQLiteCommand cmd = new SQLiteCommand(commandText, ProgramParameters.connection))
+            try
             {
-                try
+                string commandText = @"SELECT data_calendar_event FROM " + ProgramParameters.schemadb + @"[ordini_elenco] WHERE codice_ordine IN (@ordCode)  LIMIT 1;";
+                using (SQLiteCommand cmd = new(commandText, connection))
                 {
+
                     answer.Success = true;
 
                     cmd.Parameters.AddWithValue("@ordCode", string.Join(", ", ids));
                     object res = cmd.ExecuteScalar();
 
-                    if (res != DBNull.Value && !(res is null) && DateTime.Compare((DateTime)res, DateTime.MinValue) == 1)
+                    if (res != DBNull.Value && res is not null && DateTime.Compare((DateTime)res, DateTime.MinValue) == 1)
                     {
                         answer.Found = true;
                         answer.AppointmentDate = (DateTime)res;
                     }
+
                 }
-                catch (SQLiteException ex)
-                {
-                    OnTopMessage.Error("Errore durante aggiornamento date calendario al database. Codice: " + DbTools.ReturnErorrCode(ex));
-                }
+            }
+            catch (SQLiteException ex)
+            {
+                OnTopMessage.Error("Errore durante aggiornamento date calendario al database. Codice: " + DbTools.ReturnErorrCode(ex));
             }
             return answer;
         }
-
-        public void ReleaseObj(object obj)
-        {
-            obj = null;
-
-            GC.Collect();
-            GC.WaitForPendingFinalizers();
-            GC.Collect();
-            return;
-
-        }
-
     }
-
 }

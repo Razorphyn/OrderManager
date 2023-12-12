@@ -1,8 +1,6 @@
 BEGIN TRANSACTION;
 	DROP TABLE IF EXISTS temp_value;
-	
-	UPDATE informazioni SET versione=4 where id=1;
-	
+		
 	CREATE TEMPORARY TABLE temp_value AS
 		SELECT 
 			Id, 
