@@ -46,6 +46,7 @@ namespace Razorphyn
             AutoUpdater.InstalledVersion = new Version(Application.ProductVersion);
             AutoUpdater.RunUpdateAsAdmin = false;
             AutoUpdater.ShowRemindLaterButton = false;
+            AutoUpdater.Synchronous = true;
             AutoUpdater.DownloadPath = Application.StartupPath;
             AutoUpdater.Start("https://github.com/Razorphyn/OrderManager/blob/main/mangaerordini/AutoUpdater.xml?raw=true");
 
