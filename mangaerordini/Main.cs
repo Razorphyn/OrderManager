@@ -2,6 +2,7 @@ using CsvHelper;
 using iText.Kernel.Pdf;
 using iText.Kernel.Pdf.Canvas.Parser;
 using iText.Kernel.Pdf.Canvas.Parser.Listener;
+using iText.StyledXmlParser.Jsoup.Nodes;
 using ManagerOrdini;
 using ManagerOrdini.Forms;
 using Microsoft.VisualBasic;
@@ -20,7 +21,6 @@ using System.Runtime.InteropServices;
 using System.Text;
 using System.Text.RegularExpressions;
 using System.Windows.Forms;
-using UglyToad.PdfPig.DocumentLayoutAnalysis.PageSegmenter;
 using static Razorphyn.Populate;
 using static Razorphyn.SupportClasses;
 using Application = System.Windows.Forms.Application;
@@ -3329,6 +3329,7 @@ namespace mangaerordini
 
             if (esito.Success)
             {
+                OnTopMessage.Information("Oggetto aggiunto all'offerta");
                 LoadOfferteCreaTable();
                 LoadOfferteOggettiCreaTable(idof);
 
@@ -4011,8 +4012,8 @@ namespace mangaerordini
                         {
                             Dictionary<string, string> findStrLang = new()
                                 {
-                                    { "Offerta", "ita" },
-                                    { "Quotation", "eng" }
+                                    { "offerta", "ita" },
+                                    { "quotation", "eng" }
                                 };
 
                             var page = document.GetPage(1);
@@ -4026,7 +4027,7 @@ namespace mangaerordini
                             {
                                 words.Add(new Word
                                 {
-                                    Value = word.Text,
+                                    Value = word.Text.ToLower(),
                                     X = Convert.ToInt32(word.BoundingBox.BottomLeft.X),
                                     Y = Convert.ToInt32(word.BoundingBox.BottomLeft.Y)
                                 });
@@ -4038,7 +4039,6 @@ namespace mangaerordini
 
                             for (int i = 0; i < WordsCount; i++)
                             {
-
                                 if (Offerlang == "" && findStrLang.ContainsKey(words[i].Value))
                                 {
                                     Offerlang = findStrLang[words[i].Value];
@@ -4265,14 +4265,14 @@ namespace mangaerordini
             {
                 case "offerta":
 
-                    findStrField["ita"].Add("numero", "OrdineNo./Data/");
-                    findStrField["eng"].Add("numero", "Number/Date");
+                    findStrField["ita"].Add("numero", "ordineno./data/");
+                    findStrField["eng"].Add("numero", "number/date");
 
-                    findStrField["ita"].Add("cliente", "No.cliente");
-                    findStrField["eng"].Add("cliente", "Cust.No.");
+                    findStrField["ita"].Add("cliente", "no.cliente");
+                    findStrField["eng"].Add("cliente", "cust.no.");
 
-                    findStrField["ita"].Add("data", "/Data");
-                    findStrField["eng"].Add("data", "/Date");
+                    findStrField["ita"].Add("data", "/data");
+                    findStrField["eng"].Add("data", "/date");
                     break;
                 case "OffertaItem":
 
@@ -4282,20 +4282,20 @@ namespace mangaerordini
 
                 case "Ordine":
 
-                    findStrField["ita"].Add("numero", "OrdineNo./");
-                    findStrField["eng"].Add("numero", "Number/");
+                    findStrField["ita"].Add("numero", "ordineno./");
+                    findStrField["eng"].Add("numero", "number/");
 
-                    findStrField["ita"].Add("data", "OrdineNo./Data");
-                    findStrField["eng"].Add("data", "Number/Date");
+                    findStrField["ita"].Add("data", "ordineno./data");
+                    findStrField["eng"].Add("data", "number/date");
 
-                    findStrField["ita"].Add("numeroOff", "OffertaNo./");
-                    findStrField["eng"].Add("numeroOff", "QuotationNo./");
+                    findStrField["ita"].Add("numeroOff", "offertano./");
+                    findStrField["eng"].Add("numeroOff", "quotationno./");
 
-                    findStrField["ita"].Add("cliente", "No.cliente");
-                    findStrField["eng"].Add("cliente", "Cust.No.");
+                    findStrField["ita"].Add("cliente", "no.cliente");
+                    findStrField["eng"].Add("cliente", "cust.no.");
 
-                    findStrField["ita"].Add("ETA", "Terminedat.");
-                    findStrField["eng"].Add("ETA", "ShipmentDate");
+                    findStrField["ita"].Add("ETA", "terminedat.");
+                    findStrField["eng"].Add("ETA", "shipmentdate");
                     break;
                 case "OrdineItem":
 
@@ -6578,8 +6578,8 @@ namespace mangaerordini
                             Dictionary<string, string> findStrLang = new()
                             {
                                 { "d'ordine", "ita" },
-                                { "Order", "eng" },
-                                { "Order confirmation", "eng" }
+                                { "order", "eng" },
+                                { "order confirmation", "eng" }
 
                             };
 
@@ -6592,7 +6592,7 @@ namespace mangaerordini
                             {
                                 words.Add(new Word
                                 {
-                                    Value = word.Text,
+                                    Value = word.Text.ToLower(),
                                     X = Convert.ToInt32(word.BoundingBox.BottomLeft.X),
                                     Y = Convert.ToInt32(word.BoundingBox.BottomLeft.Y)
                                 });
@@ -6794,7 +6794,7 @@ namespace mangaerordini
         {
             string eta = "";
 
-            if (line.Contains("Setti.") || line.Contains("Week"))
+            if (line.Contains("setti.") || line.Contains("week"))
             {
                 string pat = @"\d{1,2}.\d{1,4}$";
                 Regex r = new Regex(pat, RegexOptions.IgnoreCase);

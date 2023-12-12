@@ -150,11 +150,10 @@ namespace Razorphyn
 
                         esito.Success = true;
 
-                        OnTopMessage.Information("Oggetto " + nome + " aggiunto all'offerta");
                     }
                     catch (SQLiteException ex)
                     {
-                        OnTopMessage.Error("Errore durante aggiunta al database. Codice: " + DbTools.ReturnErorrCode(ex));
+                        OnTopMessage.Error("Errore durante aggiunta " + nome + "al database. Codice: " + DbTools.ReturnErorrCode(ex));
                     }
                 }
 

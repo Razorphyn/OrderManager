@@ -262,9 +262,9 @@
             this.AddOffCreaSede.Anchor = ((System.Windows.Forms.AnchorStyles)((System.Windows.Forms.AnchorStyles.Left | System.Windows.Forms.AnchorStyles.Right)));
             this.AddOffCreaSede.Font = new System.Drawing.Font("Segoe UI", 12F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
             this.AddOffCreaSede.FormattingEnabled = true;
-            this.AddOffCreaSede.Location = new System.Drawing.Point(555, 50);
+            this.AddOffCreaSede.Location = new System.Drawing.Point(555, 46);
             this.AddOffCreaSede.Name = "AddOffCreaSede";
-            this.AddOffCreaSede.Size = new System.Drawing.Size(255, 29);
+            this.AddOffCreaSede.Size = new System.Drawing.Size(255, 36);
             this.AddOffCreaSede.TabIndex = 109;
             this.AddOffCreaSede.SelectedIndexChanged += new System.EventHandler(this.AddOffCreaSede_SelectedIndexChanged);
             // 
@@ -273,18 +273,18 @@
             this.AddOffCreaSpedizioneGest.Anchor = ((System.Windows.Forms.AnchorStyles)((System.Windows.Forms.AnchorStyles.Left | System.Windows.Forms.AnchorStyles.Right)));
             this.AddOffCreaSpedizioneGest.Font = new System.Drawing.Font("Segoe UI", 12F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
             this.AddOffCreaSpedizioneGest.FormattingEnabled = true;
-            this.AddOffCreaSpedizioneGest.Location = new System.Drawing.Point(555, 94);
+            this.AddOffCreaSpedizioneGest.Location = new System.Drawing.Point(555, 90);
             this.AddOffCreaSpedizioneGest.Name = "AddOffCreaSpedizioneGest";
-            this.AddOffCreaSpedizioneGest.Size = new System.Drawing.Size(255, 29);
+            this.AddOffCreaSpedizioneGest.Size = new System.Drawing.Size(255, 36);
             this.AddOffCreaSpedizioneGest.TabIndex = 107;
             // 
             // AddOffCreaSpedizione
             // 
             this.AddOffCreaSpedizione.Anchor = ((System.Windows.Forms.AnchorStyles)((System.Windows.Forms.AnchorStyles.Left | System.Windows.Forms.AnchorStyles.Right)));
             this.AddOffCreaSpedizione.Font = new System.Drawing.Font("Segoe UI", 12F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
-            this.AddOffCreaSpedizione.Location = new System.Drawing.Point(133, 94);
+            this.AddOffCreaSpedizione.Location = new System.Drawing.Point(133, 91);
             this.AddOffCreaSpedizione.Name = "AddOffCreaSpedizione";
-            this.AddOffCreaSpedizione.Size = new System.Drawing.Size(256, 29);
+            this.AddOffCreaSpedizione.Size = new System.Drawing.Size(256, 34);
             this.AddOffCreaSpedizione.TabIndex = 105;
             // 
             // AddOffCreaStato
@@ -292,9 +292,9 @@
             this.AddOffCreaStato.Anchor = ((System.Windows.Forms.AnchorStyles)((System.Windows.Forms.AnchorStyles.Left | System.Windows.Forms.AnchorStyles.Right)));
             this.AddOffCreaStato.Font = new System.Drawing.Font("Segoe UI", 12F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
             this.AddOffCreaStato.FormattingEnabled = true;
-            this.AddOffCreaStato.Location = new System.Drawing.Point(916, 7);
+            this.AddOffCreaStato.Location = new System.Drawing.Point(916, 3);
             this.AddOffCreaStato.Name = "AddOffCreaStato";
-            this.AddOffCreaStato.Size = new System.Drawing.Size(257, 29);
+            this.AddOffCreaStato.Size = new System.Drawing.Size(257, 36);
             this.AddOffCreaStato.TabIndex = 103;
             // 
             // AddOffCreaPRef
@@ -302,9 +302,9 @@
             this.AddOffCreaPRef.Anchor = ((System.Windows.Forms.AnchorStyles)((System.Windows.Forms.AnchorStyles.Left | System.Windows.Forms.AnchorStyles.Right)));
             this.AddOffCreaPRef.Font = new System.Drawing.Font("Segoe UI", 12F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
             this.AddOffCreaPRef.FormattingEnabled = true;
-            this.AddOffCreaPRef.Location = new System.Drawing.Point(916, 50);
+            this.AddOffCreaPRef.Location = new System.Drawing.Point(916, 46);
             this.AddOffCreaPRef.Name = "AddOffCreaPRef";
-            this.AddOffCreaPRef.Size = new System.Drawing.Size(257, 29);
+            this.AddOffCreaPRef.Size = new System.Drawing.Size(257, 36);
             this.AddOffCreaPRef.TabIndex = 101;
             // 
             // AddOffCreaCliente
@@ -312,9 +312,9 @@
             this.AddOffCreaCliente.Anchor = ((System.Windows.Forms.AnchorStyles)((System.Windows.Forms.AnchorStyles.Left | System.Windows.Forms.AnchorStyles.Right)));
             this.AddOffCreaCliente.Font = new System.Drawing.Font("Segoe UI", 12F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
             this.AddOffCreaCliente.FormattingEnabled = true;
-            this.AddOffCreaCliente.Location = new System.Drawing.Point(133, 50);
+            this.AddOffCreaCliente.Location = new System.Drawing.Point(133, 46);
             this.AddOffCreaCliente.Name = "AddOffCreaCliente";
-            this.AddOffCreaCliente.Size = new System.Drawing.Size(256, 29);
+            this.AddOffCreaCliente.Size = new System.Drawing.Size(256, 36);
             this.AddOffCreaCliente.TabIndex = 99;
             this.AddOffCreaCliente.SelectedIndexChanged += new System.EventHandler(this.AddOffCreaCliente_SelectedIndexChanged);
             // 
@@ -324,20 +324,20 @@
             this.AddOffCreaData.CalendarFont = new System.Drawing.Font("Segoe UI", 12F);
             this.AddOffCreaData.Font = new System.Drawing.Font("Segoe UI", 12F);
             this.AddOffCreaData.Format = System.Windows.Forms.DateTimePickerFormat.Custom;
-            this.AddOffCreaData.Location = new System.Drawing.Point(556, 7);
+            this.AddOffCreaData.Location = new System.Drawing.Point(556, 5);
             this.AddOffCreaData.Margin = new System.Windows.Forms.Padding(4, 5, 4, 5);
             this.AddOffCreaData.Name = "AddOffCreaData";
-            this.AddOffCreaData.Size = new System.Drawing.Size(253, 29);
+            this.AddOffCreaData.Size = new System.Drawing.Size(253, 34);
             this.AddOffCreaData.TabIndex = 91;
             // 
             // AddOffCreaNOff
             // 
             this.AddOffCreaNOff.Anchor = ((System.Windows.Forms.AnchorStyles)((System.Windows.Forms.AnchorStyles.Left | System.Windows.Forms.AnchorStyles.Right)));
             this.AddOffCreaNOff.Font = new System.Drawing.Font("Segoe UI", 12F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
-            this.AddOffCreaNOff.Location = new System.Drawing.Point(134, 7);
+            this.AddOffCreaNOff.Location = new System.Drawing.Point(134, 5);
             this.AddOffCreaNOff.Margin = new System.Windows.Forms.Padding(4, 5, 4, 5);
             this.AddOffCreaNOff.Name = "AddOffCreaNOff";
-            this.AddOffCreaNOff.Size = new System.Drawing.Size(254, 29);
+            this.AddOffCreaNOff.Size = new System.Drawing.Size(254, 34);
             this.AddOffCreaNOff.TabIndex = 90;
             // 
             // OfferItemCollection
@@ -352,7 +352,7 @@
             this.OfferItemCollection.ColumnStyles.Add(new System.Windows.Forms.ColumnStyle(System.Windows.Forms.SizeType.Absolute, 120F));
             this.OfferItemCollection.ColumnStyles.Add(new System.Windows.Forms.ColumnStyle(System.Windows.Forms.SizeType.Absolute, 140F));
             this.OfferItemCollection.ColumnStyles.Add(new System.Windows.Forms.ColumnStyle(System.Windows.Forms.SizeType.Absolute, 140F));
-            this.OfferItemCollection.ColumnStyles.Add(new System.Windows.Forms.ColumnStyle(System.Windows.Forms.SizeType.Absolute, 117F));
+            this.OfferItemCollection.ColumnStyles.Add(new System.Windows.Forms.ColumnStyle(System.Windows.Forms.SizeType.Absolute, 118F));
             this.OfferItemCollection.Controls.Add(this.label7, 0, 0);
             this.OfferItemCollection.Controls.Add(this.label6, 6, 0);
             this.OfferItemCollection.Controls.Add(this.label5, 5, 0);
@@ -384,9 +384,9 @@
             // 
             this.label6.AutoSize = true;
             this.label6.Dock = System.Windows.Forms.DockStyle.Fill;
-            this.label6.Location = new System.Drawing.Point(1063, 1);
+            this.label6.Location = new System.Drawing.Point(1062, 1);
             this.label6.Name = "label6";
-            this.label6.Size = new System.Drawing.Size(111, 50);
+            this.label6.Size = new System.Drawing.Size(112, 50);
             this.label6.TabIndex = 5;
             this.label6.Text = "Quantità";
             this.label6.TextAlign = System.Drawing.ContentAlignment.MiddleCenter;
@@ -395,7 +395,7 @@
             // 
             this.label5.AutoSize = true;
             this.label5.Dock = System.Windows.Forms.DockStyle.Fill;
-            this.label5.Location = new System.Drawing.Point(922, 1);
+            this.label5.Location = new System.Drawing.Point(921, 1);
             this.label5.Name = "label5";
             this.label5.Size = new System.Drawing.Size(134, 50);
             this.label5.TabIndex = 4;
@@ -406,7 +406,7 @@
             // 
             this.label4.AutoSize = true;
             this.label4.Dock = System.Windows.Forms.DockStyle.Fill;
-            this.label4.Location = new System.Drawing.Point(781, 1);
+            this.label4.Location = new System.Drawing.Point(780, 1);
             this.label4.Name = "label4";
             this.label4.Size = new System.Drawing.Size(134, 50);
             this.label4.TabIndex = 3;
@@ -417,7 +417,7 @@
             // 
             this.label3.AutoSize = true;
             this.label3.Dock = System.Windows.Forms.DockStyle.Fill;
-            this.label3.Location = new System.Drawing.Point(660, 1);
+            this.label3.Location = new System.Drawing.Point(659, 1);
             this.label3.Name = "label3";
             this.label3.Size = new System.Drawing.Size(114, 50);
             this.label3.TabIndex = 2;
@@ -430,7 +430,7 @@
             this.label1.Dock = System.Windows.Forms.DockStyle.Fill;
             this.label1.Location = new System.Drawing.Point(99, 1);
             this.label1.Name = "label1";
-            this.label1.Size = new System.Drawing.Size(433, 50);
+            this.label1.Size = new System.Drawing.Size(432, 50);
             this.label1.TabIndex = 0;
             this.label1.Text = "Pezzo";
             this.label1.TextAlign = System.Drawing.ContentAlignment.MiddleCenter;
@@ -439,7 +439,7 @@
             // 
             this.label2.AutoSize = true;
             this.label2.Dock = System.Windows.Forms.DockStyle.Fill;
-            this.label2.Location = new System.Drawing.Point(539, 1);
+            this.label2.Location = new System.Drawing.Point(538, 1);
             this.label2.Name = "label2";
             this.label2.Size = new System.Drawing.Size(114, 50);
             this.label2.TabIndex = 1;
@@ -465,7 +465,7 @@
             // 
             // ImportPdfOfferta
             // 
-            this.AutoScaleDimensions = new System.Drawing.SizeF(9F, 21F);
+            this.AutoScaleDimensions = new System.Drawing.SizeF(11F, 28F);
             this.AutoScaleMode = System.Windows.Forms.AutoScaleMode.Font;
             this.BackColor = System.Drawing.Color.White;
             this.ClientSize = new System.Drawing.Size(1184, 825);

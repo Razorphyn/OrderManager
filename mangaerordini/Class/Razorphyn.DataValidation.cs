@@ -354,7 +354,7 @@ namespace Razorphyn
                     answer.DecimalValue = prezzo;
                 }
 
-                if (gestSP < 0 && prezzo>0)
+                if (gestSP < 0 && prezzo > 0)
                 {
                     answer.Error += "Selezionare opzione per la gestione del costo della spedizione o mettere costo a zero." + Environment.NewLine;
                 }

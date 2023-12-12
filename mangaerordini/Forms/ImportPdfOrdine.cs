@@ -22,6 +22,7 @@ namespace ManagerOrdini.Forms
 
         long orderID = 0;
         long offerID = 0;
+        long offerIDOriginal = 0;
         DateTime etaorder = DateTime.MinValue;
 
         List<long> ricambiOfferta = new();
@@ -55,7 +56,7 @@ namespace ManagerOrdini.Forms
             this.orderInfo = Form1_offerInfo;
             this.Items = Form1_Items;
             this.filePath = filePath;
-            this.offerID = (String.IsNullOrEmpty(orderInfo["numeroOff"])) ? -1 : Offerte.GetResources.GetOfferIdFromCodice(orderInfo["numeroOff"]);
+            this.offerID = this.offerIDOriginal = (String.IsNullOrEmpty(orderInfo["numeroOff"])) ? -1 : Offerte.GetResources.GetOfferIdFromCodice(orderInfo["numeroOff"]);
 
             FieldOrdNOrdine.Text = orderInfo["numero"];
             FieldOrdData.Text = orderInfo["data"];
@@ -75,7 +76,9 @@ namespace ManagerOrdini.Forms
                 index = Utility.FindIndexFromValue(ComboBoxOrdSede, id_sede);
                 ComboBoxOrdSede.SelectedIndex = index;
                 Populate_combobox_ordini_crea_offerta(ComboBoxOrdOfferta, idcl: id_cliente, idsd: id_sede, stato: null);
-                ComboBoxOrdOfferta.SelectedIndex = Utility.FindIndexFromValue(ComboBoxOrdOfferta, this.offerID);
+
+                index = Utility.FindIndexFromValue(ComboBoxOrdOfferta, this.offerID);
+                ComboBoxOrdOfferta.SelectedIndex = index;
             }
 
             Populate_combobox_pref(ComboBoxOrdContatto, id_cliente);
@@ -88,10 +91,14 @@ namespace ManagerOrdini.Forms
             ComboBoxOrdCliente.SelectedIndexChanged += ComboBoxOrdCliente_SelectedIndexChanged;
             ComboBoxOrdSede.SelectedIndexChanged += ComboBoxOrdSede_SelectedIndexChanged;
             ComboBoxOrdOfferta.SelectedIndexChanged += ComboBoxOrdOfferta_SelectedIndexChanged;
+
         }
 
         private void BtCreaOrdine_Click(object sender, EventArgs e)
         {
+            List<Item> items = BuildItemList(etaorder, offerID);
+            if (!CheckUniqueItemEntry(items))
+                return;
 
             if (orderID == 0)
             {
@@ -219,10 +226,7 @@ namespace ManagerOrdini.Forms
             if (orderID > 0)
             {
 
-                List<Item> items = BuildItemList(etaorder, offerID);
-
                 int netAdded = 0;
-
                 int c = items.Count();
 
                 List<int> Rows2BeDel = new();
@@ -322,6 +326,8 @@ namespace ManagerOrdini.Forms
                 CheckBoxOrdOffertaNonPresente.Enabled = true;
                 ComboBoxOrdContatto.Enabled = true;
 
+                this.offerID = this.offerIDOriginal;
+
                 if (ComboBoxOrdOfferta.Items.Count < 2)
                 {
                     ComboBoxOrdOfferta.Enabled = false;
@@ -330,8 +336,9 @@ namespace ManagerOrdini.Forms
                 }
                 else
                 {
+                    CheckBoxOrdOffertaNonPresente.Checked = false;
                     int index = Utility.FindIndexFromValue(ComboBoxOrdOfferta, this.offerID);
-                    ComboBoxOrdSede.SelectedIndex = index;
+                    ComboBoxOrdOfferta.SelectedIndex = index;
                 }
 
                 BuildHeaderTableItem();
@@ -352,7 +359,7 @@ namespace ManagerOrdini.Forms
                 ComboBoxOrdOfferta.SelectedIndex = 0;
 
                 ImportPDFSupport.DeleteControls(TabItem);
-                BuildHeaderTableItem();
+                //BuildHeaderTableItem();
                 TableDefaultMessage("Selezionare Sede");
             }
 
@@ -372,6 +379,8 @@ namespace ManagerOrdini.Forms
 
             if (this.offerID > 0)
             {
+                CheckBoxOrdOffertaNonPresente.Checked = false;
+
                 Populate_ricambi();
 
                 DrawingControl.SuspendDrawing(TabItem);
@@ -383,9 +392,7 @@ namespace ManagerOrdini.Forms
             else
             {
                 ricambiOfferta.Clear();
-
                 CheckBoxOrdOffertaNonPresente.Checked = true;
-
             }
 
             return;
@@ -453,7 +460,8 @@ namespace ManagerOrdini.Forms
                 listItems.Add(item);
             }
 
-            return RemoveDuplicateItemEntry(listItems);
+            //return RemoveDuplicateItemEntry(listItems);
+            return listItems;
         }
 
         private List<Item> RemoveDuplicateItemEntry(List<Item> items)
@@ -497,6 +505,24 @@ namespace ManagerOrdini.Forms
             return items;
         }
 
+        private bool CheckUniqueItemEntry(List<Item> items)
+        {
+            int c = items.Count;
+
+            for (int i = 0; i < c; i++)
+            {
+                for (int j = i + 1; j < c; j++)
+                {
+                    if (items[i].id == items[j].id && DateTime.Compare(items[i].eta, items[j].eta) == 0)
+                    {
+                        OnTopMessage.Information("L'oggetto con ID " + items[i].id + " presenta un'altra riga con la stessa data di consegna."+Environment.NewLine+"Cambiare la data di consegna o non importare uno dei due elementi.");
+                        return false;
+                    }
+                }
+            }
+
+            return true;
+        }
 
         //TABLE
 
@@ -778,8 +804,12 @@ namespace ManagerOrdini.Forms
             for (int i = 0; i < c; i++)
             {
                 string ctrName = "isOffer" + i;
-                CheckBox ctrCheckBox = this.Controls.Find(ctrName, true)[0] as CheckBox;
-                ctrCheckBox.Checked = false;
+                Control[] ctrCheckBox = this.Controls.Find(ctrName, true);
+                if (ctrCheckBox != null && ctrCheckBox.Length > 0)
+                {
+                    (ctrCheckBox[0] as CheckBox).Checked = false;
+                }
+
             }
         }
 
@@ -797,8 +827,9 @@ namespace ManagerOrdini.Forms
         private void CheckBoxOrdOffertaNonPresente_CheckedChanged(object sender, EventArgs e)
         {
             UncheckItemOffer();
+            CheckBox obj = (CheckBox)sender;
 
-            if (ComboBoxOrdOfferta.SelectedIndex > 0)
+            if (obj.Checked && ComboBoxOrdOfferta.SelectedIndex > 0)
                 ComboBoxOrdOfferta.SelectedIndex = 0;
         }
 
@@ -836,13 +867,13 @@ namespace ManagerOrdini.Forms
 
             DataValidation.ValidationResult prezzoOrV = DataValidation.ValidatePrezzo(prezzoOr);
             Error += prezzoOrV.Error;
-            
+
             DataValidation.ValidationResult prezzoScV = DataValidation.ValidatePrezzo(prezzoSc);
             Error += prezzoScV.Error;
-            
+
             DataValidation.ValidationResult qtaV = DataValidation.ValidateQta(qta);
             Error += qtaV.Error;
-            
+
             DataValidation.ValidationResult delivery = DataValidation.ValidateDate(etaItem);
             Error += delivery.Error;
 

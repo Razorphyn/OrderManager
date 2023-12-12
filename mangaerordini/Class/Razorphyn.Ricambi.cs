@@ -1,12 +1,5 @@
-﻿using System;
-using System.Collections.Generic;
+﻿using System.Data;
 using System.Data.SQLite;
-using System.Data;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
-using System.Windows.Forms;
-using Windows.ApplicationModel;
 
 namespace Razorphyn
 {
@@ -52,7 +45,7 @@ namespace Razorphyn
                                         ON CM.Id =  PR.ID_macchina
                                     LEFT JOIN " + ProgramParameters.schemadb + @"[fornitori] AS F
 									    ON F.Id =  PR.ID_fornitore 
-                                    WHERE PR.deleted = 0 " + addInfo + @" ORDER BY  PR.Id ASC "+ limitResults + ";";
+                                    WHERE PR.deleted = 0 " + addInfo + @" ORDER BY  PR.Id ASC " + limitResults + ";";
 
 
                 using (SQLiteDataAdapter cmd = new(commandText, connection))
