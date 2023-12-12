@@ -2,7 +2,6 @@ using CsvHelper;
 using iText.Kernel.Pdf;
 using iText.Kernel.Pdf.Canvas.Parser;
 using iText.Kernel.Pdf.Canvas.Parser.Listener;
-using iText.StyledXmlParser.Jsoup.Nodes;
 using ManagerOrdini;
 using ManagerOrdini.Forms;
 using Microsoft.VisualBasic;

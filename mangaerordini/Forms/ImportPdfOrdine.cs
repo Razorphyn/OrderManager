@@ -515,7 +515,7 @@ namespace ManagerOrdini.Forms
                 {
                     if (items[i].id == items[j].id && DateTime.Compare(items[i].eta, items[j].eta) == 0)
                     {
-                        OnTopMessage.Information("L'oggetto con ID " + items[i].id + " presenta un'altra riga con la stessa data di consegna."+Environment.NewLine+"Cambiare la data di consegna o non importare uno dei due elementi.");
+                        OnTopMessage.Information("L'oggetto con ID " + items[i].id + " presenta un'altra riga con la stessa data di consegna." + Environment.NewLine + "Cambiare la data di consegna o non importare uno dei due elementi.");
                         return false;
                     }
                 }

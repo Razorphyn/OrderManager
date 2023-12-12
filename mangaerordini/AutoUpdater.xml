@@ -1,7 +1,7 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <item>
-	<version>4.5.0.4</version>
-	<url>https://github.com/Razorphyn/OrderManager/releases/download/4.5.0.4/ReleaseV4.5.0.4.zip</url>
+	<version>4.5.2.2</version>
+	<url>https://github.com/Razorphyn/OrderManager/releases/download/stable/ReleaseV4.5.2.2.zip</url>
 	<changelog></changelog>
 	<mandatory>true</mandatory>
 </item>
