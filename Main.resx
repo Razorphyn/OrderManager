@@ -1,0 +1,600 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<root>
+  <!--
+    Microsoft ResX Schema 
+
+    Version 2.0
+
+    The primary goals of this format is to allow a simple XML format
+    that is mostly human readable. The generation and parsing of the
+    various data types are done through the TypeConverter classes
+    associated with the data types.
+
+    Example:
+
+    ... ado.net/XML headers & schema ...
+    <resheader name="resmimetype">text/microsoft-resx</resheader>
+    <resheader name="version">2.0</resheader>
+    <resheader name="reader">System.Resources.ResXResourceReader, System.Windows.Forms, ...</resheader>
+    <resheader name="writer">System.Resources.ResXResourceWriter, System.Windows.Forms, ...</resheader>
+    <data name="Name1"><value>this is my long string</value><comment>this is a comment</comment></data>
+    <data name="Color1" type="System.Drawing.Color, System.Drawing">Blue</data>
+    <data name="Bitmap1" mimetype="application/x-microsoft.net.object.binary.base64">
+        <value>[base64 mime encoded serialized .NET Framework object]</value>
+    </data>
+    <data name="Icon1" type="System.Drawing.Icon, System.Drawing" mimetype="application/x-microsoft.net.object.bytearray.base64">
+        <value>[base64 mime encoded string representing a byte array form of the .NET Framework object]</value>
+        <comment>This is a comment</comment>
+    </data>
+
+    There are any number of "resheader" rows that contain simple
+    name/value pairs.
+
+    Each data row contains a name, and value. The row also contains a
+    type or mimetype. Type corresponds to a .NET class that support
+    text/value conversion through the TypeConverter architecture.
+    Classes that don't support this are serialized and stored with the
+    mimetype set.
+
+    The mimetype is used for serialized objects, and tells the
+    ResXResourceReader how to depersist the object. This is currently not
+    extensible. For a given mimetype the value must be set accordingly:
+
+    Note - application/x-microsoft.net.object.binary.base64 is the format
+    that the ResXResourceWriter will generate, however the reader can
+    read any of the formats listed below.
+
+    mimetype: application/x-microsoft.net.object.binary.base64
+    value   : The object must be serialized with
+            : System.Runtime.Serialization.Formatters.Binary.BinaryFormatter
+            : and then encoded with base64 encoding.
+    
+    mimetype: application/x-microsoft.net.object.soap.base64
+    value   : The object must be serialized with
+            : System.Runtime.Serialization.Formatters.Soap.SoapFormatter
+            : and then encoded with base64 encoding.
+
+    mimetype: application/x-microsoft.net.object.bytearray.base64
+    value   : The object must be serialized into a byte array
+            : using a System.ComponentModel.TypeConverter
+            : and then encoded with base64 encoding.
+    -->
+  <xsd:schema id="root" xmlns="" xmlns:xsd="http://www.w3.org/2001/XMLSchema" xmlns:msdata="urn:schemas-microsoft-com:xml-msdata">
+    <xsd:import namespace="http://www.w3.org/XML/1998/namespace" />
+    <xsd:element name="root" msdata:IsDataSet="true">
+      <xsd:complexType>
+        <xsd:choice maxOccurs="unbounded">
+          <xsd:element name="metadata">
+            <xsd:complexType>
+              <xsd:sequence>
+                <xsd:element name="value" type="xsd:string" minOccurs="0" />
+              </xsd:sequence>
+              <xsd:attribute name="name" use="required" type="xsd:string" />
+              <xsd:attribute name="type" type="xsd:string" />
+              <xsd:attribute name="mimetype" type="xsd:string" />
+              <xsd:attribute ref="xml:space" />
+            </xsd:complexType>
+          </xsd:element>
+          <xsd:element name="assembly">
+            <xsd:complexType>
+              <xsd:attribute name="alias" type="xsd:string" />
+              <xsd:attribute name="name" type="xsd:string" />
+            </xsd:complexType>
+          </xsd:element>
+          <xsd:element name="data">
+            <xsd:complexType>
+              <xsd:sequence>
+                <xsd:element name="value" type="xsd:string" minOccurs="0" msdata:Ordinal="1" />
+                <xsd:element name="comment" type="xsd:string" minOccurs="0" msdata:Ordinal="2" />
+              </xsd:sequence>
+              <xsd:attribute name="name" type="xsd:string" use="required" msdata:Ordinal="1" />
+              <xsd:attribute name="type" type="xsd:string" msdata:Ordinal="3" />
+              <xsd:attribute name="mimetype" type="xsd:string" msdata:Ordinal="4" />
+              <xsd:attribute ref="xml:space" />
+            </xsd:complexType>
+          </xsd:element>
+          <xsd:element name="resheader">
+            <xsd:complexType>
+              <xsd:sequence>
+                <xsd:element name="value" type="xsd:string" minOccurs="0" msdata:Ordinal="1" />
+              </xsd:sequence>
+              <xsd:attribute name="name" type="xsd:string" use="required" />
+            </xsd:complexType>
+          </xsd:element>
+        </xsd:choice>
+      </xsd:complexType>
+    </xsd:element>
+  </xsd:schema>
+  <resheader name="resmimetype">
+    <value>text/microsoft-resx</value>
+  </resheader>
+  <resheader name="version">
+    <value>2.0</value>
+  </resheader>
+  <resheader name="reader">
+    <value>System.Resources.ResXResourceReader, System.Windows.Forms, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089</value>
+  </resheader>
+  <resheader name="writer">
+    <value>System.Resources.ResXResourceWriter, System.Windows.Forms, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089</value>
+  </resheader>
+  <metadata name="label34.GenerateMember" type="System.Boolean, mscorlib, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089">
+    <value>False</value>
+  </metadata>
+  <metadata name="label36.GenerateMember" type="System.Boolean, mscorlib, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089">
+    <value>False</value>
+  </metadata>
+  <metadata name="label33.GenerateMember" type="System.Boolean, mscorlib, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089">
+    <value>False</value>
+  </metadata>
+  <metadata name="label28.GenerateMember" type="System.Boolean, mscorlib, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089">
+    <value>False</value>
+  </metadata>
+  <metadata name="label16.GenerateMember" type="System.Boolean, mscorlib, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089">
+    <value>False</value>
+  </metadata>
+  <metadata name="toolTip1.TrayLocation" type="System.Drawing.Point, System.Drawing, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b03f5f7f11d50a3a">
+    <value>18, 41</value>
+  </metadata>
+  <metadata name="label15.GenerateMember" type="System.Boolean, mscorlib, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089">
+    <value>False</value>
+  </metadata>
+  <metadata name="label27.GenerateMember" type="System.Boolean, mscorlib, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089">
+    <value>False</value>
+  </metadata>
+  <metadata name="label21.GenerateMember" type="System.Boolean, mscorlib, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089">
+    <value>False</value>
+  </metadata>
+  <metadata name="label20.GenerateMember" type="System.Boolean, mscorlib, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089">
+    <value>False</value>
+  </metadata>
+  <metadata name="label17.GenerateMember" type="System.Boolean, mscorlib, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089">
+    <value>False</value>
+  </metadata>
+  <metadata name="label25.GenerateMember" type="System.Boolean, mscorlib, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089">
+    <value>False</value>
+  </metadata>
+  <metadata name="label1.GenerateMember" type="System.Boolean, mscorlib, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089">
+    <value>False</value>
+  </metadata>
+  <metadata name="label2.GenerateMember" type="System.Boolean, mscorlib, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089">
+    <value>False</value>
+  </metadata>
+  <metadata name="label5.GenerateMember" type="System.Boolean, mscorlib, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089">
+    <value>False</value>
+  </metadata>
+  <metadata name="label90.GenerateMember" type="System.Boolean, mscorlib, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089">
+    <value>False</value>
+  </metadata>
+  <metadata name="label6.GenerateMember" type="System.Boolean, mscorlib, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089">
+    <value>False</value>
+  </metadata>
+  <metadata name="label7.GenerateMember" type="System.Boolean, mscorlib, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089">
+    <value>False</value>
+  </metadata>
+  <metadata name="label48.GenerateMember" type="System.Boolean, mscorlib, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089">
+    <value>False</value>
+  </metadata>
+  <metadata name="label49.GenerateMember" type="System.Boolean, mscorlib, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089">
+    <value>False</value>
+  </metadata>
+  <metadata name="label50.GenerateMember" type="System.Boolean, mscorlib, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089">
+    <value>False</value>
+  </metadata>
+  <metadata name="label51.GenerateMember" type="System.Boolean, mscorlib, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089">
+    <value>False</value>
+  </metadata>
+  <metadata name="label52.GenerateMember" type="System.Boolean, mscorlib, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089">
+    <value>False</value>
+  </metadata>
+  <metadata name="label54.GenerateMember" type="System.Boolean, mscorlib, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089">
+    <value>False</value>
+  </metadata>
+  <metadata name="label12.GenerateMember" type="System.Boolean, mscorlib, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089">
+    <value>False</value>
+  </metadata>
+  <metadata name="label41.GenerateMember" type="System.Boolean, mscorlib, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089">
+    <value>False</value>
+  </metadata>
+  <metadata name="label53.GenerateMember" type="System.Boolean, mscorlib, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089">
+    <value>False</value>
+  </metadata>
+  <metadata name="label60.GenerateMember" type="System.Boolean, mscorlib, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089">
+    <value>False</value>
+  </metadata>
+  <metadata name="label38.GenerateMember" type="System.Boolean, mscorlib, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089">
+    <value>False</value>
+  </metadata>
+  <metadata name="label106.GenerateMember" type="System.Boolean, mscorlib, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089">
+    <value>False</value>
+  </metadata>
+  <metadata name="label111.GenerateMember" type="System.Boolean, mscorlib, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089">
+    <value>False</value>
+  </metadata>
+  <metadata name="label83.GenerateMember" type="System.Boolean, mscorlib, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089">
+    <value>False</value>
+  </metadata>
+  <metadata name="label30.GenerateMember" type="System.Boolean, mscorlib, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089">
+    <value>False</value>
+  </metadata>
+  <metadata name="label123.GenerateMember" type="System.Boolean, mscorlib, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089">
+    <value>False</value>
+  </metadata>
+  <metadata name="label154.GenerateMember" type="System.Boolean, mscorlib, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089">
+    <value>False</value>
+  </metadata>
+  <metadata name="label155.GenerateMember" type="System.Boolean, mscorlib, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089">
+    <value>False</value>
+  </metadata>
+  <metadata name="label157.GenerateMember" type="System.Boolean, mscorlib, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089">
+    <value>False</value>
+  </metadata>
+  <metadata name="label158.GenerateMember" type="System.Boolean, mscorlib, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089">
+    <value>False</value>
+  </metadata>
+  <metadata name="label59.GenerateMember" type="System.Boolean, mscorlib, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089">
+    <value>False</value>
+  </metadata>
+  <metadata name="label156.GenerateMember" type="System.Boolean, mscorlib, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089">
+    <value>False</value>
+  </metadata>
+  <metadata name="label160.GenerateMember" type="System.Boolean, mscorlib, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089">
+    <value>False</value>
+  </metadata>
+  <metadata name="label161.GenerateMember" type="System.Boolean, mscorlib, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089">
+    <value>False</value>
+  </metadata>
+  <metadata name="label164.GenerateMember" type="System.Boolean, mscorlib, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089">
+    <value>False</value>
+  </metadata>
+  <metadata name="label165.GenerateMember" type="System.Boolean, mscorlib, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089">
+    <value>False</value>
+  </metadata>
+  <metadata name="label124.GenerateMember" type="System.Boolean, mscorlib, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089">
+    <value>False</value>
+  </metadata>
+  <metadata name="label76.GenerateMember" type="System.Boolean, mscorlib, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089">
+    <value>False</value>
+  </metadata>
+  <metadata name="label79.GenerateMember" type="System.Boolean, mscorlib, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089">
+    <value>False</value>
+  </metadata>
+  <metadata name="label82.GenerateMember" type="System.Boolean, mscorlib, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089">
+    <value>False</value>
+  </metadata>
+  <metadata name="LabelPtotOff.GenerateMember" type="System.Boolean, mscorlib, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089">
+    <value>False</value>
+  </metadata>
+  <metadata name="label101.GenerateMember" type="System.Boolean, mscorlib, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089">
+    <value>False</value>
+  </metadata>
+  <data name="label101.ToolTip" xml:space="preserve">
+    <value>-Exlude from Tot.
+La spedizione non verrà inclusa nel prezzo dell'offerta/ordine.
+Opzione utile se il costo è già implicitamente incluso nel prezzo finale.
+
+-Add total &amp; No Discount
+La spedizione verrà inclusa nel prezzo finale dell'offerta/ordine senza applicare sconti
+
+-Add Tot with Discount
+La spedizione verrà inclusa nel prezzo finale dell'offerta/ordine dopo aver applicato lo sconto</value>
+  </data>
+  <metadata name="label115.GenerateMember" type="System.Boolean, mscorlib, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089">
+    <value>False</value>
+  </metadata>
+  <metadata name="label77.GenerateMember" type="System.Boolean, mscorlib, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089">
+    <value>False</value>
+  </metadata>
+  <metadata name="label78.GenerateMember" type="System.Boolean, mscorlib, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089">
+    <value>False</value>
+  </metadata>
+  <metadata name="label75.GenerateMember" type="System.Boolean, mscorlib, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089">
+    <value>False</value>
+  </metadata>
+  <metadata name="label80.GenerateMember" type="System.Boolean, mscorlib, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089">
+    <value>False</value>
+  </metadata>
+  <metadata name="label73.GenerateMember" type="System.Boolean, mscorlib, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089">
+    <value>False</value>
+  </metadata>
+  <metadata name="label149.GenerateMember" type="System.Boolean, mscorlib, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089">
+    <value>False</value>
+  </metadata>
+  <metadata name="label152.GenerateMember" type="System.Boolean, mscorlib, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089">
+    <value>False</value>
+  </metadata>
+  <metadata name="label140.GenerateMember" type="System.Boolean, mscorlib, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089">
+    <value>False</value>
+  </metadata>
+  <metadata name="label95.GenerateMember" type="System.Boolean, mscorlib, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089">
+    <value>False</value>
+  </metadata>
+  <metadata name="label87.GenerateMember" type="System.Boolean, mscorlib, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089">
+    <value>False</value>
+  </metadata>
+  <metadata name="label93.GenerateMember" type="System.Boolean, mscorlib, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089">
+    <value>False</value>
+  </metadata>
+  <metadata name="label94.GenerateMember" type="System.Boolean, mscorlib, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089">
+    <value>False</value>
+  </metadata>
+  <metadata name="label91.GenerateMember" type="System.Boolean, mscorlib, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089">
+    <value>False</value>
+  </metadata>
+  <metadata name="label92.GenerateMember" type="System.Boolean, mscorlib, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089">
+    <value>False</value>
+  </metadata>
+  <metadata name="label151.GenerateMember" type="System.Boolean, mscorlib, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089">
+    <value>False</value>
+  </metadata>
+  <metadata name="label97.GenerateMember" type="System.Boolean, mscorlib, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089">
+    <value>False</value>
+  </metadata>
+  <metadata name="label127.GenerateMember" type="System.Boolean, mscorlib, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089">
+    <value>False</value>
+  </metadata>
+  <metadata name="label67.GenerateMember" type="System.Boolean, mscorlib, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089">
+    <value>False</value>
+  </metadata>
+  <metadata name="label69.GenerateMember" type="System.Boolean, mscorlib, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089">
+    <value>False</value>
+  </metadata>
+  <metadata name="label70.GenerateMember" type="System.Boolean, mscorlib, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089">
+    <value>False</value>
+  </metadata>
+  <metadata name="label68.GenerateMember" type="System.Boolean, mscorlib, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089">
+    <value>False</value>
+  </metadata>
+  <metadata name="label71.GenerateMember" type="System.Boolean, mscorlib, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089">
+    <value>False</value>
+  </metadata>
+  <metadata name="label134.GenerateMember" type="System.Boolean, mscorlib, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089">
+    <value>False</value>
+  </metadata>
+  <metadata name="label136.GenerateMember" type="System.Boolean, mscorlib, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089">
+    <value>False</value>
+  </metadata>
+  <metadata name="label162.GenerateMember" type="System.Boolean, mscorlib, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089">
+    <value>False</value>
+  </metadata>
+  <metadata name="label14.GenerateMember" type="System.Boolean, mscorlib, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089">
+    <value>False</value>
+  </metadata>
+  <metadata name="label11.GenerateMember" type="System.Boolean, mscorlib, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089">
+    <value>False</value>
+  </metadata>
+  <metadata name="label4.GenerateMember" type="System.Boolean, mscorlib, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089">
+    <value>False</value>
+  </metadata>
+  <metadata name="label9.GenerateMember" type="System.Boolean, mscorlib, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089">
+    <value>False</value>
+  </metadata>
+  <metadata name="label8.GenerateMember" type="System.Boolean, mscorlib, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089">
+    <value>False</value>
+  </metadata>
+  <metadata name="label13.GenerateMember" type="System.Boolean, mscorlib, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089">
+    <value>False</value>
+  </metadata>
+  <metadata name="label10.GenerateMember" type="System.Boolean, mscorlib, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089">
+    <value>False</value>
+  </metadata>
+  <metadata name="label130.GenerateMember" type="System.Boolean, mscorlib, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089">
+    <value>False</value>
+  </metadata>
+  <metadata name="label129.GenerateMember" type="System.Boolean, mscorlib, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089">
+    <value>False</value>
+  </metadata>
+  <metadata name="label99.GenerateMember" type="System.Boolean, mscorlib, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089">
+    <value>False</value>
+  </metadata>
+  <metadata name="label159.GenerateMember" type="System.Boolean, mscorlib, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089">
+    <value>False</value>
+  </metadata>
+  <metadata name="label146.GenerateMember" type="System.Boolean, mscorlib, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089">
+    <value>False</value>
+  </metadata>
+  <metadata name="label47.GenerateMember" type="System.Boolean, mscorlib, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089">
+    <value>False</value>
+  </metadata>
+  <metadata name="label55.GenerateMember" type="System.Boolean, mscorlib, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089">
+    <value>False</value>
+  </metadata>
+  <metadata name="label56.GenerateMember" type="System.Boolean, mscorlib, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089">
+    <value>False</value>
+  </metadata>
+  <metadata name="label163.GenerateMember" type="System.Boolean, mscorlib, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089">
+    <value>False</value>
+  </metadata>
+  <metadata name="label166.GenerateMember" type="System.Boolean, mscorlib, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089">
+    <value>False</value>
+  </metadata>
+  <metadata name="label167.GenerateMember" type="System.Boolean, mscorlib, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089">
+    <value>False</value>
+  </metadata>
+  <metadata name="label168.GenerateMember" type="System.Boolean, mscorlib, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089">
+    <value>False</value>
+  </metadata>
+  <metadata name="label61.GenerateMember" type="System.Boolean, mscorlib, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089">
+    <value>False</value>
+  </metadata>
+  <metadata name="label63.GenerateMember" type="System.Boolean, mscorlib, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089">
+    <value>False</value>
+  </metadata>
+  <data name="FieldOrdSpedGestione.ToolTip" xml:space="preserve">
+    <value>-Exlude from Tot.
+La spedizione non verrà inclusa nel prezzo dell'offerta/ordine.
+Opzione utile se il costo è già implicitamente incluso nel prezzo finale.
+
+-Add total &amp; No Discount
+La spedizione verrà inclusa nel prezzo finale dell'offerta/ordine senza applicare sconti
+
+-Add Tot with Discount
+La spedizione verrà inclusa nel prezzo finale dell'offerta/ordine dopo aver applicato lo sconto</value>
+  </data>
+  <data name="AddOffCreaSpedizioneGest.ToolTip" xml:space="preserve">
+    <value>-Exlude from Tot.
+La spedizione non verrà inclusa nel prezzo dell'offerta/ordine
+
+-Add total &amp; No Discount
+La spedizione verrà inclusa nel prezzo finale dell'offerta/ordine senza applicare sconti
+
+-Add Tot with Discount
+La spedizione verrà inclusa nel prezzo finale dell'offerta/ordine dopo aver applicato lo sconto</value>
+  </data>
+  <data name="label100.ToolTip" xml:space="preserve">
+    <value>-Exlude from Tot.
+La spedizione non verrà inclusa nel prezzo dell'offerta/ordine
+
+-Add total &amp; No Discount
+La spedizione verrà inclusa nel prezzo finale dell'offerta/ordine senza applicare sconti
+
+-Add Tot with Discount
+La spedizione verrà inclusa nel prezzo finale dell'offerta/ordine dopo aver applicato lo sconto</value>
+  </data>
+  <metadata name="TimerAddOffCreaOggettoPezzoFiltro.TrayLocation" type="System.Drawing.Point, System.Drawing, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b03f5f7f11d50a3a">
+    <value>112, 45</value>
+  </metadata>
+  <metadata name="TimerDataGridViewFilter.TrayLocation" type="System.Drawing.Point, System.Drawing, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b03f5f7f11d50a3a">
+    <value>408, 20</value>
+  </metadata>
+  <metadata name="TimerOffCreaFiltro.TrayLocation" type="System.Drawing.Point, System.Drawing, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b03f5f7f11d50a3a">
+    <value>625, 30</value>
+  </metadata>
+  <metadata name="TimerdataGridViewCompFilter.TrayLocation" type="System.Drawing.Point, System.Drawing, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b03f5f7f11d50a3a">
+    <value>853, 17</value>
+  </metadata>
+  <metadata name="TimerFieldOrdOggPezzoFiltro.TrayLocation" type="System.Drawing.Point, System.Drawing, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b03f5f7f11d50a3a">
+    <value>1068, 17</value>
+  </metadata>
+  <metadata name="Timer_RunSQLiteOptimize.TrayLocation" type="System.Drawing.Point, System.Drawing, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b03f5f7f11d50a3a">
+    <value>17, 0</value>
+  </metadata>
+  <metadata name="$this.TrayHeight" type="System.Int32, mscorlib, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089">
+    <value>82</value>
+  </metadata>
+  <assembly alias="System.Drawing" name="System.Drawing, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b03f5f7f11d50a3a" />
+  <data name="$this.Icon" type="System.Drawing.Icon, System.Drawing" mimetype="application/x-microsoft.net.object.bytearray.base64">
+    <value>
+        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
+        EEIE0/8BJzuR3UusW84AAAAASUVORK5CYII=
+</value>
+  </data>
+</root>

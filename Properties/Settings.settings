@@ -1,0 +1,15 @@
+﻿<?xml version='1.0' encoding='utf-8'?>
+<SettingsFile xmlns="http://schemas.microsoft.com/VisualStudio/2004/01/settings" CurrentProfile="(Default)" GeneratedClassNamespace="OrderManager.Properties" GeneratedClassName="Settings">
+  <Profiles />
+  <Settings>
+    <Setting Name="ClientId" Type="System.String" Scope="Application">
+      <Value Profile="(Default)">bf456c01-9487-4af9-a061-315860e0d5d7</Value>
+    </Setting>
+    <Setting Name="Scopes" Type="System.String" Scope="Application">
+      <Value Profile="(Default)">Calendars.ReadWrite;Calendars.ReadWrite.Shared;User.Read</Value>
+    </Setting>
+    <Setting Name="TenantId" Type="System.String" Scope="User">
+      <Value Profile="(Default)">f8cdef31-a31e-4b4a-93e4-5f571e91255a</Value>
+    </Setting>
+  </Settings>
+</SettingsFile>

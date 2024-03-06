@@ -361,3 +361,5 @@ MigrationBackup/
 
 # Fody - auto-generated XML schema
 FodyWeavers.xsd
+mangaerordini/Properties/Settings.Designer.cs
+mangaerordini/Properties/Settings.settings
